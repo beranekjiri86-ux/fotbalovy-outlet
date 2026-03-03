@@ -1,0 +1,20 @@
+export type Product = {
+  id: number;
+  name: string;
+  article_code: string;
+  brand: string | null;
+  category: "kopačky" | "běžecké boty" | "tenisky";
+  boot_type: string | null;
+  size_eu: number | null;
+  size_uk: number | null;
+  size_cm: number | null;
+  condition: "nové" | "použité" | null;
+  original_price: number | null;
+  sale_price: number;
+  monogram: string | null;
+  note: string | null;
+  image_url: string | null;
+  slug: string;
+  status: "available" | "reserved" | "sold";
+  reserved_until: string | null;
+};
