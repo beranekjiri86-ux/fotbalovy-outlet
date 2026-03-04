@@ -9,7 +9,7 @@ type Product = {
   kod_produktu: string | null;
   znacka: string | null;
   image_url: string | null;
-  fotky: string[] | null;
+  images: string[] | null;   // ← změnit
   poznamka: string | null;
   prodejni_cena: number | null;
   doporucena_cna: number | null;
