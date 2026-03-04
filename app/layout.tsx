@@ -33,15 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       textDecoration:"none",
       color:"inherit"
     }}>
-      <img
-        src="/logo.png"
-        alt="Fotbalový Outlet CZ"
-        style={{
-          height:60,
-          width:60,
-          objectFit:"contain"
-        }}
-      />
+      <img src="/logo.png" alt="Fotbalový Outlet CZ" style={{height:60}} />
       <div style={{lineHeight:1}}>
         <div style={{fontWeight:800,fontSize:18}}>
           Fotbalový Outlet CZ
