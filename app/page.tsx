@@ -13,19 +13,54 @@ export default function Home() {
 
   return (
     <>
-      <div style={{ marginTop: 20 }}>
-        <a href="/produkty" style={{ display: "block" }}>
-          <img
-            src="/baner.png"
-            alt="Fotbalový Outlet CZ"
-            style={{
-              width: "100%",
-              borderRadius: 12,
-              display: "block",
-            }}
-          />
-        </a>
-      </div>
+  <div style={{ marginTop: 20, position: "relative" }}>
+  <img
+    src="/baner.png"
+    alt="Fotbalový Outlet CZ"
+    style={{
+      width: "100%",
+      borderRadius: 12,
+      display: "block"
+    }}
+  />
+
+  <div
+    style={{
+      position: "absolute",
+      left: 30,
+      bottom: 30,
+      background: "rgba(0,0,0,0.6)",
+      padding: "20px 24px",
+      borderRadius: 10,
+      color: "white",
+      maxWidth: 320
+    }}
+  >
+    <div style={{ fontSize: 22, fontWeight: 800 }}>
+      Fotbalový Outlet CZ
+    </div>
+
+    <div style={{ fontSize: 14, opacity: 0.9, marginTop: 6 }}>
+      nové i použité kopačky za outlet ceny
+    </div>
+
+    <Link
+      href="/produkty"
+      style={{
+        display: "inline-block",
+        marginTop: 12,
+        background: "#16a34a",
+        padding: "10px 16px",
+        borderRadius: 8,
+        fontWeight: 700,
+        color: "white",
+        textDecoration: "none"
+      }}
+    >
+      Prohlédnout nabídku
+    </Link>
+  </div>
+</div>
 
       <div className="grid" style={{ gap: 16, paddingTop: 16 }}>
         <div className="card">
