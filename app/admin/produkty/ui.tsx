@@ -6,11 +6,11 @@ import { supabase } from "@/lib/supabaseClient";
 
 type ProductRow = {
   id: string;
-  nazev: string;
-  kod_produktu: string | null;
-  znacka: string | null;
+  name: string;
+  article_code: string | null;
+  brand: string | null;
   image_url: string | null;
-  prodejni_cena: number | null;
+  sale_price: number | null;
 };
 
 export default function AdminProductsClient() {
