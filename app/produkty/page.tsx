@@ -132,8 +132,14 @@ export default async function Produkty({ searchParams }: SP) {
     return u.pathname + (u.search ? u.search : "");
   };
 
-  const cats = ["kopačky", "běžecké boty", "tenisky"];
-
+  const cats = [
+  "kopačky",
+  "běžecké boty",
+  "tenisky",
+  "rukavice",
+  "dresy",
+  "oblečení"
+];
   return (
     <div className="container" style={{ paddingTop: 16 }}>
       {/* Header řádek */}
