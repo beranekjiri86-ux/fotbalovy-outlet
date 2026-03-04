@@ -125,7 +125,7 @@ export default async function Produkty({ searchParams }: SP) {
     .from("products")
     .select("*")
     .in("status", ["available", "reserved"])
-    .order("prodejni_cena", { ascending: true });
+    .order("sale_price", { ascending: true });
 
   // fulltext-ish search: název, kód, značka
   if (q) {
@@ -134,7 +134,7 @@ export default async function Produkty({ searchParams }: SP) {
 
   if (category) query = query.eq("category", category);
   if (condition.length) query = query.in("condition", condition); // pokud máš condition sloupec; když ne, dej vědět
-  if (brands.length) query = query.in("znacka", brands);
+  if (brands.length) query = query.in("brand", brands);
 
   // --- kopačky filtry ---
   if (category === "kopačky") {
@@ -389,7 +389,7 @@ export default async function Produkty({ searchParams }: SP) {
               <div className="thumb">
                 <img
                   src={p.image_url || `https://loremflickr.com/800/800/football,boots?lock=${p.id}`}
-                  alt={p.nazev ?? p.name}
+                  alt={p.name}
                   style={{ width: "100%", height: "220px", objectFit: "cover" }}
                 />
               </div>
