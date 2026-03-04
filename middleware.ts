@@ -4,7 +4,6 @@ import type { NextRequest } from "next/server";
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // chráníme vše pod /admin
   if (!pathname.startsWith("/admin")) return NextResponse.next();
 
   const pw = process.env.ADMIN_PASSWORD;
@@ -19,9 +18,8 @@ export function middleware(req: NextRequest) {
   }
 
   const decoded = Buffer.from(auth.slice("Basic ".length), "base64").toString("utf-8");
-  const [user, pass] = decoded.split(":");
+  const [, pass] = decoded.split(":");
 
-  // user může být cokoliv, kontrolujeme jen heslo
   if (pass !== pw) {
     return new NextResponse("Unauthorized", {
       status: 401,
