@@ -124,7 +124,7 @@ export default async function Produkty({ searchParams }: SP) {
   let query = supabase
     .from("products")
     .select("*")
-    .in("stav", ["available", "reserved"])
+    .in("status", ["available", "reserved"])
     .order("prodejni_cena", { ascending: true });
 
   // fulltext-ish search: název, kód, značka
