@@ -162,7 +162,16 @@ export default async function Produkty({ searchParams }: SP) {
         {products.map(p => (
           <Link key={p.id} href={`/p/${p.slug}`} className="card product">
             <div className="thumb">
-              {p.image_url ? <img src={p.image_url} alt={p.name} /> : <span className="muted">Bez fotky</span>}
+              <img
+  src={
+    p.image_url ??
+    `https://source.unsplash.com/600x400/?${encodeURIComponent(
+      `${p.brand ?? ""} ${p.article_code} football boots`
+    )}`
+  }
+  alt={p.name}
+  style={{ width: "100%", height: "220px", objectFit: "cover" }}
+/>
             </div>
             <div style={{fontWeight:800, lineHeight:1.25}}>{p.name}</div>
             <div className="tagRow">
