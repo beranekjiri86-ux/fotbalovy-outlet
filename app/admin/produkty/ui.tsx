@@ -106,9 +106,9 @@ export default function AdminProductsClient() {
             </div>
 
             <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 800, lineHeight: 1.2 }}>{p.nazev}</div>
+              <div style={{ fontWeight: 800, lineHeight: 1.2 }}>{p.name}</div>
               <div style={{ opacity: 0.75, fontSize: 13 }}>
-                {p.znacka ?? ""} {p.kod_produktu ?? ""}
+                {p.brand ?? ""} {p.article_code ?? ""}
               </div>
             </div>
 
