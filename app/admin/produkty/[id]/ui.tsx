@@ -9,6 +9,9 @@ type Product = {
   nazev: string;
   kod_produktu: string | null;
   znacka: string | null;
+
+  kategorie: string | null; // ✅ NOVÉ
+
   image_url: string | null;
   images: string[] | null;
   poznamka: string | null;
@@ -16,6 +19,8 @@ type Product = {
   doporucena_cena: number | null;
   stav: string | null;
 };
+
+const CATEGORIES = ["kopačky", "běžecké boty", "tenisky", "rukavice", "dresy", "oblečení"] as const;
 
 export default function AdminProductEditClient({ id }: { id: string }) {
   const [p, setP] = useState<Product | null>(null);
@@ -27,7 +32,7 @@ export default function AdminProductEditClient({ id }: { id: string }) {
       const { data, error } = await supabase
         .from("products")
         .select(
-          "id,kod,nazev,kod_produktu,znacka,image_url,images,poznamka,prodejni_cena,doporucena_cena,stav"
+          "id,kod,nazev,kod_produktu,znacka,kategorie,image_url,images,poznamka,prodejni_cena,doporucena_cena,stav"
         )
         .eq("id", id)
         .single();
@@ -90,6 +95,7 @@ export default function AdminProductEditClient({ id }: { id: string }) {
     const { error } = await supabase
       .from("products")
       .update({
+        kategorie: p.kategorie, // ✅ NOVÉ
         image_url: p.image_url,
         images: p.images ?? [],
         poznamka: p.poznamka,
@@ -125,6 +131,23 @@ export default function AdminProductEditClient({ id }: { id: string }) {
           {p.znacka ?? ""} • {p.kod_produktu ?? ""}
         </div>
       </div>
+
+      {/* ✅ NOVÉ: Kategorie */}
+      <label style={{ display: "grid", gap: 6 }}>
+        Kategorie
+        <select
+          value={p.kategorie ?? ""}
+          onChange={(e) => setP({ ...p, kategorie: e.target.value || null })}
+          style={{ padding: 10, border: "1px solid #ddd", borderRadius: 10 }}
+        >
+          <option value="">— vyber —</option>
+          {CATEGORIES.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+      </label>
 
       <label style={{ display: "grid", gap: 6 }}>
         Náhledová fotka (image_url)
@@ -191,12 +214,7 @@ export default function AdminProductEditClient({ id }: { id: string }) {
 
       <div style={{ display: "grid", gap: 8 }}>
         <div style={{ fontWeight: 800 }}>Galerie (max 10)</div>
-        <input
-          type="file"
-          accept="image/*"
-          multiple
-          onChange={(e) => e.target.files && uploadFiles(e.target.files)}
-        />
+        <input type="file" accept="image/*" multiple onChange={(e) => e.target.files && uploadFiles(e.target.files)} />
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
           {gallery.map((url) => (
