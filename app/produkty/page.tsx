@@ -26,7 +26,22 @@ function qpSet(url: URL, key: string, values: string[] | string) {
     else url.searchParams.delete(key);
   }
 }
+function formatEUSize(n: number) {
+  if (!Number.isFinite(n)) return "";
 
+  const whole = Math.floor(n);
+  const frac = Math.round((n - whole) * 100); // pracujeme s 0.5 / 0.33 / 0.67
+
+  if (frac === 0) return String(whole);
+
+  // nejčastější: .5, .33, .67
+  if (Math.abs(n - (whole + 0.5)) < 0.02) return `${whole} 1/2`;
+  if (Math.abs(n - (whole + 1 / 3)) < 0.03) return `${whole} 1/3`;
+  if (Math.abs(n - (whole + 2 / 3)) < 0.03) return `${whole} 2/3`;
+
+  // fallback (kdyby bylo něco divného)
+  return String(n).replace(".0", "");
+}
 function toggle(values: string[], v: string) {
   return values.includes(v) ? values.filter((x) => x !== v) : [...values, v];
 }
