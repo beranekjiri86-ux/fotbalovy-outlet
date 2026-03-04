@@ -12,6 +12,16 @@ export default function Home() {
   const bank = env("SHOP_BANK_ACCOUNT", "36493003/5500");
 
   return (
+    <div style={{marginTop:20}}>
+  <img
+    src="/banner.jpg"
+    alt="Fotbalový Outlet CZ"
+    style={{
+      width: "100%",
+      borderRadius: 12
+    }}
+  />
+</div>
     <div className="grid" style={{gap:16, paddingTop:16}}>
       <div className="card">
         <h1 className="h1">Kopačky, běžecké boty a tenisky – nové i použité</h1>
