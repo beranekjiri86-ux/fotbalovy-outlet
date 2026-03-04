@@ -4,12 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
 type Product = {
+  id: string;                
   kod: string;
   nazev: string;
   kod_produktu: string | null;
   znacka: string | null;
   image_url: string | null;
-  images: string[] | null;   // ← změnit
+  images: string[] | null;
   poznamka: string | null;
   prodejni_cena: number | null;
   doporucena_cena: number | null;
