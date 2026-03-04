@@ -10,7 +10,12 @@ type Product = {
   kod_produktu: string | null;
   znacka: string | null;
 
-  kategorie: string | null; // ✅ NOVÉ
+  kategorie: string | null;
+
+  // ✅ NOVÉ
+  velikost_obleceni: string | null; // XS..XXXL
+  typ_obleceni: string | null; // mikina/bunda/...
+  velikost_rukavic: number | null; // 6..11
 
   image_url: string | null;
   images: string[] | null;
@@ -21,6 +26,8 @@ type Product = {
 };
 
 const CATEGORIES = ["kopačky", "běžecké boty", "tenisky", "rukavice", "dresy", "oblečení"] as const;
+const APPAREL_SIZES = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"] as const;
+const GLOVE_SIZES = [6, 7, 8, 9, 10, 11] as const;
 
 export default function AdminProductEditClient({ id }: { id: string }) {
   const [p, setP] = useState<Product | null>(null);
@@ -32,7 +39,7 @@ export default function AdminProductEditClient({ id }: { id: string }) {
       const { data, error } = await supabase
         .from("products")
         .select(
-          "id,kod,nazev,kod_produktu,znacka,kategorie,image_url,images,poznamka,prodejni_cena,doporucena_cena,stav"
+          "id,kod,nazev,kod_produktu,znacka,kategorie,velikost_obleceni,typ_obleceni,velikost_rukavic,image_url,images,poznamka,prodejni_cena,doporucena_cena,stav"
         )
         .eq("id", id)
         .single();
@@ -95,7 +102,13 @@ export default function AdminProductEditClient({ id }: { id: string }) {
     const { error } = await supabase
       .from("products")
       .update({
-        kategorie: p.kategorie, // ✅ NOVÉ
+        kategorie: p.kategorie,
+
+        // ✅ NOVÉ
+        velikost_obleceni: p.velikost_obleceni,
+        typ_obleceni: p.typ_obleceni,
+        velikost_rukavic: p.velikost_rukavic,
+
         image_url: p.image_url,
         images: p.images ?? [],
         poznamka: p.poznamka,
@@ -132,7 +145,6 @@ export default function AdminProductEditClient({ id }: { id: string }) {
         </div>
       </div>
 
-      {/* ✅ NOVÉ: Kategorie */}
       <label style={{ display: "grid", gap: 6 }}>
         Kategorie
         <select
@@ -148,6 +160,60 @@ export default function AdminProductEditClient({ id }: { id: string }) {
           ))}
         </select>
       </label>
+
+      {/* ✅ Oblečení / Dresy */}
+      {(p.kategorie === "oblečení" || p.kategorie === "dresy") ? (
+        <>
+          <label style={{ display: "grid", gap: 6 }}>
+            Velikost (oblečení/dres)
+            <select
+              value={p.velikost_obleceni ?? ""}
+              onChange={(e) => setP({ ...p, velikost_obleceni: e.target.value || null })}
+              style={{ padding: 10, border: "1px solid #ddd", borderRadius: 10 }}
+            >
+              <option value="">— vyber —</option>
+              {APPAREL_SIZES.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          {p.kategorie === "oblečení" ? (
+            <label style={{ display: "grid", gap: 6 }}>
+              Typ oblečení (např. mikina/bunda/tričko…)
+              <input
+                value={p.typ_obleceni ?? ""}
+                onChange={(e) => setP({ ...p, typ_obleceni: e.target.value || null })}
+                placeholder="mikina"
+                style={{ padding: 10, border: "1px solid #ddd", borderRadius: 10 }}
+              />
+            </label>
+          ) : null}
+        </>
+      ) : null}
+
+      {/* ✅ Rukavice */}
+      {p.kategorie === "rukavice" ? (
+        <label style={{ display: "grid", gap: 6 }}>
+          Velikost rukavic (6–11)
+          <select
+            value={p.velikost_rukavic ?? ""}
+            onChange={(e) =>
+              setP({ ...p, velikost_rukavic: e.target.value === "" ? null : Number(e.target.value) })
+            }
+            style={{ padding: 10, border: "1px solid #ddd", borderRadius: 10 }}
+          >
+            <option value="">— vyber —</option>
+            {GLOVE_SIZES.map((s) => (
+              <option key={s} value={String(s)}>
+                {s}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
 
       <label style={{ display: "grid", gap: 6 }}>
         Náhledová fotka (image_url)
@@ -165,10 +231,7 @@ export default function AdminProductEditClient({ id }: { id: string }) {
           type="number"
           value={p.prodejni_cena ?? ""}
           onChange={(e) =>
-            setP({
-              ...p,
-              prodejni_cena: e.target.value === "" ? null : Number(e.target.value),
-            })
+            setP({ ...p, prodejni_cena: e.target.value === "" ? null : Number(e.target.value) })
           }
           style={{ padding: 10, border: "1px solid #ddd", borderRadius: 10 }}
         />
@@ -180,10 +243,7 @@ export default function AdminProductEditClient({ id }: { id: string }) {
           type="number"
           value={p.doporucena_cena ?? ""}
           onChange={(e) =>
-            setP({
-              ...p,
-              doporucena_cena: e.target.value === "" ? null : Number(e.target.value),
-            })
+            setP({ ...p, doporucena_cena: e.target.value === "" ? null : Number(e.target.value) })
           }
           style={{ padding: 10, border: "1px solid #ddd", borderRadius: 10 }}
         />
