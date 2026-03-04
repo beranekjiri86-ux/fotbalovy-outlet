@@ -12,7 +12,7 @@ type Product = {
   images: string[] | null;   // ← změnit
   poznamka: string | null;
   prodejni_cena: number | null;
-  doporucena_cna: number | null;
+  doporucena_cena: number | null;
   stav: string | null;
 };
 
