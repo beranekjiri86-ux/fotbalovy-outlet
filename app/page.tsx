@@ -16,7 +16,7 @@ export default function Home() {
       <div style={{ marginTop: 20 }}>
         <a href="/produkty" style={{ display: "block" }}>
           <img
-            src="/banner.png"
+            src="/baner.png"
             alt="Fotbalový Outlet CZ"
             style={{
               width: "100%",
