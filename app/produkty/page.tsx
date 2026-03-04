@@ -127,7 +127,6 @@ export default async function Produkty({ searchParams }: SP) {
           <div className="row">
             <select
               defaultValue={brands[0] ?? ""}
-              onChange={() => {}}
               name="brand_select"
               style={{minWidth:220}}
             >
