@@ -10,23 +10,25 @@ export default function Home() {
   const ig = env("SHOP_IG", "fotbalovy_outlet_cz");
   const fb = env("SHOP_FB", "");
   const bank = env("SHOP_BANK_ACCOUNT", "36493003/5500");
+return (
+  <>
+    <div style={{ marginTop: 20 }}>
+      <Link href="/produkty">
+        <img
+          src="/baner.png"
+          alt="Fotbalový Outlet CZ"
+          style={{
+            width: "100%",
+            borderRadius: 12,
+            display: "block",
+            cursor: "pointer",
+          }}
+        />
+      </Link>
+    </div>
 
-  return (
-    <>
-<div style={{ marginTop: 20 }}>
-  <Link href="/produkty">
-    <img
-      src="/baner.png"
-      alt="Fotbalový Outlet CZ"
-      style={{
-        width: "100%",
-        borderRadius: 12,
-        display: "block",
-        cursor: "pointer",
-      }}
-    />
-  </Link>
-</div>
+    <div className="grid" style={{ gap: 16, paddingTop: 16 }}>
+      {/* zbytek už nech jak máš */}
     style={{
       position: "absolute",
       left: 30,
