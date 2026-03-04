@@ -132,7 +132,7 @@ export default async function Produkty({ searchParams }: SP) {
     query = query.or(`nazev.ilike.%${q}%,kod_produktu.ilike.%${q}%,znacka.ilike.%${q}%`);
   }
 
-  if (category) query = query.eq("kategorie", category);
+  if (category) query = query.eq("category", category);
   if (condition.length) query = query.in("condition", condition); // pokud máš condition sloupec; když ne, dej vědět
   if (brands.length) query = query.in("znacka", brands);
 
