@@ -6,7 +6,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
   const supabase = getSupabaseServerClient();
   const { data } = await supabase
     .from("products")
-    .select("*")
+    .select("*, images")
     .eq("slug", params.slug)
     .single();
 
@@ -19,9 +19,32 @@ export default async function ProductPage({ params }: { params: { slug: string }
   return (
     <div className="grid2 grid" style={{gap:16, paddingTop:16}}>
       <div className="card">
-        <div className="thumb" style={{aspectRatio:"4/3"}}>
-          {p.image_url ? <img src={p.image_url} alt={p.name} /> : <span className="muted">Bez fotky</span>}
-        </div>
+      <div className="thumb" style={{aspectRatio:"4/3"}}>
+  {p.image_url ? <img src={p.image_url} alt={p.name} /> : <span className="muted">Bez fotky</span>}
+</div>
+
+{p.images && p.images.length > 0 && (
+  <div style={{
+    display: "grid",
+    gridTemplateColumns: "repeat(2, 1fr)",
+    gap: 10,
+    marginTop: 20
+  }}>
+    {p.images.map((img) => (
+      <img
+        key={img}
+        src={img}
+        alt={p.name}
+        style={{
+          width: "100%",
+          height: 200,
+          objectFit: "cover",
+          borderRadius: 10
+        }}
+      />
+    ))}
+  </div>
+)}
         <div className="hr" />
         <h1 className="h1">{p.name}</h1>
         <div className="tagRow">
