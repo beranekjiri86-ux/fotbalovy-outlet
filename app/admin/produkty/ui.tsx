@@ -26,13 +26,13 @@ export default function AdminProductsClient() {
     (async () => {
       setLoading(true);
 
-      const base = supabase
-        .from("products")
-        .select("id,nazev,kod_produktu,znacka,image_url,prodejni_cena")
-        .order("nazev", { ascending: true })
-        .limit(200);
+    const base = supabase
+  .from("products")
+  .select("id,name,article_code,brand,image_url,sale_price")
+  .order("name", { ascending: true })
+  .limit(200);
 
-    const { data, error } =
+const { data, error } =
   query.length === 0
     ? await base
     : await supabase
