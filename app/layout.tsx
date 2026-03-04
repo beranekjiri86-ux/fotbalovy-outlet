@@ -51,7 +51,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       width: "100%",
       padding: "12px 14px",
       borderRadius: 999,
-      border: "1px solid rgba(255,255,255,0.22)",
+      border: "1px solid rgba(255,255,255,0.25)",
       background: "rgba(255,255,255,0.10)",
       color: "#fff",
       caretColor: "#fff",
