@@ -58,11 +58,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       outline: "none",
     }}
   />
-  <style jsx>{`
-    input::placeholder {
-      color: rgba(255, 255, 255, 0.7);
-    }
-  `}</style>
 </form>
     {/* MENU */}
     <nav style={{
