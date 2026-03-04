@@ -43,21 +43,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </div>
       </div>
     </Link>
-<form action="/produkty" method="GET" style={{ flex: 1, maxWidth: 520 }}>
-  <input
-    name="q"
-    placeholder="Hledej (Nike, Mercurial, DJ4977, 44...)"
-    style={{
-      width: "100%",
-      padding: "12px 14px",
-      borderRadius: 999,
-      border: "1px solid rgba(255,255,255,0.22)",
-      background: "rgba(255,255,255,0.10)",
-      color: "#fff",
-      caretColor: "#fff",
-      outline: "none",
-    }}
-  />
+<form action="/produkty" method="GET" style={{ flex: 1, maxWidth: 520, minWidth: 0 }}>
+  <input name="q" className="headerSearch" placeholder="Hledej (Nike, Mercurial, DJ4977, 44...)" />
 </form>
     {/* MENU */}
     <nav style={{
