@@ -80,7 +80,7 @@ export default async function Produkty({ searchParams }: SP) {
     { data: apparelTypeRows },
     { data: gloveSizeRows },
   ] = await Promise.all([
-    supabase.from("products").select("znacka").not("znacka", "is", null),
+    supabase.from("products").select("brand").not("brand", "is", null),
     supabase.from("products").select("size_eu").not("size_eu", "is", null),
     supabase.from("products").select("velikost_obleceni").not("velikost_obleceni", "is", null),
     supabase.from("products").select("typ_obleceni").not("typ_obleceni", "is", null),
@@ -88,8 +88,8 @@ export default async function Produkty({ searchParams }: SP) {
   ]);
 
   const allBrands = Array.from(
-    new Set((brandsRows ?? []).map((r) => (r as any).znacka).filter(Boolean))
-  ).sort();
+  new Set((brandsRows ?? []).map((r) => (r as any).brand).filter(Boolean))
+).sort();
 
   const allSizesEU = Array.from(
     new Set((sizesEURows ?? []).map((r) => (r as any).size_eu).filter((x: any) => x !== null))
@@ -134,7 +134,8 @@ export default async function Produkty({ searchParams }: SP) {
 
   if (category) query = query.eq("category", category);
   if (condition.length) query = query.in("condition", condition); // pokud máš condition sloupec; když ne, dej vědět
-  if (brands.length) query = query.in("brand", brands);
+  const brandsQ = supabase.from("products").select("brand").not("brand", "is", null);
+const { data: brandsRows } = category ? await brandsQ.eq("category", category) : await brandsQ;
 
   // --- kopačky filtry ---
   if (category === "kopačky") {
