@@ -410,11 +410,12 @@ export default async function Produkty({ searchParams }: SP) {
           {products.map((p: any) => (
             <Link key={p.id} href={`/p/${p.slug}`} className="card product">
               <div className="thumb">
-                <img
-                  src={p.image_url || `https://loremflickr.com/800/800/football,boots?lock=${p.id}`}
-                  alt={p.name}
-                  style={{ width: "100%", height: "220px", objectFit: "cover" }}
-                />
+              <img
+  src={p.image_url ?? "/no-photo.png"}
+  alt={p.name}
+  loading="lazy"
+  style={{ width: "100%", height: "220px", objectFit: "cover" }}
+/>
               </div>
 
               <div style={{ fontWeight: 800, lineHeight: 1.25 }}>{p.name}</div>
