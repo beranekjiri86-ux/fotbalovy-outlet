@@ -70,15 +70,9 @@ export default function Home() {
             kopaček (FG/AG/SG/TF/IC).
           </p>
 
-          <div className="row" style={{ marginTop: 12 }}>
-            <Link className="btn btnPrimary" href="/produkty">
-              Prohlédnout nabídku
-            </Link>
-            <Link className="btn" href="/kosik">
-              Košík
-            </Link>
-          </div>
-
+         <div className="row" style={{ marginTop: 12 }}>
+  <Link className="btn btnPrimary" href="/produkty">Prohlédnout nabídku</Link>
+</div>
           <div className="hr" />
 
           <div className="kpis">
