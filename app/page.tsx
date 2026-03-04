@@ -64,7 +64,6 @@ return (
       Prohlédnout nabídku
     </Link>
   </div>
-</div>
 
       <div className="grid" style={{ gap: 16, paddingTop: 16 }}>
         <div className="card">
