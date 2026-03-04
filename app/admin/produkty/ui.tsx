@@ -32,15 +32,15 @@ export default function AdminProductsClient() {
         .order("nazev", { ascending: true })
         .limit(200);
 
-      const { data, error } =
-        query.length === 0
-          ? await base
-          : await supabase
-              .from("products")
-              .select("id,nazev,kod_produktu,znacka,image_url,prodejni_cena")
-              .or(`nazev.ilike.%${query}%,kod_produktu.ilike.%${query}%`)
-              .order("nazev", { ascending: true })
-              .limit(200);
+    const { data, error } =
+  query.length === 0
+    ? await base
+    : await supabase
+        .from("products")
+        .select("id,name,article_code,brand,image_url,sale_price")
+        .or(`name.ilike.%${query}%,article_code.ilike.%${query}%,brand.ilike.%${query}%`)
+        .order("name", { ascending: true })
+        .limit(200);
 
       if (!alive) return;
 
