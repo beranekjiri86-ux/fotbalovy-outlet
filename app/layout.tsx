@@ -43,7 +43,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </div>
       </div>
     </Link>
-
+<form action="/produkty" method="GET" style={{ flex: 1, maxWidth: 520 }}>
+  <input
+    name="q"
+    placeholder="Hledej (Nike, Mercurial, DJ4977, 44...)"
+    style={{
+      width: "100%",
+      padding: "12px 14px",
+      borderRadius: 999,
+      border: "1px solid #ddd",
+      background: "white",
+      outline: "none",
+    }}
+  />
+</form>
     {/* MENU */}
     <nav style={{
       display:"flex",
