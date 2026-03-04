@@ -14,17 +14,13 @@ export default function Home() {
   return (
     <>
   <div style={{ marginTop: 20, position: "relative" }}>
-  <img
-    src="/baner.png"
-    alt="Fotbalový Outlet CZ"
-    style={{
-      width: "100%",
-      borderRadius: 12,
-      display: "block"
-    }}
-  />
+  <img src="/baner.png" ... />
 
-  <div
+  <div style={{ position: "absolute", ... }}>
+    ...
+    <Link href="/produkty">Prohlédnout nabídku</Link>
+  </div>
+</div>
     style={{
       position: "absolute",
       left: 30,
