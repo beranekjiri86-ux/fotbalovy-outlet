@@ -17,18 +17,24 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="cs">
       <body>
         <header className="header">
-          <div className="container nav">
-            <Link href="/" className="brand">
-              <span>Fotbalový Outlet CZ</span>
-              <span className="badge">{domain}</span>
-            </Link>
-            <nav className="links">
-              <Link className="btn" href="/produkty">Produkty</Link>
-              <Link className="btn" href="/kosik">Košík</Link>
-              <a className="btn" href={`https://instagram.com/${ig}`} target="_blank" rel="noreferrer">Instagram</a>
-            </nav>
-          </div>
-        </header>
+  <div className="container nav">
+    <Link href="/" className="brand" style={{display:"flex",alignItems:"center",gap:10}}>
+      <img
+        src="/logo.png"
+        alt="Fotbalový Outlet CZ"
+        style={{height:50}}
+      />
+    </Link>
+
+    <nav className="links">
+      <Link className="btn" href="/produkty">Produkty</Link>
+      <Link className="btn" href="/kosik">Košík</Link>
+      <a className="btn" href={`https://instagram.com/${ig}`} target="_blank" rel="noreferrer">
+        Instagram
+      </a>
+    </nav>
+  </div>
+</header>
         <main className="container">{children}</main>
         <footer className="container" style={{paddingTop:24, paddingBottom:40}}>
           <div className="small">
