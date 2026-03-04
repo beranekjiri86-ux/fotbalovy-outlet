@@ -16,23 +16,55 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="cs">
       <body>
-        <header className="header">
-  <div className="container nav">
-    <Link href="/" className="brand" style={{display:"flex",alignItems:"center",gap:10}}>
+    <header className="header">
+  <div className="container" style={{
+    display:"flex",
+    alignItems:"center",
+    justifyContent:"space-between",
+    gap:20,
+    padding:"10px 0"
+  }}>
+
+    {/* LOGO */}
+    <Link href="/" style={{
+      display:"flex",
+      alignItems:"center",
+      gap:10,
+      textDecoration:"none",
+      color:"inherit"
+    }}>
       <img
         src="/logo.png"
         alt="Fotbalový Outlet CZ"
-        style={{height:50}}
+        style={{
+          height:60,
+          width:60,
+          objectFit:"contain"
+        }}
       />
+      <div style={{lineHeight:1}}>
+        <div style={{fontWeight:800,fontSize:18}}>
+          Fotbalový Outlet CZ
+        </div>
+        <div style={{fontSize:12,opacity:0.6}}>
+          nové i použité kopačky
+        </div>
+      </div>
     </Link>
 
-    <nav className="links">
+    {/* MENU */}
+    <nav style={{
+      display:"flex",
+      gap:10,
+      alignItems:"center"
+    }}>
       <Link className="btn" href="/produkty">Produkty</Link>
       <Link className="btn" href="/kosik">Košík</Link>
-      <a className="btn" href={`https://instagram.com/${ig}`} target="_blank" rel="noreferrer">
+      <a className="btn" href={`https://instagram.com/${ig}`} target="_blank">
         Instagram
       </a>
     </nav>
+
   </div>
 </header>
         <main className="container">{children}</main>
