@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
 type Product = {
-  id: string;                
+  id: string;
   kod: string;
   nazev: string;
   kod_produktu: string | null;
@@ -26,7 +26,9 @@ export default function AdminProductEditClient({ id }: { id: string }) {
     (async () => {
       const { data, error } = await supabase
         .from("products")
-        .select("id,name,article_code,brand,image_url,images,note,sale_price,recommended_price,status")
+        .select(
+          "id,kod,nazev,kod_produktu,znacka,image_url,images,poznamka,prodejni_cena,doporucena_cena,stav"
+        )
         .eq("id", id)
         .single();
 
@@ -35,7 +37,8 @@ export default function AdminProductEditClient({ id }: { id: string }) {
         setMsg(error.message);
         return;
       }
-      setP(data as any);
+
+      setP(data as Product);
     })();
   }, [id]);
 
@@ -46,6 +49,7 @@ export default function AdminProductEditClient({ id }: { id: string }) {
     setMsg(null);
 
     const newUrls: string[] = [];
+
     for (const file of Array.from(files)) {
       const ext = file.name.split(".").pop() || "jpg";
       const path = `${p.id}/${crypto.randomUUID()}.${ext}`;
@@ -71,7 +75,7 @@ export default function AdminProductEditClient({ id }: { id: string }) {
     setMsg(`Nahráno: ${newUrls.length} fotek`);
   }
 
-  async function removeImage(url: string) {
+  function removeImage(url: string) {
     if (!p) return;
     const next = gallery.filter((x) => x !== url);
     const thumb = next[0] ?? null;
@@ -88,10 +92,10 @@ export default function AdminProductEditClient({ id }: { id: string }) {
       .update({
         image_url: p.image_url,
         images: p.images ?? [],
-        note: p.note,
-        sale_price: p.sale_price,
-        recommended_price: p.recommended_price,
-        status: p.status,
+        poznamka: p.poznamka,
+        prodejni_cena: p.prodejni_cena,
+        doporucena_cena: p.doporucena_cena,
+        stav: p.stav,
       })
       .eq("id", p.id);
 
@@ -109,12 +113,16 @@ export default function AdminProductEditClient({ id }: { id: string }) {
 
   return (
     <div style={{ display: "grid", gap: 14 }}>
-      {msg ? <div style={{ padding: 10, border: "1px solid #eee", borderRadius: 10 }}>{msg}</div> : null}
+      {msg ? (
+        <div style={{ padding: 10, border: "1px solid #eee", borderRadius: 10 }}>
+          {msg}
+        </div>
+      ) : null}
 
       <div style={{ display: "grid", gap: 8 }}>
-        <div style={{ fontWeight: 800 }}>{p.name}</div>
+        <div style={{ fontWeight: 800 }}>{p.nazev}</div>
         <div style={{ opacity: 0.7, fontSize: 13 }}>
-          {p.brand ?? ""} • {p.article_code ?? ""}
+          {p.znacka ?? ""} • {p.kod_produktu ?? ""}
         </div>
       </div>
 
@@ -132,8 +140,13 @@ export default function AdminProductEditClient({ id }: { id: string }) {
         Prodejní cena
         <input
           type="number"
-          value={p.sale_price ?? ""}
-          onChange={(e) => setP({ ...p, sale_price: e.target.value === "" ? null : Number(e.target.value) })}
+          value={p.prodejni_cena ?? ""}
+          onChange={(e) =>
+            setP({
+              ...p,
+              prodejni_cena: e.target.value === "" ? null : Number(e.target.value),
+            })
+          }
           style={{ padding: 10, border: "1px solid #ddd", borderRadius: 10 }}
         />
       </label>
@@ -142,19 +155,22 @@ export default function AdminProductEditClient({ id }: { id: string }) {
         Doporučená cena
         <input
           type="number"
-          value={p.recommended_price ?? ""}
+          value={p.doporucena_cena ?? ""}
           onChange={(e) =>
-            setP({ ...p, recommended_price: e.target.value === "" ? null : Number(e.target.value) })
+            setP({
+              ...p,
+              doporucena_cena: e.target.value === "" ? null : Number(e.target.value),
+            })
           }
           style={{ padding: 10, border: "1px solid #ddd", borderRadius: 10 }}
         />
       </label>
 
       <label style={{ display: "grid", gap: 6 }}>
-        Status
+        Stav
         <select
-          value={p.status ?? "available"}
-          onChange={(e) => setP({ ...p, status: e.target.value })}
+          value={p.stav ?? "available"}
+          onChange={(e) => setP({ ...p, stav: e.target.value })}
           style={{ padding: 10, border: "1px solid #ddd", borderRadius: 10 }}
         >
           <option value="available">available</option>
@@ -166,8 +182,8 @@ export default function AdminProductEditClient({ id }: { id: string }) {
       <label style={{ display: "grid", gap: 6 }}>
         Popis / poznámka
         <textarea
-          value={p.note ?? ""}
-          onChange={(e) => setP({ ...p, note: e.target.value })}
+          value={p.poznamka ?? ""}
+          onChange={(e) => setP({ ...p, poznamka: e.target.value })}
           rows={5}
           style={{ padding: 10, border: "1px solid #ddd", borderRadius: 10 }}
         />
@@ -175,13 +191,19 @@ export default function AdminProductEditClient({ id }: { id: string }) {
 
       <div style={{ display: "grid", gap: 8 }}>
         <div style={{ fontWeight: 800 }}>Galerie (max 10)</div>
-        <input type="file" accept="image/*" multiple onChange={(e) => e.target.files && uploadFiles(e.target.files)} />
+        <input
+          type="file"
+          accept="image/*"
+          multiple
+          onChange={(e) => e.target.files && uploadFiles(e.target.files)}
+        />
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
           {gallery.map((url) => (
             <div key={url} style={{ border: "1px solid #eee", borderRadius: 10, overflow: "hidden" }}>
               <img src={url} alt="" style={{ width: "100%", height: 120, objectFit: "cover" }} />
               <button
+                type="button"
                 onClick={() => removeImage(url)}
                 style={{ width: "100%", padding: 8, border: 0, background: "#fff", cursor: "pointer" }}
               >
@@ -193,6 +215,7 @@ export default function AdminProductEditClient({ id }: { id: string }) {
       </div>
 
       <button
+        type="button"
         onClick={save}
         disabled={saving}
         style={{ padding: 12, borderRadius: 12, border: "1px solid #ddd", fontWeight: 800 }}
