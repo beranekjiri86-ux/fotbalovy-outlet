@@ -14,7 +14,7 @@ export default function Home() {
   return (
     <div style={{marginTop:20}}>
   <img
-    src="/banner.jpg"
+    src="/banner.png"
     alt="Fotbalový Outlet CZ"
     style={{
       width: "100%",
