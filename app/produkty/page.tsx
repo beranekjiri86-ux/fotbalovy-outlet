@@ -26,24 +26,29 @@ function qpSet(url: URL, key: string, values: string[] | string) {
     else url.searchParams.delete(key);
   }
 }
+
+function toggle(values: string[], v: string) {
+  return values.includes(v) ? values.filter((x) => x !== v) : [...values, v];
+}
+
+/**
+ * EU velikosti jako zlomek:
+ * 35.5 -> "35 1/2"
+ * 41.33 -> "41 1/3"
+ * 41.67 -> "41 2/3"
+ */
 function formatEUSize(n: number) {
   if (!Number.isFinite(n)) return "";
 
   const whole = Math.floor(n);
-  const frac = Math.round((n - whole) * 100); // pracujeme s 0.5 / 0.33 / 0.67
 
-  if (frac === 0) return String(whole);
-
-  // nejčastější: .5, .33, .67
+  // tolerantní porovnání na běžné frakce
   if (Math.abs(n - (whole + 0.5)) < 0.02) return `${whole} 1/2`;
   if (Math.abs(n - (whole + 1 / 3)) < 0.03) return `${whole} 1/3`;
   if (Math.abs(n - (whole + 2 / 3)) < 0.03) return `${whole} 2/3`;
 
-  // fallback (kdyby bylo něco divného)
+  // fallback: celé číslo / cokoliv jiného
   return String(n).replace(".0", "");
-}
-function toggle(values: string[], v: string) {
-  return values.includes(v) ? values.filter((x) => x !== v) : [...values, v];
 }
 
 export default async function Produkty({ searchParams }: SP) {
@@ -52,7 +57,7 @@ export default async function Produkty({ searchParams }: SP) {
   const condition = getMulti(searchParams, "cond"); // nové/použité
   const brands = getMulti(searchParams, "brand");
   const boot = getMulti(searchParams, "boot"); // FG/AG...
-  const size = getMulti(searchParams, "eu");
+  const size = getMulti(searchParams, "eu"); // ukládáme už ve formátu "41 1/3" apod.
 
   const supabase = getSupabaseServerClient();
 
@@ -94,7 +99,21 @@ export default async function Produkty({ searchParams }: SP) {
   if (condition.length) query = query.in("condition", condition);
   if (brands.length) query = query.in("brand", brands);
   if (boot.length) query = query.in("boot_type", boot);
-  if (size.length) query = query.in("size_eu", size.map((s) => Number(s)));
+
+  // size v URL máme jako text "41 1/3", ale v DB je číslo 41.33 -> musíme převést zpět
+  if (size.length) {
+    const toNum = (s: string) => {
+      const t = s.trim();
+      if (t.includes("1/2")) return Number(t.replace("1/2", "").trim()) + 0.5;
+      if (t.includes("1/3")) return Number(t.replace("1/3", "").trim()) + 1 / 3;
+      if (t.includes("2/3")) return Number(t.replace("2/3", "").trim()) + 2 / 3;
+      const n = Number(t.replace(",", "."));
+      return Number.isFinite(n) ? n : NaN;
+    };
+
+    const nums = size.map(toNum).filter((n) => Number.isFinite(n));
+    if (nums.length) query = query.in("size_eu", nums);
+  }
 
   const { data } = await query;
   const products = (data ?? []) as unknown as Product[];
@@ -131,18 +150,15 @@ export default async function Produkty({ searchParams }: SP) {
         <div
           className="card"
           style={{
-            height: "fit-content",
             position: "sticky",
             top: 86,
+            maxHeight: "calc(100vh - 110px)",
+            overflow: "auto",
           }}
         >
           {/* Hledání */}
           <form action="/produkty" method="get" className="filters">
-            <input
-              name="q"
-              defaultValue={q}
-              placeholder="Hledat (název / kód / značka / 44)..."
-            />
+            <input name="q" defaultValue={q} placeholder="Hledat (název / kód / značka / 44)..." />
             <button className="btn" type="submit">
               Hledat
             </button>
@@ -247,7 +263,7 @@ export default async function Produkty({ searchParams }: SP) {
                 }}
               >
                 {allSizes.map((s) => {
-                  const ss = String(s).replace(".0", "");
+                  const ss = formatEUSize(s);
                   return (
                     <Link
                       key={ss}
@@ -281,7 +297,7 @@ export default async function Produkty({ searchParams }: SP) {
                 <span className="tag">{p.category}</span>
                 {p.brand ? <span className="tag">{p.brand}</span> : null}
                 {p.boot_type ? <span className="tag">{p.boot_type}</span> : null}
-                {p.size_eu ? <span className="tag">EU {String(p.size_eu).replace(".0", "")}</span> : null}
+                {p.size_eu ? <span className="tag">EU {formatEUSize(Number(p.size_eu))}</span> : null}
                 {p.condition ? <span className="tag">{p.condition}</span> : null}
                 {p.status === "reserved" ? <span className="tag">rezervováno</span> : null}
               </div>
