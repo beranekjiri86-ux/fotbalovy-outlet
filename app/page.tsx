@@ -10,60 +10,23 @@ export default function Home() {
   const ig = env("SHOP_IG", "fotbalovy_outlet_cz");
   const fb = env("SHOP_FB", "");
   const bank = env("SHOP_BANK_ACCOUNT", "36493003/5500");
-return (
-  <>
-    <div style={{ marginTop: 20 }}>
-      <Link href="/produkty">
-        <img
-          src="/baner.png"
-          alt="Fotbalový Outlet CZ"
-          style={{
-            width: "100%",
-            borderRadius: 12,
-            display: "block",
-            cursor: "pointer",
-          }}
-        />
-      </Link>
-    </div>
 
-    <div className="grid" style={{ gap: 16, paddingTop: 16 }}>
-      {/* zbytek už nech jak máš */}
-    style={{
-      position: "absolute",
-      left: 30,
-      bottom: 30,
-      background: "rgba(0,0,0,0.6)",
-      padding: "20px 24px",
-      borderRadius: 10,
-      color: "white",
-      maxWidth: 320
-    }}
-  >
-    <div style={{ fontSize: 22, fontWeight: 800 }}>
-      Fotbalový Outlet CZ
-    </div>
-
-    <div style={{ fontSize: 14, opacity: 0.9, marginTop: 6 }}>
-      nové i použité kopačky za outlet ceny
-    </div>
-
-    <Link
-      href="/produkty"
-      style={{
-        display: "inline-block",
-        marginTop: 12,
-        background: "#16a34a",
-        padding: "10px 16px",
-        borderRadius: 8,
-        fontWeight: 700,
-        color: "white",
-        textDecoration: "none"
-      }}
-    >
-      Prohlédnout nabídku
-    </Link>
-  </div>
+  return (
+    <>
+      <div style={{ marginTop: 20 }}>
+        <Link href="/produkty">
+          <img
+            src="/baner.png"
+            alt="Fotbalový Outlet CZ"
+            style={{
+              width: "100%",
+              borderRadius: 12,
+              display: "block",
+              cursor: "pointer",
+            }}
+          />
+        </Link>
+      </div>
 
       <div className="grid" style={{ gap: 16, paddingTop: 16 }}>
         <div className="card">
@@ -73,9 +36,12 @@ return (
             kopaček (FG/AG/SG/TF/IC).
           </p>
 
-         <div className="row" style={{ marginTop: 12 }}>
-  <Link className="btn btnPrimary" href="/produkty">Prohlédnout nabídku</Link>
-</div>
+          <div className="row" style={{ marginTop: 12 }}>
+            <Link className="btn btnPrimary" href="/produkty">
+              Prohlédnout nabídku
+            </Link>
+          </div>
+
           <div className="hr" />
 
           <div className="kpis">
