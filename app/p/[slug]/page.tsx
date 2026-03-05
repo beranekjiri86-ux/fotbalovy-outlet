@@ -1,4 +1,4 @@
-import { getSupabaseServerClient } from "@/lib/supabase";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import AddToCart from "./ui/AddToCart";
 
 // Lokální typ pro tuto stránku – obsahuje vše, co tady používáš + images
@@ -46,7 +46,8 @@ export default async function ProductPage({ params }: { params: { slug: string }
   }
 
   const p = data as ProductPageRow;
-
+  
+const supabase = createSupabaseServerClient();
   return (
     <div className="grid2 grid" style={{ gap: 16, paddingTop: 16 }}>
       <div className="card">
