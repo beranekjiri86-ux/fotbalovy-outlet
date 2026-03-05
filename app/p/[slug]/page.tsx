@@ -10,7 +10,7 @@ function money(n: number | null) {
   return `${Math.round(n)} Kč`;
 }
 
-// ✅ EU velikosti jako zlomek: 41.5 -> 41 1/2, 41.33 -> 41 1/3, 41.67 -> 41 2/3
+// EU velikosti jako zlomek: 41.5 -> 41 1/2, 41.33 -> 41 1/3, 41.67 -> 41 2/3
 function formatEUSize(n: number | null) {
   if (n == null || !Number.isFinite(n)) return "—";
   const whole = Math.floor(n);
@@ -31,7 +31,6 @@ export default async function ProductPage({ params }: { params: { slug: string }
     .select(
       [
         "id",
-        "slug",
         "name",
         "article_code",
         "brand",
@@ -63,7 +62,6 @@ export default async function ProductPage({ params }: { params: { slug: string }
         {(product as any).name}
       </h1>
 
-      {/* INFO BLOK (bez slugu) */}
       <div className="card" style={{ marginTop: 12, padding: 12, display: "grid", gap: 8 }}>
         <div className="small muted" style={{ display: "grid", gap: 6 }}>
           <div>
@@ -74,8 +72,6 @@ export default async function ProductPage({ params }: { params: { slug: string }
           </div>
           <div>
             <b>Kategorie:</b> {(product as any).category ?? "—"}
-          </div>
-            <b>Typ:</b> {(product as any).boot_type ?? "—"}
           </div>
           <div>
             <b>Stav:</b> {(product as any).condition ?? "—"}
@@ -92,7 +88,6 @@ export default async function ProductPage({ params }: { params: { slug: string }
         </div>
       </div>
 
-      {/* FOTO */}
       {mainImg ? (
         <div className="card" style={{ marginTop: 12, overflow: "hidden" }}>
           <img
@@ -107,10 +102,12 @@ export default async function ProductPage({ params }: { params: { slug: string }
         </div>
       )}
 
-      {/* BOTY */}
       {isShoesCategory((product as any).category ?? null) ? (
         <div className="card" style={{ marginTop: 12, padding: 12, display: "grid", gap: 6 }}>
           <div style={{ fontWeight: 800 }}>Velikosti</div>
+          <div className="small muted">
+            <b>Typ:</b> {(product as any).boot_type ?? "—"}
+          </div>
           <div className="small muted">
             <b>EU:</b> {formatEUSize((product as any).size_eu ?? null)}
           </div>
@@ -123,21 +120,32 @@ export default async function ProductPage({ params }: { params: { slug: string }
         </div>
       ) : null}
 
-      {/* POPIS */}
       <div className="card" style={{ marginTop: 12, padding: 12, display: "grid", gap: 8 }}>
         <div style={{ fontWeight: 800 }}>Popis</div>
-        <div style={{ whiteSpace: "pre-wrap", lineHeight: 1.5 }}>{(product as any).note ? (product as any).note : "—"}</div>
+        <div style={{ whiteSpace: "pre-wrap", lineHeight: 1.5 }}>
+          {(product as any).note ? (product as any).note : "—"}
+        </div>
       </div>
 
-      {/* GALERIE */}
       {gallery.length ? (
         <div className="card" style={{ marginTop: 12, padding: 12, display: "grid", gap: 10 }}>
           <div style={{ fontWeight: 800 }}>Galerie</div>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
             {gallery.slice(0, 10).map((url) => (
-              <div key={url} style={{ border: "1px solid var(--border)", borderRadius: 12, overflow: "hidden" }}>
-                <img src={url} alt="" style={{ width: "100%", height: 140, objectFit: "cover", display: "block" }} />
+              <div
+                key={url}
+                style={{
+                  border: "1px solid var(--border)",
+                  borderRadius: 12,
+                  overflow: "hidden",
+                }}
+              >
+                <img
+                  src={url}
+                  alt=""
+                  style={{ width: "100%", height: 140, objectFit: "cover", display: "block" }}
+                />
               </div>
             ))}
           </div>
