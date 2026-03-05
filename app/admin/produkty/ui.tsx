@@ -52,17 +52,6 @@ function badgeStyle(active?: boolean) {
   };
 }
 
-// Supabase "or" filter string je citlivý na čárky, závorky apod.
-function escapeForIlike(input: string) {
-  return input
-    .replaceAll("\\", "\\\\")
-    .replaceAll('"', '\\"')
-    .replaceAll(",", " ")
-    .replaceAll("(", " ")
-    .replaceAll(")", " ")
-    .trim();
-}
-
 export default function AdminProductsClient() {
   const [q, setQ] = useState("");
   const [rows, setRows] = useState<ProductRow[]>([]);
@@ -82,7 +71,7 @@ export default function AdminProductsClient() {
     return () => clearTimeout(t);
   }, [query]);
 
-  // když se změní dotaz, resetni stránkování + hasMore
+  // když se změní dotaz, resetni stránkování (+ hasMore aby nezůstal "konec seznamu")
   useEffect(() => {
     setPage(0);
     setHasMore(true);
@@ -120,13 +109,13 @@ export default function AdminProductsClient() {
         .range(from, to);
 
       if (debounced.length > 0) {
-        const term = escapeForIlike(debounced);
+        // hledání v názvu/kódu/značce (vždy používej EN názvy sloupců z DB)
         s = s.or(
-          `name.ilike.%${term}%,article_code.ilike.%${term}%,brand.ilike.%${term}%`
+          `name.ilike.%${debounced}%,article_code.ilike.%${debounced}%,brand.ilike.%${debounced}%`
         );
       }
 
-      // ✅ returns() až úplně na konci, aby šly řetězit filtry (or/range/order)
+      // ✅ returns() až úplně na konci (jinak by zmizelo .or / .range z typů)
       const { data, error } = await s.returns<ProductRow[]>();
 
       if (!alive) return;
