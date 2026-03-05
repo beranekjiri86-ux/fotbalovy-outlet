@@ -53,9 +53,7 @@ function badgeStyle(active?: boolean) {
 }
 
 // Supabase "or" filter string je citlivý na čárky, závorky apod.
-// Tohle je jednoduché, praktické minimum pro fulltext-like vyhledávání přes ilike.
 function escapeForIlike(input: string) {
-  // escape backslash + uvozovky a odstraň nejproblematičtější oddělovače v or() syntaxi
   return input
     .replaceAll("\\", "\\\\")
     .replaceAll('"', '\\"')
@@ -119,21 +117,17 @@ export default function AdminProductsClient() {
           ].join(",")
         )
         .order("name", { ascending: true })
-        .range(from, to)
-        // ✅ Tohle odstraní TS uniony typu GenericStringError[] atd.
-        .returns<ProductRow[]>();
+        .range(from, to);
 
       if (debounced.length > 0) {
         const term = escapeForIlike(debounced);
-
-        // hledání v názvu/kódu/značce (vždy používej EN názvy sloupců z DB)
-        // Pozn.: ilike s %...% je ok, ale dávej pozor na special chars v term.
         s = s.or(
           `name.ilike.%${term}%,article_code.ilike.%${term}%,brand.ilike.%${term}%`
         );
       }
 
-      const { data, error } = await s;
+      // ✅ returns() až úplně na konci, aby šly řetězit filtry (or/range/order)
+      const { data, error } = await s.returns<ProductRow[]>();
 
       if (!alive) return;
 
