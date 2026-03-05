@@ -7,9 +7,6 @@ import { supabase } from "@/lib/supabaseClient";
 type Product = {
   id: string;
 
-  // ✅ slug (pro /p/[slug])
-  slug: string | null;
-
   // DB (EN)
   name: string;
   article_code: string | null;
@@ -55,22 +52,9 @@ function isShoesCategory(cat: string | null) {
   return cat === "kopačky" || cat === "běžecké boty" || cat === "tenisky";
 }
 
-// ✅ slugify (bez diakritiky)
-function slugify(input: string) {
-  return input
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "") // pryč diakritika
-    .replace(/[^a-z0-9]+/g, "-") // vše ostatní -> pomlčka
-    .replace(/(^-|-$)+/g, "") // ořez pomlček
-    .trim();
-}
-
 function makeEmptyProduct(): Product {
   return {
     id: "new",
-
-    slug: null,
 
     name: "",
     article_code: null,
@@ -120,7 +104,6 @@ export default function AdminProductEditClient({ id }: { id: string }) {
         .select(
           [
             "id",
-            "slug", // ✅
             "name",
             "article_code",
             "brand",
@@ -152,7 +135,6 @@ export default function AdminProductEditClient({ id }: { id: string }) {
         return;
       }
 
-      // Supabase někdy vrací images: null → chceme array
       const normalized: Product = {
         ...(data as any),
         images: Array.isArray((data as any).images) ? (data as any).images : [],
@@ -168,16 +150,39 @@ export default function AdminProductEditClient({ id }: { id: string }) {
 
   const gallery = useMemo(() => p?.images ?? [], [p]);
 
+  // ===== helpers: persist images immediately =====
+  async function persistImages(nextImages: string[], nextThumb: string | null) {
+    if (!p || p.id === "new") return;
+
+    const { error } = await supabase
+      .from("products")
+      .update({ images: nextImages, image_url: nextThumb })
+      .eq("id", p.id);
+
+    if (error) {
+      console.error(error);
+      setMsg(`Fotky nahrané, ale neuložilo se do DB: ${error.message}`);
+      return;
+    }
+  }
+
   // ===== UPLOAD PHOTOS =====
   async function uploadFiles(files: FileList) {
     if (!p) return;
+
+    // ✅ u NEW produktu vypneme upload (ať se to "neztratí")
+    if (p.id === "new") {
+      setMsg("Nejdřív vytvoř produkt (tlačítko dole), potom můžeš nahrávat fotky.");
+      return;
+    }
+
     setMsg(null);
 
     const newUrls: string[] = [];
 
     for (const file of Array.from(files)) {
       const ext = file.name.split(".").pop() || "jpg";
-      const path = `${p.id === "new" ? "new" : p.id}/${crypto.randomUUID()}.${ext}`;
+      const path = `${p.id}/${crypto.randomUUID()}.${ext}`;
 
       const { error: upErr } = await supabase.storage
         .from("product-images")
@@ -196,15 +201,22 @@ export default function AdminProductEditClient({ id }: { id: string }) {
     const merged = [...gallery, ...newUrls].slice(0, 10);
     const thumb = p.image_url || merged[0] || null;
 
+    // 1) UI hned
     setP({ ...p, images: merged, image_url: thumb });
-    setMsg(`Nahráno: ${newUrls.length} fotek (nezapomeň uložit změny)`); // ✅ důležité
+
+    // 2) ✅ DB hned (to je ta hlavní oprava)
+    await persistImages(merged, thumb);
+
+    setMsg(`Nahráno a uloženo: ${newUrls.length} fotek ✅`);
   }
 
-  function removeImage(url: string) {
+  async function removeImage(url: string) {
     if (!p) return;
     const next = gallery.filter((x) => x !== url);
     const thumb = next[0] ?? null;
+
     setP({ ...p, images: next, image_url: thumb });
+    await persistImages(next, thumb);
   }
 
   // ===== SAVE (insert/update) =====
@@ -214,23 +226,7 @@ export default function AdminProductEditClient({ id }: { id: string }) {
     setSaving(true);
     setMsg(null);
 
-    // ✅ slug generujeme z názvu + pár věcí (aby byl stabilnější)
-    const baseSlug = slugify(
-      [
-        p.name,
-        p.article_code ?? "",
-        p.brand ?? "",
-        p.size_eu != null ? `eu${String(p.size_eu).replace(".", "")}` : "",
-        p.condition ?? "",
-      ]
-        .filter(Boolean)
-        .join(" ")
-    );
-
     const payload = {
-      // ✅ slug do DB (nové produkty ho doteď neměly → 404 na /p/[slug])
-      slug: baseSlug || null,
-
       name: p.name.trim(),
       article_code: p.article_code?.trim() || null,
       brand: p.brand?.trim() || null,
@@ -241,18 +237,15 @@ export default function AdminProductEditClient({ id }: { id: string }) {
       size_uk: isShoesCategory(p.category) ? (p.size_uk ?? null) : null,
       size_cm: isShoesCategory(p.category) ? (p.size_cm ?? null) : null,
 
-      // stav/ceny
       condition: p.condition || null,
       status: p.status || "available",
       sale_price: p.sale_price ?? null,
       original_price: p.original_price ?? null,
 
-      // text + obrázky
       note: p.note?.trim() || null,
       image_url: p.image_url?.trim() || null,
       images: p.images ?? [],
 
-      // rukavice/oblečení
       velikost_rukavic: p.category === "rukavice" ? (p.velikost_rukavic ?? null) : null,
       velikost_obleceni:
         p.category === "dresy" || p.category === "oblečení" ? (p.velikost_obleceni || null) : null,
@@ -276,10 +269,9 @@ export default function AdminProductEditClient({ id }: { id: string }) {
           return;
         }
 
-        setMsg("Vytvořeno ✅");
+        setMsg("Vytvořeno ✅ Teď můžeš přidat fotky.");
         router.replace(`/admin/produkty/${(data as any).id}`);
         router.refresh();
-        setSaving(false);
         return;
       }
 
@@ -290,7 +282,6 @@ export default function AdminProductEditClient({ id }: { id: string }) {
         setMsg(error.message);
       } else {
         setMsg("Uloženo ✅");
-        // (volitelné) refresh, ať se projeví změny i v listu
         router.refresh();
       }
     } finally {
@@ -303,14 +294,7 @@ export default function AdminProductEditClient({ id }: { id: string }) {
   return (
     <div style={{ display: "grid", gap: 14 }}>
       {msg ? (
-        <div
-          style={{
-            padding: 10,
-            border: "1px solid var(--border)",
-            borderRadius: 12,
-            background: "var(--card)",
-          }}
-        >
+        <div style={{ padding: 10, border: "1px solid var(--border)", borderRadius: 12, background: "var(--card)" }}>
           {msg}
         </div>
       ) : null}
@@ -320,44 +304,23 @@ export default function AdminProductEditClient({ id }: { id: string }) {
         <div style={{ opacity: 0.8, fontSize: 13 }}>
           {p.brand ?? ""} {p.article_code ? `• ${p.article_code}` : ""}
         </div>
-
-        {/* ✅ jen pro info (needitovatelné), ať vidíš co se generuje */}
-        {p.slug ? (
-          <div className="small muted">
-            URL: <b>/p/{p.slug}</b>
-          </div>
-        ) : (
-          <div className="small muted">Slug se vytvoří po uložení.</div>
-        )}
       </div>
 
       {/* ZÁKLAD */}
       <label style={{ display: "grid", gap: 6 }}>
         Název
-        <input
-          value={p.name}
-          onChange={(e) => setP({ ...p, name: e.target.value })}
-          placeholder="Např. Nike Mercurial Vapor 15"
-        />
+        <input value={p.name} onChange={(e) => setP({ ...p, name: e.target.value })} placeholder="Např. Nike Mercurial Vapor 15" />
       </label>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
         <label style={{ display: "grid", gap: 6 }}>
           Kód artiklu
-          <input
-            value={p.article_code ?? ""}
-            onChange={(e) => setP({ ...p, article_code: e.target.value || null })}
-            placeholder="DJ4977-780"
-          />
+          <input value={p.article_code ?? ""} onChange={(e) => setP({ ...p, article_code: e.target.value || null })} placeholder="DJ4977-780" />
         </label>
 
         <label style={{ display: "grid", gap: 6 }}>
           Značka
-          <input
-            value={p.brand ?? ""}
-            onChange={(e) => setP({ ...p, brand: e.target.value || null })}
-            placeholder="Nike / adidas / Puma…"
-          />
+          <input value={p.brand ?? ""} onChange={(e) => setP({ ...p, brand: e.target.value || null })} placeholder="Nike / adidas / Puma…" />
         </label>
       </div>
 
@@ -388,39 +351,20 @@ export default function AdminProductEditClient({ id }: { id: string }) {
                 </option>
               ))}
             </select>
-            <div className="small muted">Pozn.: v DB máš někde „IN“ — správně má být „IC“.</div>
           </label>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
             <label style={{ display: "grid", gap: 6 }}>
               EU
-              <input
-                type="number"
-                step="0.01"
-                value={p.size_eu ?? ""}
-                onChange={(e) => setP({ ...p, size_eu: e.target.value === "" ? null : Number(e.target.value) })}
-                placeholder="41.33"
-              />
+              <input type="number" step="0.01" value={p.size_eu ?? ""} onChange={(e) => setP({ ...p, size_eu: e.target.value === "" ? null : Number(e.target.value) })} />
             </label>
             <label style={{ display: "grid", gap: 6 }}>
               UK
-              <input
-                type="number"
-                step="0.01"
-                value={p.size_uk ?? ""}
-                onChange={(e) => setP({ ...p, size_uk: e.target.value === "" ? null : Number(e.target.value) })}
-                placeholder="7.5"
-              />
+              <input type="number" step="0.01" value={p.size_uk ?? ""} onChange={(e) => setP({ ...p, size_uk: e.target.value === "" ? null : Number(e.target.value) })} />
             </label>
             <label style={{ display: "grid", gap: 6 }}>
               CM
-              <input
-                type="number"
-                step="0.1"
-                value={p.size_cm ?? ""}
-                onChange={(e) => setP({ ...p, size_cm: e.target.value === "" ? null : Number(e.target.value) })}
-                placeholder="26.0"
-              />
+              <input type="number" step="0.1" value={p.size_cm ?? ""} onChange={(e) => setP({ ...p, size_cm: e.target.value === "" ? null : Number(e.target.value) })} />
             </label>
           </div>
         </div>
@@ -430,10 +374,7 @@ export default function AdminProductEditClient({ id }: { id: string }) {
       {p.category === "rukavice" ? (
         <label style={{ display: "grid", gap: 6 }}>
           Velikost rukavic (6–11)
-          <select
-            value={p.velikost_rukavic ?? ""}
-            onChange={(e) => setP({ ...p, velikost_rukavic: e.target.value === "" ? null : Number(e.target.value) })}
-          >
+          <select value={p.velikost_rukavic ?? ""} onChange={(e) => setP({ ...p, velikost_rukavic: e.target.value === "" ? null : Number(e.target.value) })}>
             <option value="">— vyber —</option>
             {GLOVE_SIZES.map((s) => (
               <option key={s} value={String(s)}>
@@ -451,10 +392,7 @@ export default function AdminProductEditClient({ id }: { id: string }) {
 
           <label style={{ display: "grid", gap: 6 }}>
             Velikost (XS–XXXL)
-            <select
-              value={(p.velikost_obleceni ?? "").toUpperCase()}
-              onChange={(e) => setP({ ...p, velikost_obleceni: e.target.value || null })}
-            >
+            <select value={(p.velikost_obleceni ?? "").toUpperCase()} onChange={(e) => setP({ ...p, velikost_obleceni: e.target.value || null })}>
               <option value="">— vyber —</option>
               {APPAREL_SIZES.map((s) => (
                 <option key={s} value={s}>
@@ -466,12 +404,8 @@ export default function AdminProductEditClient({ id }: { id: string }) {
 
           {p.category === "oblečení" ? (
             <label style={{ display: "grid", gap: 6 }}>
-              Typ oblečení (např. mikina/bunda/tričko…)
-              <input
-                value={p.typ_obleceni ?? ""}
-                onChange={(e) => setP({ ...p, typ_obleceni: e.target.value || null })}
-                placeholder="mikina"
-              />
+              Typ oblečení
+              <input value={p.typ_obleceni ?? ""} onChange={(e) => setP({ ...p, typ_obleceni: e.target.value || null })} placeholder="mikina" />
             </label>
           ) : null}
         </div>
@@ -480,7 +414,7 @@ export default function AdminProductEditClient({ id }: { id: string }) {
       {/* STAV + CENY */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
         <label style={{ display: "grid", gap: 6 }}>
-          Stav (nové/použité)
+          Stav
           <select value={p.condition ?? ""} onChange={(e) => setP({ ...p, condition: e.target.value || null })}>
             <option value="">—</option>
             {CONDITIONS.map((c) => (
@@ -506,20 +440,12 @@ export default function AdminProductEditClient({ id }: { id: string }) {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
         <label style={{ display: "grid", gap: 6 }}>
           Prodejní cena
-          <input
-            type="number"
-            value={p.sale_price ?? ""}
-            onChange={(e) => setP({ ...p, sale_price: e.target.value === "" ? null : Number(e.target.value) })}
-          />
+          <input type="number" value={p.sale_price ?? ""} onChange={(e) => setP({ ...p, sale_price: e.target.value === "" ? null : Number(e.target.value) })} />
         </label>
 
         <label style={{ display: "grid", gap: 6 }}>
           Původní cena
-          <input
-            type="number"
-            value={p.original_price ?? ""}
-            onChange={(e) => setP({ ...p, original_price: e.target.value === "" ? null : Number(e.target.value) })}
-          />
+          <input type="number" value={p.original_price ?? ""} onChange={(e) => setP({ ...p, original_price: e.target.value === "" ? null : Number(e.target.value) })} />
         </label>
       </div>
 
@@ -530,20 +456,20 @@ export default function AdminProductEditClient({ id }: { id: string }) {
       </label>
 
       {/* IMAGES */}
-      <label style={{ display: "grid", gap: 6 }}>
-        Náhledová fotka (image_url)
-        <input value={p.image_url ?? ""} onChange={(e) => setP({ ...p, image_url: e.target.value || null })} />
-      </label>
-
       <div className="card" style={{ display: "grid", gap: 10, padding: 12 }}>
-        <div style={{ fontWeight: 800 }}>Galerie (max 10)</div>
-        <input type="file" accept="image/*" multiple onChange={(e) => e.target.files && uploadFiles(e.target.files)} />
+        <div style={{ fontWeight: 800 }}>Fotky (max 10)</div>
+
+        {p.id === "new" ? (
+          <div className="small muted">Nejdřív vytvoř produkt, potom můžeš nahrávat fotky.</div>
+        ) : (
+          <input type="file" accept="image/*" multiple onChange={(e) => e.target.files && uploadFiles(e.target.files)} />
+        )}
 
         {gallery.length ? (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
             {gallery.map((url) => (
               <div key={url} style={{ border: "1px solid var(--border)", borderRadius: 12, overflow: "hidden" }}>
-                <img src={url} alt="" style={{ width: "100%", height: 120, objectFit: "cover" }} />
+                <img src={url} alt="" loading="lazy" style={{ width: "100%", height: 120, objectFit: "cover" }} />
                 <button
                   type="button"
                   onClick={() => removeImage(url)}
