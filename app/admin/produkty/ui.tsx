@@ -21,6 +21,8 @@ type ProductRow = {
 
   image_url: string | null;
   sale_price: number | null;
+
+  created_at: string | null;
 };
 
 function isShoesCategory(cat: string | null) {
@@ -66,12 +68,20 @@ export default function AdminProductsClient() {
   const query = useMemo(() => q.trim(), [q]);
   const [debounced, setDebounced] = useState(query);
 
+  // refetch po návratu do okna (typicky po editaci a návratu zpět)
+  const [refreshKey, setRefreshKey] = useState(0);
+  useEffect(() => {
+    const onFocus = () => setRefreshKey((x) => x + 1);
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, []);
+
   useEffect(() => {
     const t = setTimeout(() => setDebounced(query), 250);
     return () => clearTimeout(t);
   }, [query]);
 
-  // když se změní dotaz, resetni stránkování (+ hasMore aby nezůstal "konec seznamu")
+  // když se změní dotaz, resetni stránkování (+ hasMore)
   useEffect(() => {
     setPage(0);
     setHasMore(true);
@@ -87,27 +97,28 @@ export default function AdminProductsClient() {
       const to = from + PAGE_SIZE - 1;
 
       let s = supabase
-  .from("products")
-  .select(
-    [
-      "id",
-      "name",
-      "article_code",
-      "brand",
-      "category",
-      "boot_type",
-      "size_eu",
-      "size_uk",
-      "size_cm",
-      "condition",
-      "status",
-      "image_url",
-      "sale_price",
-      "created_at", // 👈 přidat
-    ].join(",")
-  )
-  .order("created_at", { ascending: false }) // 👈 změnit
-  .range(from, to);
+        .from("products")
+        .select(
+          [
+            "id",
+            "name",
+            "article_code",
+            "brand",
+            "category",
+            "boot_type",
+            "size_eu",
+            "size_uk",
+            "size_cm",
+            "condition",
+            "status",
+            "image_url",
+            "sale_price",
+            "created_at",
+          ].join(",")
+        )
+        // ✅ ať je nový produkt hned vidět nahoře
+        .order("created_at", { ascending: false })
+        .range(from, to);
 
       if (debounced.length > 0) {
         // hledání v názvu/kódu/značce (vždy používej EN názvy sloupců z DB)
@@ -116,7 +127,6 @@ export default function AdminProductsClient() {
         );
       }
 
-      // ✅ returns() až úplně na konci (jinak by zmizelo .or / .range z typů)
       const { data, error } = await s.returns<ProductRow[]>();
 
       if (!alive) return;
@@ -142,7 +152,7 @@ export default function AdminProductsClient() {
     return () => {
       alive = false;
     };
-  }, [debounced, page]);
+  }, [debounced, page, refreshKey]);
 
   return (
     <div style={{ display: "grid", gap: 12 }}>
