@@ -73,6 +73,9 @@ export default async function ProductPage({ params }: { params: { slug: string }
           <div>
             <b>Kategorie:</b> {(product as any).category ?? "—"}
           </div>
+            <div>
+          <b>Typ:</b> {(product as any).boot_type ?? "—"}
+          </div>
           <div>
             <b>Stav:</b> {(product as any).condition ?? "—"}
           </div>
@@ -105,9 +108,6 @@ export default async function ProductPage({ params }: { params: { slug: string }
       {isShoesCategory((product as any).category ?? null) ? (
         <div className="card" style={{ marginTop: 12, padding: 12, display: "grid", gap: 6 }}>
           <div style={{ fontWeight: 800 }}>Velikosti</div>
-          <div className="small muted">
-            <b>Typ:</b> {(product as any).boot_type ?? "—"}
-          </div>
           <div className="small muted">
             <b>EU:</b> {formatEUSize((product as any).size_eu ?? null)}
           </div>
