@@ -488,42 +488,52 @@ setMsg(`Hotovo ✅ v DB je teď ${imgs.length} fotek`);
         {p.id === "new" ? (
           <div className="small muted">Nejdřív vytvoř produkt, potom můžeš nahrávat fotky.</div>
         ) : (
-       <input
-  type="file"
-  accept="image/*"
-  multiple
-  onChange={(e) => {
-    const files = e.currentTarget.files;
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={(e) => {
+              const files = e.currentTarget.files;
 
-    if (!files || files.length === 0) {
-      setMsg("Nebyl vybrán žádný soubor.");
-      return;
-    }
+              if (!files || files.length === 0) {
+                setMsg("Nebyl vybrán žádný soubor.");
+                return;
+              }
 
-    // ✅ ukaž hned název souboru (uvidíš, že se onChange spustil)
-    setMsg(`Vybráno: ${Array.from(files).map((f) => f.name).join(", ")}`);
+              setMsg(`Vybráno: ${Array.from(files).map((f) => f.name).join(", ")}`);
 
-    // ✅ některé prohlížeče/mobily nezvládnou hned reset + upload v tom samém ticku
-    const copy = files;
+              const copy = files;
 
-    setTimeout(() => {
-      uploadFiles(copy);
-      // reset až po startu uploadu (aby byl vidět název)
-      e.currentTarget.value = "";
-    }, 50);
-  }}
-/>
+              setTimeout(() => {
+                uploadFiles(copy);
+                e.currentTarget.value = "";
+              }, 50);
+            }}
+          />
         )}
 
         {gallery.length ? (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
             {gallery.map((url) => (
-              <div key={url} style={{ border: "1px solid var(--border)", borderRadius: 12, overflow: "hidden" }}>
-                <img src={url} alt="" loading="lazy" style={{ width: "100%", height: 120, objectFit: "cover", display: "block" }} />
+              <div
+                key={url}
+                style={{ border: "1px solid var(--border)", borderRadius: 12, overflow: "hidden" }}
+              >
+                <img
+                  src={url}
+                  alt=""
+                  loading="lazy"
+                  style={{ width: "100%", height: 120, objectFit: "cover", display: "block" }}
+                />
                 <button
                   type="button"
                   className="btn"
-                  style={{ width: "100%", borderRadius: 0, border: 0, borderTop: "1px solid var(--border)" }}
+                  style={{
+                    width: "100%",
+                    borderRadius: 0,
+                    border: 0,
+                    borderTop: "1px solid var(--border)",
+                  }}
                   onClick={() => removeImage(url)}
                 >
                   Smazat
@@ -536,7 +546,13 @@ setMsg(`Hotovo ✅ v DB je teď ${imgs.length} fotek`);
         )}
       </div>
 
-      <button type="button" onClick={save} disabled={saving} className="btn btnPrimary" style={{ padding: 12 }}>
+      <button
+        type="button"
+        onClick={save}
+        disabled={saving}
+        className="btn btnPrimary"
+        style={{ padding: 12 }}
+      >
         {saving ? (isNew ? "Vytvářím…" : "Ukládám…") : isNew ? "Vytvořit produkt" : "Uložit změny"}
       </button>
     </div>
