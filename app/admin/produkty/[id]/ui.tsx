@@ -475,35 +475,77 @@ export default function AdminProductEditClient({ id }: { id: string }) {
       </label>
 
       {/* IMAGES */}
-      <div className="card" style={{ display: "grid", gap: 10, padding: 12 }}>
-        <div style={{ fontWeight: 800 }}>Fotky (max 10)</div>
+      async function uploadFiles(files: FileList | null) {
+  if (!p) return;
 
-        {p.id === "new" ? (
-          <div className="small muted">Nejdřív vytvoř produkt, potom můžeš nahrávat fotky.</div>
-        ) : (
-          <input type="file" accept="image/*" multiple onChange={(e) => e.target.files && uploadFiles(e.target.files)} />
-        )}
+  if (!files || files.length === 0) {
+    setMsg("Nebyl vybrán žádný soubor.");
+    return;
+  }
 
-        {gallery.length ? (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
-            {gallery.map((url) => (
-              <div key={url} style={{ border: "1px solid var(--border)", borderRadius: 12, overflow: "hidden" }}>
-                <img src={url} alt="" loading="lazy" style={{ width: "100%", height: 120, objectFit: "cover" }} />
-                <button
-                  type="button"
-                  onClick={() => removeImage(url)}
-                  className="btn"
-                  style={{ width: "100%", borderRadius: 0, border: 0, borderTop: "1px solid var(--border)" }}
-                >
-                  Smazat
-                </button>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="small muted">Zatím žádné fotky.</div>
-        )}
-      </div>
+  if (p.id === "new") {
+    setMsg("Nejdřív vytvoř produkt, potom můžeš nahrávat fotky.");
+    return;
+  }
+
+  try {
+    const list = Array.from(files);
+    setMsg(`Nahrávám ${list.length} fotek…`);
+
+    const newUrls: string[] = [];
+
+    for (let i = 0; i < list.length; i++) {
+      const file = list[i];
+      setMsg(`Nahrávám ${i + 1}/${list.length}: ${file.name}`);
+
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `${p.id}/${crypto.randomUUID()}.${ext}`;
+
+      const { error: upErr } = await supabase.storage
+        .from("product-images")
+        .upload(path, file, { upsert: false, contentType: file.type || "image/jpeg" });
+
+      if (upErr) {
+        console.error("UPLOAD ERROR:", upErr);
+        setMsg(`Upload selhal: ${upErr.message}`);
+        return;
+      }
+
+      const { data } = supabase.storage.from("product-images").getPublicUrl(path);
+      newUrls.push(data.publicUrl);
+    }
+
+    if (newUrls.length === 0) {
+      setMsg("Nenahrála se žádná fotka (0 URL).");
+      return;
+    }
+
+    const current = Array.isArray(p.images) ? p.images : [];
+    const merged = [...current, ...newUrls].slice(0, 10);
+    const thumb = p.image_url || merged[0] || null;
+
+    setMsg("Ukládám odkazy do DB…");
+
+    const { data: saved, error: dbErr } = await supabase
+      .from("products")
+      .update({ images: merged, image_url: thumb })
+      .eq("id", p.id)
+      .select("images,image_url")
+      .single();
+
+    if (dbErr) {
+      console.error("DB UPDATE ERROR:", dbErr);
+      setMsg(`DB update selhal: ${dbErr.message}`);
+      return;
+    }
+
+    setP({ ...p, images: saved.images ?? [], image_url: saved.image_url ?? null });
+    setMsg(`Hotovo ✅ nahráno ${newUrls.length} fotek`);
+  } catch (e: any) {
+    console.error("UPLOAD EXCEPTION:", e);
+    setMsg(`Chyba při uploadu: ${e?.message ?? "neznámá chyba"}`);
+  }
+}
 
       <button type="button" onClick={save} disabled={saving} className="btn btnPrimary" style={{ padding: 12 }}>
         {saving ? (isNew ? "Vytvářím…" : "Ukládám…") : isNew ? "Vytvořit produkt" : "Uložit změny"}
