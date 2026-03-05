@@ -1,10 +1,14 @@
 "use client";
+
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
 type Product = {
   id: string;
+
+  // ✅ slug (pro /p/[slug])
+  slug: string | null;
 
   // DB (EN)
   name: string;
@@ -33,7 +37,7 @@ type Product = {
   image_url: string | null;
   images: string[] | null;
 
-  // rukavice / oblečení (sloupce co jsi přidal)
+  // rukavice / oblečení
   velikost_rukavic: number | null; // 6..11
   velikost_obleceni: string | null; // XS..XXXL
   typ_obleceni: string | null; // tričko/mikina/...
@@ -47,35 +51,26 @@ const BOOT_TYPES = ["FG", "AG", "SG", "TF", "IC"] as const;
 const APPAREL_SIZES = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"] as const;
 const GLOVE_SIZES = [6, 7, 8, 9, 10, 11] as const;
 
-const PRODUCT_SELECT = [
-  "id",
-  "name",
-  "article_code",
-  "brand",
-  "category",
-  "boot_type",
-  "size_eu",
-  "size_uk",
-  "size_cm",
-  "condition",
-  "status",
-  "sale_price",
-  "original_price",
-  "note",
-  "image_url",
-  "images",
-  "velikost_rukavic",
-  "velikost_obleceni",
-  "typ_obleceni",
-].join(",");
-
 function isShoesCategory(cat: string | null) {
   return cat === "kopačky" || cat === "běžecké boty" || cat === "tenisky";
+}
+
+// ✅ slugify (bez diakritiky)
+function slugify(input: string) {
+  return input
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // pryč diakritika
+    .replace(/[^a-z0-9]+/g, "-") // vše ostatní -> pomlčka
+    .replace(/(^-|-$)+/g, "") // ořez pomlček
+    .trim();
 }
 
 function makeEmptyProduct(): Product {
   return {
     id: "new",
+
+    slug: null,
 
     name: "",
     article_code: null,
@@ -104,17 +99,8 @@ function makeEmptyProduct(): Product {
   };
 }
 
-function normalizeProduct(row: Product): Product {
-  return {
-    ...row,
-    images: Array.isArray(row.images) ? row.images : [],
-  };
-}
-
 export default function AdminProductEditClient({ id }: { id: string }) {
   const router = useRouter();
-
-
   const isNew = id === "new";
 
   const [p, setP] = useState<Product | null>(isNew ? makeEmptyProduct() : null);
@@ -129,8 +115,34 @@ export default function AdminProductEditClient({ id }: { id: string }) {
     (async () => {
       setMsg(null);
 
-      const q = supabase.from("products").select(PRODUCT_SELECT).eq("id", id).single();
-      const { data, error } = await q.returns<Product>();
+      const { data, error } = await supabase
+        .from("products")
+        .select(
+          [
+            "id",
+            "slug", // ✅
+            "name",
+            "article_code",
+            "brand",
+            "category",
+            "boot_type",
+            "size_eu",
+            "size_uk",
+            "size_cm",
+            "condition",
+            "status",
+            "sale_price",
+            "original_price",
+            "note",
+            "image_url",
+            "images",
+            "velikost_rukavic",
+            "velikost_obleceni",
+            "typ_obleceni",
+          ].join(",")
+        )
+        .eq("id", id)
+        .single();
 
       if (!alive) return;
 
@@ -140,12 +152,13 @@ export default function AdminProductEditClient({ id }: { id: string }) {
         return;
       }
 
-      if (!data) {
-        setMsg("Produkt nenalezen.");
-        return;
-      }
+      // Supabase někdy vrací images: null → chceme array
+      const normalized: Product = {
+        ...(data as any),
+        images: Array.isArray((data as any).images) ? (data as any).images : [],
+      };
 
-      setP(normalizeProduct(data));
+      setP(normalized);
     })();
 
     return () => {
@@ -184,7 +197,7 @@ export default function AdminProductEditClient({ id }: { id: string }) {
     const thumb = p.image_url || merged[0] || null;
 
     setP({ ...p, images: merged, image_url: thumb });
-    setMsg(`Nahráno: ${newUrls.length} fotek`);
+    setMsg(`Nahráno: ${newUrls.length} fotek (nezapomeň uložit změny)`); // ✅ důležité
   }
 
   function removeImage(url: string) {
@@ -201,7 +214,23 @@ export default function AdminProductEditClient({ id }: { id: string }) {
     setSaving(true);
     setMsg(null);
 
+    // ✅ slug generujeme z názvu + pár věcí (aby byl stabilnější)
+    const baseSlug = slugify(
+      [
+        p.name,
+        p.article_code ?? "",
+        p.brand ?? "",
+        p.size_eu != null ? `eu${String(p.size_eu).replace(".", "")}` : "",
+        p.condition ?? "",
+      ]
+        .filter(Boolean)
+        .join(" ")
+    );
+
     const payload = {
+      // ✅ slug do DB (nové produkty ho doteď neměly → 404 na /p/[slug])
+      slug: baseSlug || null,
+
       name: p.name.trim(),
       article_code: p.article_code?.trim() || null,
       brand: p.brand?.trim() || null,
@@ -238,8 +267,7 @@ export default function AdminProductEditClient({ id }: { id: string }) {
           return;
         }
 
-        const q = supabase.from("products").insert(payload).select("id").single();
-        const { data, error } = await q.returns<{ id: string }>();
+        const { data, error } = await supabase.from("products").insert(payload).select("id").single();
 
         if (error) {
           console.error(error);
@@ -248,31 +276,21 @@ export default function AdminProductEditClient({ id }: { id: string }) {
           return;
         }
 
-        if (!data?.id) {
-          setMsg("Vytvořeno, ale bez návratu id (neočekávané).");
-          setSaving(false);
-          return;
-        }
-
         setMsg("Vytvořeno ✅");
-        router.replace(`/admin/produkty/${data.id}`);
+        router.replace(`/admin/produkty/${(data as any).id}`);
         router.refresh();
         setSaving(false);
         return;
       }
 
-      const q = supabase.from("products").update(payload).eq("id", p.id).select(PRODUCT_SELECT).single();
-      const { data, error } = await q.returns<Product>();
+      const { error } = await supabase.from("products").update(payload).eq("id", p.id);
 
       if (error) {
         console.error(error);
         setMsg(error.message);
-      } else if (data) {
-        setP(normalizeProduct(data));
-        setMsg("Uloženo ✅");
-        router.refresh();
       } else {
-        setMsg("Uloženo, ale bez návratu dat (neočekávané).");
+        setMsg("Uloženo ✅");
+        // (volitelné) refresh, ať se projeví změny i v listu
         router.refresh();
       }
     } finally {
@@ -285,7 +303,14 @@ export default function AdminProductEditClient({ id }: { id: string }) {
   return (
     <div style={{ display: "grid", gap: 14 }}>
       {msg ? (
-        <div style={{ padding: 10, border: "1px solid var(--border)", borderRadius: 12, background: "var(--card)" }}>
+        <div
+          style={{
+            padding: 10,
+            border: "1px solid var(--border)",
+            borderRadius: 12,
+            background: "var(--card)",
+          }}
+        >
           {msg}
         </div>
       ) : null}
@@ -295,6 +320,15 @@ export default function AdminProductEditClient({ id }: { id: string }) {
         <div style={{ opacity: 0.8, fontSize: 13 }}>
           {p.brand ?? ""} {p.article_code ? `• ${p.article_code}` : ""}
         </div>
+
+        {/* ✅ jen pro info (needitovatelné), ať vidíš co se generuje */}
+        {p.slug ? (
+          <div className="small muted">
+            URL: <b>/p/{p.slug}</b>
+          </div>
+        ) : (
+          <div className="small muted">Slug se vytvoří po uložení.</div>
+        )}
       </div>
 
       {/* ZÁKLAD */}
