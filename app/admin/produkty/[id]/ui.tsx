@@ -481,16 +481,31 @@ export default function AdminProductEditClient({ id }: { id: string }) {
         {p.id === "new" ? (
           <div className="small muted">Nejdřív vytvoř produkt, potom můžeš nahrávat fotky.</div>
         ) : (
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={async (e) => {
-              const files = e.target.files;
-              e.currentTarget.value = "";
-              await uploadFiles(files);
-            }}
-          />
+       <input
+  type="file"
+  accept="image/*"
+  multiple
+  onChange={(e) => {
+    const files = e.currentTarget.files;
+
+    if (!files || files.length === 0) {
+      setMsg("Nebyl vybrán žádný soubor.");
+      return;
+    }
+
+    // ✅ ukaž hned název souboru (uvidíš, že se onChange spustil)
+    setMsg(`Vybráno: ${Array.from(files).map((f) => f.name).join(", ")}`);
+
+    // ✅ některé prohlížeče/mobily nezvládnou hned reset + upload v tom samém ticku
+    const copy = files;
+
+    setTimeout(() => {
+      uploadFiles(copy);
+      // reset až po startu uploadu (aby byl vidět název)
+      e.currentTarget.value = "";
+    }, 50);
+  }}
+/>
         )}
 
         {gallery.length ? (
