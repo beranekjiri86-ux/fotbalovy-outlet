@@ -21,6 +21,8 @@ function orderNumber() {
 
 export async function POST(req: Request) {
   const supabase = createSupabaseServerClient();
+  export const getSupabaseServerClient = createSupabaseServerClient;
+export const getSupabaseBrowserClient = createSupabaseBrowserClient;
   const body = (await req.json()) as Body;
 
   if (!body?.items?.length) {
