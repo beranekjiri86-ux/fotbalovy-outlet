@@ -9,9 +9,10 @@ function money(n: number | null) {
   if (n == null) return "—";
   return `${Math.round(n)} Kč`;
 }
+
+// ✅ EU velikosti jako zlomek: 41.5 -> 41 1/2, 41.33 -> 41 1/3, 41.67 -> 41 2/3
 function formatEUSize(n: number | null) {
   if (n == null || !Number.isFinite(n)) return "—";
-
   const whole = Math.floor(n);
 
   if (Math.abs(n - (whole + 0.5)) < 0.02) return `${whole} 1/2`;
@@ -20,7 +21,8 @@ function formatEUSize(n: number | null) {
 
   return String(n).replace(".0", "");
 }
-export default async function ProductPage({ params }: { params: { : string } }) {
+
+export default async function ProductPage({ params }: { params: { slug: string } }) {
   const supabase = createSupabaseServerClient();
   const slug = decodeURIComponent(params.slug);
 
@@ -61,16 +63,32 @@ export default async function ProductPage({ params }: { params: { : string } }) 
         {(product as any).name}
       </h1>
 
-      {/* INFO BLOK – vždy zobrazí hodnoty (když nejsou, ukáže —) */}
+      {/* INFO BLOK (bez slugu) */}
       <div className="card" style={{ marginTop: 12, padding: 12, display: "grid", gap: 8 }}>
         <div className="small muted" style={{ display: "grid", gap: 6 }}>
-          <div><b>Značka:</b> {(product as any).brand ?? "—"}</div>
-          <div><b>Kód:</b> {(product as any).article_code ?? "—"}</div>
-          <div><b>Kategorie:</b> {(product as any).category ?? "—"}</div>
-          <div><b>Stav:</b> {(product as any).condition ?? "—"}</div>
-          <div><b>Status:</b> {(product as any).status ?? "—"}</div>
-          <div><b>Prodejní cena:</b> {money((product as any).sale_price ?? null)}</div>
-          <div><b>Původní cena:</b> {money((product as any).original_price ?? null)}</div>
+          <div>
+            <b>Značka:</b> {(product as any).brand ?? "—"}
+          </div>
+          <div>
+            <b>Kód:</b> {(product as any).article_code ?? "—"}
+          </div>
+          <div>
+            <b>Kategorie:</b> {(product as any).category ?? "—"}
+          </div>
+            <b>Typ:</b> {(product as any).boot_type ?? "—"}
+          </div>
+          <div>
+            <b>Stav:</b> {(product as any).condition ?? "—"}
+          </div>
+          <div>
+            <b>Status:</b> {(product as any).status ?? "—"}
+          </div>
+          <div>
+            <b>Prodejní cena:</b> {money((product as any).sale_price ?? null)}
+          </div>
+          <div>
+            <b>Původní cena:</b> {money((product as any).original_price ?? null)}
+          </div>
         </div>
       </div>
 
@@ -85,7 +103,7 @@ export default async function ProductPage({ params }: { params: { : string } }) 
         </div>
       ) : (
         <div className="card small muted" style={{ marginTop: 12, padding: 12 }}>
-          Bez fotky (image_url / images jsou prázdné).
+          Bez fotky.
         </div>
       )}
 
@@ -93,19 +111,22 @@ export default async function ProductPage({ params }: { params: { : string } }) 
       {isShoesCategory((product as any).category ?? null) ? (
         <div className="card" style={{ marginTop: 12, padding: 12, display: "grid", gap: 6 }}>
           <div style={{ fontWeight: 800 }}>Velikosti</div>
-         <div className="small muted"><b>EU:</b> {formatEUSize((product as any).size_eu)}</div>
-          <div className="small muted"><b>UK:</b> {(product as any).size_uk ?? "—"}</div>
-          <div className="small muted"><b>CM:</b> {(product as any).size_cm ?? "—"}</div>
-          <div className="small muted"><b>Typ:</b> {(product as any).boot_type ?? "—"}</div>
+          <div className="small muted">
+            <b>EU:</b> {formatEUSize((product as any).size_eu ?? null)}
+          </div>
+          <div className="small muted">
+            <b>UK:</b> {(product as any).size_uk ?? "—"}
+          </div>
+          <div className="small muted">
+            <b>CM:</b> {(product as any).size_cm ?? "—"}
+          </div>
         </div>
       ) : null}
 
       {/* POPIS */}
       <div className="card" style={{ marginTop: 12, padding: 12, display: "grid", gap: 8 }}>
         <div style={{ fontWeight: 800 }}>Popis</div>
-        <div style={{ whiteSpace: "pre-wrap", lineHeight: 1.5 }}>
-          {(product as any).note ? (product as any).note : "—"}
-        </div>
+        <div style={{ whiteSpace: "pre-wrap", lineHeight: 1.5 }}>{(product as any).note ? (product as any).note : "—"}</div>
       </div>
 
       {/* GALERIE */}
