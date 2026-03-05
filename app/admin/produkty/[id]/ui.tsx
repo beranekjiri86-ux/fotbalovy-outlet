@@ -1,5 +1,9 @@
 "use client";
-
+useEffect(() => {
+  supabase.auth.getUser().then(({ data, error }) => {
+    console.log("AUTH USER:", data.user?.id, data.user?.email, "ERR:", error);
+  });
+}, []);
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
