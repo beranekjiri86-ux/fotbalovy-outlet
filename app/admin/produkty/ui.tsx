@@ -100,18 +100,17 @@ export default function AdminProductsClient() {
           <Link
             key={p.id}
             href={`/admin/produkty/${p.id}`}
-            style={{
-              display: "flex",
-              gap: 14,
-              alignItems: "center",
-              padding: 12,
-              border: "1px solid #eee",
-              borderRadius: 12,
-              textDecoration: "none",
-              color: "inherit",
-              transition: "all .15s ease",
-              background: "#fff",
-            }}
+           style={{
+  display: "flex",
+  gap: 14,
+  alignItems: "center",
+  padding: 12,
+  border: "1px solid #233044",
+  borderRadius: 12,
+  textDecoration: "none",
+  color: "#e6edf3",
+  background: "#121926"
+}}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = "#f9fafb";
               e.currentTarget.style.borderColor = "#ddd";
