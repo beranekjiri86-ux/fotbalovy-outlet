@@ -117,3 +117,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
+@media (max-width: 720px) {
+  .headerSearch {
+    width: 100%;
+  }
+}
