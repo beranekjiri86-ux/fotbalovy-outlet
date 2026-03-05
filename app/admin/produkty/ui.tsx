@@ -87,26 +87,27 @@ export default function AdminProductsClient() {
       const to = from + PAGE_SIZE - 1;
 
       let s = supabase
-        .from("products")
-        .select(
-          [
-            "id",
-            "name",
-            "article_code",
-            "brand",
-            "category",
-            "boot_type",
-            "size_eu",
-            "size_uk",
-            "size_cm",
-            "condition",
-            "status",
-            "image_url",
-            "sale_price",
-          ].join(",")
-        )
-        .order("name", { ascending: true })
-        .range(from, to);
+  .from("products")
+  .select(
+    [
+      "id",
+      "name",
+      "article_code",
+      "brand",
+      "category",
+      "boot_type",
+      "size_eu",
+      "size_uk",
+      "size_cm",
+      "condition",
+      "status",
+      "image_url",
+      "sale_price",
+      "created_at", // 👈 přidat
+    ].join(",")
+  )
+  .order("created_at", { ascending: false }) // 👈 změnit
+  .range(from, to);
 
       if (debounced.length > 0) {
         // hledání v názvu/kódu/značce (vždy používej EN názvy sloupců z DB)
