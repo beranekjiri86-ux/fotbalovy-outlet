@@ -232,12 +232,18 @@ export default function AdminProductEditClient({ id }: { id: string }) {
 
   setMsg("Ukládám fotky do DB…");
 
-  const { data: saved, error: upDbErr } = await supabase
-    .from("products")
-    .update({ images: merged, image_url: thumb })
-    .eq("id", p.id)
-    .select("images,image_url")
-    .single();
+ const { data: saved, error: dbErr } = await supabase
+  .from("products")
+  .update({ images: merged, image_url: thumb })
+  .eq("id", p.id)
+  .select("images,image_url")
+  .single();
+
+   if (dbErr) {
+  console.error("DB UPDATE ERROR:", dbErr);
+  setMsg(`DB update selhal: ${dbErr.message}`);
+  return;
+}
 
   if (upDbErr) {
     console.error("DB UPDATE IMAGES ERROR:", upDbErr);
