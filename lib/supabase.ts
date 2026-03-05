@@ -5,6 +5,8 @@ import type { Database } from "@/types/supabase"; // pokud nemáš, můžeš dá
 export function createSupabaseServerClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+  export const getSupabaseServerClient = createSupabaseServerClient;
+export const getSupabaseBrowserClient = createSupabaseBrowserClient;
 
   const cookieStore = cookies();
 
