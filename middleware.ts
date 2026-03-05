@@ -31,12 +31,14 @@ export async function middleware(request: NextRequest) {
 
   // ✅ necháme volné jen /admin/login
   if (path.startsWith("/admin") && path !== "/admin/login") {
-    if (!user) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/admin/login";
-      return NextResponse.redirect(url);
-    }
+  const isAdmin = !!user && user.email === "beranekjiri.86@gmail.com";
+
+  if (!isAdmin) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/admin/login";
+    return NextResponse.redirect(url);
   }
+}
 
   // ✅ když už je přihlášený, nenech ho na login stránce
   if (path === "/admin/login" && user) {
