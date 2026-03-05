@@ -38,9 +38,18 @@ export default function AdminProductEditClient({ id }: { id: string }) {
     (async () => {
       const { data, error } = await supabase
         .from("products")
-        .select(
-          "id,kod,nazev,kod_produktu,znacka,kategorie,velikost_obleceni,typ_obleceni,velikost_rukavic,image_url,images,poznamka,prodejni_cena,doporucena_cena,stav"
-        )
+        .select(`
+id,
+name,
+article_code,
+brand,
+image_url,
+images,
+note,
+sale_price,
+original_price,
+status
+`)
         .eq("id", id)
         .single();
 
