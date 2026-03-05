@@ -1,35 +1,39 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
+import { createServerClient } from "@supabase/ssr";
 
-export function middleware(req: NextRequest) {
-  const { pathname } = req.nextUrl;
+export async function middleware(request: NextRequest) {
+  let response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
+  });
 
-  if (!pathname.startsWith("/admin")) return NextResponse.next();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options);
+          });
+        },
+      },
+    }
+  );
 
-  const pw = process.env.ADMIN_PASSWORD;
-  if (!pw) return new NextResponse("ADMIN_PASSWORD is not set", { status: 500 });
+  // DŮLEŽITÉ: tímhle se session “osvěží”
+  await supabase.auth.getUser();
 
-  const auth = req.headers.get("authorization");
-  if (!auth?.startsWith("Basic ")) {
-    return new NextResponse("Auth required", {
-      status: 401,
-      headers: { "WWW-Authenticate": 'Basic realm="Admin"' },
-    });
-  }
-
-  const decoded = Buffer.from(auth.slice("Basic ".length), "base64").toString("utf-8");
-  const [, pass] = decoded.split(":");
-
-  if (pass !== pw) {
-    return new NextResponse("Unauthorized", {
-      status: 401,
-      headers: { "WWW-Authenticate": 'Basic realm="Admin"' },
-    });
-  }
-
-  return NextResponse.next();
+  return response;
 }
 
+// middleware spouštěj na všech stránkách kromě statických assetů
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
 };
