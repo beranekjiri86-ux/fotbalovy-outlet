@@ -114,11 +114,6 @@ function normalizeProduct(row: Product): Product {
 export default function AdminProductEditClient({ id }: { id: string }) {
   const router = useRouter();
 
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data, error }) => {
-      console.log("AUTH USER:", data?.user?.id, data?.user?.email, error);
-    });
-  }, []);
 
   const isNew = id === "new";
 
