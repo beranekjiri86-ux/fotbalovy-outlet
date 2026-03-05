@@ -1,5 +1,5 @@
 "use client";
-
+<Link className="btn btnPrimary" href="/admin/produkty/new">+ Nový produkt</Link>
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
