@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getSupabaseServerClient } from "@/lib/supabase";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { Product } from "@/lib/types";
 
 type SP = { searchParams?: Record<string, string | string[] | undefined> };
@@ -67,7 +67,7 @@ export default async function Produkty({ searchParams }: SP) {
   const apparelType = getMulti(searchParams, "at"); // mikina/bunda/...
   const gloveSize = getMulti(searchParams, "gs"); // 6..11
 
-  const supabase = getSupabaseServerClient();
+  const supabase = createSupabaseServerClient();
 
   // ✅ načtení hodnot pro filtry (distinct)
   const [
