@@ -12,13 +12,13 @@ type Product = {
   brand: string | null;
   category: string | null;
 
-  boot_type: string | null; // FG/AG/SG/TF/IC
+  boot_type: string | null;
   size_eu: number | null;
   size_uk: number | null;
   size_cm: number | null;
 
-  condition: string | null; // nové/použité
-  status: string | null; // available/reserved/sold
+  condition: string | null;
+  status: string | null;
 
   sale_price: number | null;
   original_price: number | null;
@@ -83,7 +83,6 @@ export default function AdminProductEditClient({ id }: { id: string }) {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
-  // LOAD (edit mode)
   useEffect(() => {
     if (isNew) return;
 
@@ -146,27 +145,24 @@ export default function AdminProductEditClient({ id }: { id: string }) {
     if (!p || p.id === "new") return;
 
     const { data: saved, error: dbErr } = await supabase
-  .from("products")
-  .update({ images: merged, image_url: thumb })
-  .eq("id", p.id)
-  .select("id,images,image_url")
-  .single();
+      .from("products")
+      .update({ images: nextImages, image_url: nextThumb })
+      .eq("id", p.id)
+      .select("images,image_url")
+      .single();
 
-if (dbErr) {
-  console.error("DB UPDATE ERROR:", dbErr);
-  setMsg(`DB update selhal: ${dbErr.message}`);
-  return;
-}
+    if (dbErr) {
+      console.error("DB UPDATE IMAGES ERROR:", dbErr);
+      setMsg(`DB update selhal: ${dbErr.message}`);
+      return;
+    }
 
-// ✅ hned ověř, že DB opravdu vrátila uložené values
-const imgs = Array.isArray((saved as any).images) ? ((saved as any).images as string[]) : [];
-if (imgs.length === 0) {
-  setMsg("DB update proběhl, ale images je pořád prázdné. To je téměř jistě RLS/policy na UPDATE.");
-  return;
-}
-
-setP({ ...p, images: imgs, image_url: (saved as any).image_url ?? null });
-setMsg(`Hotovo ✅ v DB je teď ${imgs.length} fotek`);
+    setP({
+      ...p,
+      images: (saved as any).images ?? [],
+      image_url: (saved as any).image_url ?? null,
+    });
+  }
 
   async function uploadFiles(files: FileList | null) {
     if (!p) return;
@@ -183,7 +179,7 @@ setMsg(`Hotovo ✅ v DB je teď ${imgs.length} fotek`);
 
     try {
       const list = Array.from(files);
-      setMsg(`Nahrávám ${list.length} fotek…`);
+      setMsg(`Nahrávám ${list.length} fotek...`);
 
       const newUrls: string[] = [];
 
@@ -217,10 +213,10 @@ setMsg(`Hotovo ✅ v DB je teď ${imgs.length} fotek`);
       const merged = [...current, ...newUrls].slice(0, 10);
       const thumb = p.image_url || merged[0] || null;
 
-      setMsg("Ukládám odkazy do DB…");
+      setMsg("Ukládám odkazy do DB...");
       await persistImages(merged, thumb);
 
-      setMsg(`Hotovo ✅ nahráno ${newUrls.length} fotek`);
+      setMsg(`Hotovo: nahráno ${newUrls.length} fotek`);
     } catch (e: any) {
       console.error("UPLOAD EXCEPTION:", e);
       setMsg(`Chyba při uploadu: ${e?.message ?? "neznámá chyba"}`);
@@ -283,7 +279,7 @@ setMsg(`Hotovo ✅ v DB je teď ${imgs.length} fotek`);
           return;
         }
 
-        setMsg("Vytvořeno ✅ Teď můžeš přidat fotky.");
+        setMsg("Vytvořeno. Teď můžeš přidat fotky.");
         router.replace(`/admin/produkty/${(data as any).id}`);
         router.refresh();
         return;
@@ -295,7 +291,7 @@ setMsg(`Hotovo ✅ v DB je teď ${imgs.length} fotek`);
         console.error(error);
         setMsg(error.message);
       } else {
-        setMsg("Uloženo ✅");
+        setMsg("Uloženo.");
         router.refresh();
       }
     } finally {
@@ -303,7 +299,7 @@ setMsg(`Hotovo ✅ v DB je teď ${imgs.length} fotek`);
     }
   }
 
-  if (!p) return <div>Načítám…</div>;
+  if (!p) return <div>Načítám...</div>;
 
   return (
     <div style={{ display: "grid", gap: 14 }}>
@@ -340,7 +336,7 @@ setMsg(`Hotovo ✅ v DB je teď ${imgs.length} fotek`);
       <label style={{ display: "grid", gap: 6 }}>
         Kategorie
         <select value={p.category ?? ""} onChange={(e) => setP({ ...p, category: e.target.value || null })}>
-          <option value="">— vyber —</option>
+          <option value="">- vyber -</option>
           {CATEGORIES.map((c) => (
             <option key={c} value={c}>
               {c}
@@ -349,139 +345,7 @@ setMsg(`Hotovo ✅ v DB je teď ${imgs.length} fotek`);
         </select>
       </label>
 
-      {isShoesCategory(p.category) ? (
-        <div className="card" style={{ display: "grid", gap: 10, padding: 12 }}>
-          <div style={{ fontWeight: 800 }}>Boty – typ a velikosti</div>
-
-          <label style={{ display: "grid", gap: 6 }}>
-            Typ podrážky (boot_type)
-            <select value={p.boot_type ?? ""} onChange={(e) => setP({ ...p, boot_type: e.target.value || null })}>
-              <option value="">— vyber —</option>
-              {BOOT_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
-            <label style={{ display: "grid", gap: 6 }}>
-              EU
-              <input
-                type="number"
-                step="0.01"
-                value={p.size_eu ?? ""}
-                onChange={(e) => setP({ ...p, size_eu: e.target.value === "" ? null : Number(e.target.value) })}
-              />
-            </label>
-            <label style={{ display: "grid", gap: 6 }}>
-              UK
-              <input
-                type="number"
-                step="0.01"
-                value={p.size_uk ?? ""}
-                onChange={(e) => setP({ ...p, size_uk: e.target.value === "" ? null : Number(e.target.value) })}
-              />
-            </label>
-            <label style={{ display: "grid", gap: 6 }}>
-              CM
-              <input
-                type="number"
-                step="0.1"
-                value={p.size_cm ?? ""}
-                onChange={(e) => setP({ ...p, size_cm: e.target.value === "" ? null : Number(e.target.value) })}
-              />
-            </label>
-          </div>
-        </div>
-      ) : null}
-
-      {p.category === "rukavice" ? (
-        <label style={{ display: "grid", gap: 6 }}>
-          Velikost rukavic (6–11)
-          <select
-            value={p.velikost_rukavic ?? ""}
-            onChange={(e) => setP({ ...p, velikost_rukavic: e.target.value === "" ? null : Number(e.target.value) })}
-          >
-            <option value="">— vyber —</option>
-            {GLOVE_SIZES.map((s) => (
-              <option key={s} value={String(s)}>
-                {s}
-              </option>
-            ))}
-          </select>
-        </label>
-      ) : null}
-
-      {p.category === "dresy" || p.category === "oblečení" ? (
-        <div className="card" style={{ display: "grid", gap: 10, padding: 12 }}>
-          <div style={{ fontWeight: 800 }}>Oblečení</div>
-
-          <label style={{ display: "grid", gap: 6 }}>
-            Velikost (XS–XXXL)
-            <select value={(p.velikost_obleceni ?? "").toUpperCase()} onChange={(e) => setP({ ...p, velikost_obleceni: e.target.value || null })}>
-              <option value="">— vyber —</option>
-              {APPAREL_SIZES.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          {p.category === "oblečení" ? (
-            <label style={{ display: "grid", gap: 6 }}>
-              Typ oblečení
-              <input value={p.typ_obleceni ?? ""} onChange={(e) => setP({ ...p, typ_obleceni: e.target.value || null })} />
-            </label>
-          ) : null}
-        </div>
-      ) : null}
-
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-        <label style={{ display: "grid", gap: 6 }}>
-          Stav
-          <select value={p.condition ?? ""} onChange={(e) => setP({ ...p, condition: e.target.value || null })}>
-            <option value="">—</option>
-            {CONDITIONS.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label style={{ display: "grid", gap: 6 }}>
-          Status
-          <select value={p.status ?? "available"} onChange={(e) => setP({ ...p, status: e.target.value || null })}>
-            {STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-        <label style={{ display: "grid", gap: 6 }}>
-          Prodejní cena
-          <input type="number" value={p.sale_price ?? ""} onChange={(e) => setP({ ...p, sale_price: e.target.value === "" ? null : Number(e.target.value) })} />
-        </label>
-
-        <label style={{ display: "grid", gap: 6 }}>
-          Původní cena
-          <input type="number" value={p.original_price ?? ""} onChange={(e) => setP({ ...p, original_price: e.target.value === "" ? null : Number(e.target.value) })} />
-        </label>
-      </div>
-
-      <label style={{ display: "grid", gap: 6 }}>
-        Popis / poznámka
-        <textarea value={p.note ?? ""} onChange={(e) => setP({ ...p, note: e.target.value || null })} rows={5} />
-      </label>
-
-      {/* FOTKY */}
+      {/* Fotky */}
       <div className="card" style={{ display: "grid", gap: 10, padding: 12 }}>
         <div style={{ fontWeight: 800 }}>Fotky (max 10)</div>
 
@@ -515,10 +379,7 @@ setMsg(`Hotovo ✅ v DB je teď ${imgs.length} fotek`);
         {gallery.length ? (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
             {gallery.map((url) => (
-              <div
-                key={url}
-                style={{ border: "1px solid var(--border)", borderRadius: 12, overflow: "hidden" }}
-              >
+              <div key={url} style={{ border: "1px solid var(--border)", borderRadius: 12, overflow: "hidden" }}>
                 <img
                   src={url}
                   alt=""
@@ -528,12 +389,7 @@ setMsg(`Hotovo ✅ v DB je teď ${imgs.length} fotek`);
                 <button
                   type="button"
                   className="btn"
-                  style={{
-                    width: "100%",
-                    borderRadius: 0,
-                    border: 0,
-                    borderTop: "1px solid var(--border)",
-                  }}
+                  style={{ width: "100%", borderRadius: 0, border: 0, borderTop: "1px solid var(--border)" }}
                   onClick={() => removeImage(url)}
                 >
                   Smazat
@@ -546,14 +402,8 @@ setMsg(`Hotovo ✅ v DB je teď ${imgs.length} fotek`);
         )}
       </div>
 
-      <button
-        type="button"
-        onClick={save}
-        disabled={saving}
-        className="btn btnPrimary"
-        style={{ padding: 12 }}
-      >
-        {saving ? (isNew ? "Vytvářím…" : "Ukládám…") : isNew ? "Vytvořit produkt" : "Uložit změny"}
+      <button type="button" onClick={save} disabled={saving} className="btn btnPrimary" style={{ padding: 12 }}>
+        {saving ? (isNew ? "Vytvářím..." : "Ukládám...") : isNew ? "Vytvořit produkt" : "Uložit změny"}
       </button>
     </div>
   );
