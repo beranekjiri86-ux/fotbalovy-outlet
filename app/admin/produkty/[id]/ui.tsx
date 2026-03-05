@@ -167,49 +167,87 @@ export default function AdminProductEditClient({ id }: { id: string }) {
   }
 
   // ===== UPLOAD PHOTOS =====
-  async function uploadFiles(files: FileList) {
-    if (!p) return;
+ async function uploadFiles(files: FileList) {
+  if (!p) return;
 
-    // ✅ u NEW produktu vypneme upload (ať se to "neztratí")
-    if (p.id === "new") {
-      setMsg("Nejdřív vytvoř produkt (tlačítko dole), potom můžeš nahrávat fotky.");
-      return;
-    }
+  if (p.id === "new") {
+    setMsg("Nejdřív vytvoř produkt, potom můžeš nahrávat fotky.");
+    return;
+  }
 
-    setMsg(null);
+  const list = Array.from(files);
+  if (list.length === 0) return;
 
-    const newUrls: string[] = [];
+  setMsg(`Nahrávám 0/${list.length}…`);
 
-    for (const file of Array.from(files)) {
-      const ext = file.name.split(".").pop() || "jpg";
-      const path = `${p.id}/${crypto.randomUUID()}.${ext}`;
+  const newUrls: string[] = [];
 
-      const { error: upErr } = await supabase.storage
-        .from("product-images")
-        .upload(path, file, { upsert: false, contentType: file.type });
+  // helper: timeout wrapper
+  const withTimeout = async <T,>(promise: Promise<T>, ms: number) => {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_, rej) => setTimeout(() => rej(new Error("Timeout (20s)")), ms)),
+    ]);
+  };
 
-      if (upErr) {
-        console.error(upErr);
-        setMsg(upErr.message);
+  for (let i = 0; i < list.length; i++) {
+    const file = list[i];
+    setMsg(`Nahrávám ${i + 1}/${list.length}: ${file.name}`);
+
+    const ext = file.name.split(".").pop() || "jpg";
+    const path = `${p.id}/${crypto.randomUUID()}.${ext}`;
+
+    try {
+      const res = await withTimeout(
+        supabase.storage.from("product-images").upload(path, file, {
+          upsert: false,
+          contentType: file.type || "image/jpeg",
+        }),
+        20000
+      );
+
+      if ((res as any).error) {
+        console.error("UPLOAD ERROR:", (res as any).error);
+        setMsg(`Upload selhal: ${(res as any).error.message}`);
         continue;
       }
 
       const { data } = supabase.storage.from("product-images").getPublicUrl(path);
       newUrls.push(data.publicUrl);
+    } catch (e: any) {
+      console.error("UPLOAD EXCEPTION:", e);
+      setMsg(`Upload se zasekl: ${e?.message ?? "neznámá chyba"}`);
+      return;
     }
-
-    const merged = [...gallery, ...newUrls].slice(0, 10);
-    const thumb = p.image_url || merged[0] || null;
-
-    // 1) UI hned
-    setP({ ...p, images: merged, image_url: thumb });
-
-    // 2) ✅ DB hned (to je ta hlavní oprava)
-    await persistImages(merged, thumb);
-
-    setMsg(`Nahráno a uloženo: ${newUrls.length} fotek ✅`);
   }
 
+  if (newUrls.length === 0) {
+    setMsg("Nenahrála se žádná fotka. Zkontroluj Storage bucket/policies.");
+    return;
+  }
+
+  const current = Array.isArray(p.images) ? p.images : [];
+  const merged = [...current, ...newUrls].slice(0, 10);
+  const thumb = p.image_url || merged[0] || null;
+
+  setMsg("Ukládám fotky do DB…");
+
+  const { data: saved, error: upDbErr } = await supabase
+    .from("products")
+    .update({ images: merged, image_url: thumb })
+    .eq("id", p.id)
+    .select("images,image_url")
+    .single();
+
+  if (upDbErr) {
+    console.error("DB UPDATE IMAGES ERROR:", upDbErr);
+    setMsg(`DB update selhal: ${upDbErr.message}`);
+    return;
+  }
+
+  setP({ ...p, images: saved.images ?? [], image_url: saved.image_url ?? null });
+  setMsg(`Hotovo ✅ nahráno ${newUrls.length} fotek`);
+}
   async function removeImage(url: string) {
     if (!p) return;
     const next = gallery.filter((x) => x !== url);
