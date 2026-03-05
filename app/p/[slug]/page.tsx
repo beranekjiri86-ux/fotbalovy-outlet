@@ -20,7 +20,7 @@ function formatEUSize(n: number | null) {
 
   return String(n).replace(".0", "");
 }
-export default async function ProductPage({ params }: { params: { slug: string } }) {
+export default async function ProductPage({ params }: { params: { : string } }) {
   const supabase = createSupabaseServerClient();
   const slug = decodeURIComponent(params.slug);
 
@@ -64,7 +64,6 @@ export default async function ProductPage({ params }: { params: { slug: string }
       {/* INFO BLOK – vždy zobrazí hodnoty (když nejsou, ukáže —) */}
       <div className="card" style={{ marginTop: 12, padding: 12, display: "grid", gap: 8 }}>
         <div className="small muted" style={{ display: "grid", gap: 6 }}>
-          <div><b>Slug:</b> {(product as any).slug ?? "—"}</div>
           <div><b>Značka:</b> {(product as any).brand ?? "—"}</div>
           <div><b>Kód:</b> {(product as any).article_code ?? "—"}</div>
           <div><b>Kategorie:</b> {(product as any).category ?? "—"}</div>
@@ -94,10 +93,10 @@ export default async function ProductPage({ params }: { params: { slug: string }
       {isShoesCategory((product as any).category ?? null) ? (
         <div className="card" style={{ marginTop: 12, padding: 12, display: "grid", gap: 6 }}>
           <div style={{ fontWeight: 800 }}>Velikosti</div>
-          <div className="small muted"><b>Typ:</b> {(product as any).boot_type ?? "—"}</div>
-          <div className="small muted"><b>EU:</b> {(product as any).size_eu ?? "—"}</div>
+         <div className="small muted"><b>EU:</b> {formatEUSize((product as any).size_eu)}</div>
           <div className="small muted"><b>UK:</b> {(product as any).size_uk ?? "—"}</div>
           <div className="small muted"><b>CM:</b> {(product as any).size_cm ?? "—"}</div>
+          <div className="small muted"><b>Typ:</b> {(product as any).boot_type ?? "—"}</div>
         </div>
       ) : null}
 
