@@ -30,6 +30,22 @@ function numOrNull(v: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+const PRODUCT_SELECT = [
+  "id",
+  "name",
+  "article_code",
+  "brand",
+  "category",
+  "boot_type",
+  "size_eu",
+  "size_uk",
+  "size_cm",
+  "condition",
+  "status",
+  "image_url",
+  "sale_price",
+].join(",");
+
 export default function AdminProductEditClient({ id }: { id: string }) {
   const router = useRouter();
 
@@ -39,7 +55,7 @@ export default function AdminProductEditClient({ id }: { id: string }) {
 
   const [p, setP] = useState<ProductRow | null>(null);
 
-  // form state (jednoduše jako stringy)
+  // form state
   const [name, setName] = useState("");
   const [articleCode, setArticleCode] = useState("");
   const [brand, setBrand] = useState("");
@@ -63,27 +79,14 @@ export default function AdminProductEditClient({ id }: { id: string }) {
       setLoading(true);
       setErrorMsg(null);
 
-      const { data, error } = await supabase
+      const q = supabase
         .from("products")
-        .select(
-          [
-            "id",
-            "name",
-            "article_code",
-            "brand",
-            "category",
-            "boot_type",
-            "size_eu",
-            "size_uk",
-            "size_cm",
-            "condition",
-            "status",
-            "image_url",
-            "sale_price",
-          ].join(",")
-        )
+        .select(PRODUCT_SELECT)
         .eq("id", id)
         .single();
+
+      // ✅ returns() až na konci – typově data: ProductRow | null
+      const { data, error } = await q.returns<ProductRow>();
 
       if (!alive) return;
 
@@ -95,25 +98,31 @@ export default function AdminProductEditClient({ id }: { id: string }) {
         return;
       }
 
-      const row = data as ProductRow;
-      setP(row);
+      if (!data) {
+        setErrorMsg("Produkt nenalezen.");
+        setP(null);
+        setLoading(false);
+        return;
+      }
+
+      setP(data);
 
       // naplň formulář
-      setName(row.name ?? "");
-      setArticleCode(row.article_code ?? "");
-      setBrand(row.brand ?? "");
-      setCategory(row.category ?? "");
+      setName(data.name ?? "");
+      setArticleCode(data.article_code ?? "");
+      setBrand(data.brand ?? "");
+      setCategory(data.category ?? "");
 
-      setBootType(row.boot_type ?? "");
-      setSizeEu(row.size_eu != null ? String(row.size_eu) : "");
-      setSizeUk(row.size_uk != null ? String(row.size_uk) : "");
-      setSizeCm(row.size_cm != null ? String(row.size_cm) : "");
+      setBootType(data.boot_type ?? "");
+      setSizeEu(data.size_eu != null ? String(data.size_eu) : "");
+      setSizeUk(data.size_uk != null ? String(data.size_uk) : "");
+      setSizeCm(data.size_cm != null ? String(data.size_cm) : "");
 
-      setCondition(row.condition ?? "");
-      setStatus(row.status ?? "");
+      setCondition(data.condition ?? "");
+      setStatus(data.status ?? "");
 
-      setImageUrl(row.image_url ?? "");
-      setSalePrice(row.sale_price != null ? String(row.sale_price) : "");
+      setImageUrl(data.image_url ?? "");
+      setSalePrice(data.sale_price != null ? String(data.sale_price) : "");
 
       setLoading(false);
     })();
@@ -148,29 +157,15 @@ export default function AdminProductEditClient({ id }: { id: string }) {
       sale_price: numOrNull(salePrice),
     };
 
-    const { data, error } = await supabase
+    const q = supabase
       .from("products")
       .update(payload)
       .eq("id", p.id)
-      // ✅ Tohle je důležité: vrátí ti reálně uložený řádek
-      .select(
-        [
-          "id",
-          "name",
-          "article_code",
-          "brand",
-          "category",
-          "boot_type",
-          "size_eu",
-          "size_uk",
-          "size_cm",
-          "condition",
-          "status",
-          "image_url",
-          "sale_price",
-        ].join(",")
-      )
+      .select(PRODUCT_SELECT)
       .single();
+
+    // ✅ typově data: ProductRow | null
+    const { data, error } = await q.returns<ProductRow>();
 
     if (error) {
       console.error("UPDATE FAILED:", error);
@@ -179,12 +174,16 @@ export default function AdminProductEditClient({ id }: { id: string }) {
       return;
     }
 
-    const updated = data as ProductRow;
+    if (!data) {
+      setErrorMsg("Uložení proběhlo bez návratu dat (neočekávané).");
+      setSaving(false);
+      return;
+    }
 
-    // ✅ Okamžitě promítni do UI (ať vidíš změny hned bez reloadu)
-    setP(updated);
+    // ✅ okamžitě promítni do UI
+    setP(data);
 
-    // ✅ Pokud někde výš/list používá Server Components, tohle to přenačte
+    // ✅ přenačti případné server-cachované části
     router.refresh();
 
     setSaving(false);
