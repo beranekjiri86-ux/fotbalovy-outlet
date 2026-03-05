@@ -48,6 +48,28 @@ const BOOT_TYPES = ["FG", "AG", "SG", "TF", "IC"] as const;
 const APPAREL_SIZES = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"] as const;
 const GLOVE_SIZES = [6, 7, 8, 9, 10, 11] as const;
 
+const PRODUCT_SELECT = [
+  "id",
+  "name",
+  "article_code",
+  "brand",
+  "category",
+  "boot_type",
+  "size_eu",
+  "size_uk",
+  "size_cm",
+  "condition",
+  "status",
+  "sale_price",
+  "original_price",
+  "note",
+  "image_url",
+  "images",
+  "velikost_rukavic",
+  "velikost_obleceni",
+  "typ_obleceni",
+].join(",");
+
 function isShoesCategory(cat: string | null) {
   return cat === "kopačky" || cat === "běžecké boty" || cat === "tenisky";
 }
@@ -83,6 +105,13 @@ function makeEmptyProduct(): Product {
   };
 }
 
+function normalizeProduct(row: Product): Product {
+  return {
+    ...row,
+    images: Array.isArray(row.images) ? row.images : [],
+  };
+}
+
 export default function AdminProductEditClient({ id }: { id: string }) {
   const router = useRouter();
 
@@ -100,33 +129,8 @@ export default function AdminProductEditClient({ id }: { id: string }) {
     (async () => {
       setMsg(null);
 
-      const { data, error } = await supabase
-        .from("products")
-        .select(
-          [
-            "id",
-            "name",
-            "article_code",
-            "brand",
-            "category",
-            "boot_type",
-            "size_eu",
-            "size_uk",
-            "size_cm",
-            "condition",
-            "status",
-            "sale_price",
-            "original_price",
-            "note",
-            "image_url",
-            "images",
-            "velikost_rukavic",
-            "velikost_obleceni",
-            "typ_obleceni",
-          ].join(",")
-        )
-        .eq("id", id)
-        .single();
+      const q = supabase.from("products").select(PRODUCT_SELECT).eq("id", id).single();
+      const { data, error } = await q.returns<Product>();
 
       if (!alive) return;
 
@@ -136,13 +140,12 @@ export default function AdminProductEditClient({ id }: { id: string }) {
         return;
       }
 
-      // Supabase vrací často `images: null` → chceme array
-      const normalized: Product = {
-        ...(data as any),
-        images: Array.isArray((data as any).images) ? (data as any).images : [],
-      };
+      if (!data) {
+        setMsg("Produkt nenalezen.");
+        return;
+      }
 
-      setP(normalized);
+      setP(normalizeProduct(data));
     })();
 
     return () => {
@@ -222,7 +225,8 @@ export default function AdminProductEditClient({ id }: { id: string }) {
 
       // rukavice/oblečení
       velikost_rukavic: p.category === "rukavice" ? (p.velikost_rukavic ?? null) : null,
-      velikost_obleceni: p.category === "dresy" || p.category === "oblečení" ? (p.velikost_obleceni || null) : null,
+      velikost_obleceni:
+        p.category === "dresy" || p.category === "oblečení" ? (p.velikost_obleceni || null) : null,
       typ_obleceni: p.category === "oblečení" ? (p.typ_obleceni?.trim() || null) : null,
     };
 
@@ -234,7 +238,8 @@ export default function AdminProductEditClient({ id }: { id: string }) {
           return;
         }
 
-        const { data, error } = await supabase.from("products").insert(payload).select("id").single();
+        const q = supabase.from("products").insert(payload).select("id").single();
+        const { data, error } = await q.returns<{ id: string }>();
 
         if (error) {
           console.error(error);
@@ -243,21 +248,32 @@ export default function AdminProductEditClient({ id }: { id: string }) {
           return;
         }
 
+        if (!data?.id) {
+          setMsg("Vytvořeno, ale bez návratu id (neočekávané).");
+          setSaving(false);
+          return;
+        }
+
         setMsg("Vytvořeno ✅");
-        // přesměruj na edit konkrétní položky
-        router.replace(`/admin/produkty/${(data as any).id}`);
+        router.replace(`/admin/produkty/${data.id}`);
         router.refresh();
         setSaving(false);
         return;
       }
 
-      const { error } = await supabase.from("products").update(payload).eq("id", p.id);
+      const q = supabase.from("products").update(payload).eq("id", p.id).select(PRODUCT_SELECT).single();
+      const { data, error } = await q.returns<Product>();
 
       if (error) {
         console.error(error);
         setMsg(error.message);
-      } else {
+      } else if (data) {
+        setP(normalizeProduct(data));
         setMsg("Uloženo ✅");
+        router.refresh();
+      } else {
+        setMsg("Uloženo, ale bez návratu dat (neočekávané).");
+        router.refresh();
       }
     } finally {
       setSaving(false);
@@ -275,9 +291,7 @@ export default function AdminProductEditClient({ id }: { id: string }) {
       ) : null}
 
       <div style={{ display: "grid", gap: 8 }}>
-        <div style={{ fontWeight: 800, fontSize: 18 }}>
-          {isNew ? "Nový produkt" : p.name}
-        </div>
+        <div style={{ fontWeight: 800, fontSize: 18 }}>{isNew ? "Nový produkt" : p.name}</div>
         <div style={{ opacity: 0.8, fontSize: 13 }}>
           {p.brand ?? ""} {p.article_code ? `• ${p.article_code}` : ""}
         </div>
@@ -478,11 +492,7 @@ export default function AdminProductEditClient({ id }: { id: string }) {
       {/* TEXT */}
       <label style={{ display: "grid", gap: 6 }}>
         Popis / poznámka
-        <textarea
-          value={p.note ?? ""}
-          onChange={(e) => setP({ ...p, note: e.target.value || null })}
-          rows={5}
-        />
+        <textarea value={p.note ?? ""} onChange={(e) => setP({ ...p, note: e.target.value || null })} rows={5} />
       </label>
 
       {/* IMAGES */}
