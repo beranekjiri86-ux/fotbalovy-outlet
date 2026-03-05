@@ -1,8 +1,7 @@
-export const revalidate = 300; // ✅ ISR: přegeneruje max 1× za 5 min
+export const revalidate = 300; // ✅ 5 min ISR (rychlé jako statika)
 
 import Link from "next/link";
-import { unstable_cache } from "next/cache";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabasePublicClient } from "@/lib/supabase/public";
 
 type Row = {
   id: string;
@@ -14,6 +13,7 @@ type Row = {
   category: string | null;
   condition: string | null;
   status: string | null;
+  article_code: string | null;
 };
 
 function money(n: number | null) {
@@ -21,44 +21,32 @@ function money(n: number | null) {
   return `${Math.round(n)} Kč`;
 }
 
-// ✅ Cache dotazu na produkty (včetně search q)
-const getProducts = unstable_cache(
-  async (q: string) => {
-    const supabase = createSupabaseServerClient();
-
-    let s = supabase
-      .from("products")
-      .select("id,name,slug,image_url,sale_price,brand,category,condition,status,article_code")
-      .order("name", { ascending: true })
-      .limit(300);
-
-    if (q) {
-      // hledání v názvu/kódu/značce
-      s = s.or(`name.ilike.%${q}%,article_code.ilike.%${q}%,brand.ilike.%${q}%`);
-    }
-
-    const { data, error } = await s;
-    if (error) throw error;
-
-    return (data ?? []) as Row[];
-  },
-  ["products-list-v1"],
-  { revalidate: 300 }
-);
-
 export default async function ProduktyPage({ searchParams }: { searchParams?: { q?: string } }) {
   const q = (searchParams?.q ?? "").trim();
 
-  let rows: Row[] = [];
-  try {
-    rows = await getProducts(q);
-  } catch (e: any) {
+  const supabase = createSupabasePublicClient();
+
+  let s = supabase
+    .from("products")
+    .select("id,name,slug,image_url,sale_price,brand,category,condition,status,article_code")
+    .order("name", { ascending: true })
+    .limit(300);
+
+  if (q) {
+    s = s.or(`name.ilike.%${q}%,article_code.ilike.%${q}%,brand.ilike.%${q}%`);
+  }
+
+  const { data, error } = await s;
+
+  if (error) {
     return (
       <div className="card" style={{ marginTop: 12, padding: 12 }}>
-        <b>Chyba načtení produktů:</b> {e?.message ?? "Neznámá chyba"}
+        <b>Chyba načtení produktů:</b> {error.message}
       </div>
     );
   }
+
+  const rows = (data ?? []) as Row[];
 
   return (
     <div style={{ paddingTop: 16, display: "grid", gap: 12 }}>
