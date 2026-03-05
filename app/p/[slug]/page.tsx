@@ -62,6 +62,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
         {(product as any).name}
       </h1>
 
+      {/* INFO BLOK (bez slugu) */}
       <div className="card" style={{ marginTop: 12, padding: 12, display: "grid", gap: 8 }}>
         <div className="small muted" style={{ display: "grid", gap: 6 }}>
           <div>
@@ -73,9 +74,12 @@ export default async function ProductPage({ params }: { params: { slug: string }
           <div>
             <b>Kategorie:</b> {(product as any).category ?? "—"}
           </div>
-            <div>
-          <b>Typ:</b> {(product as any).boot_type ?? "—"}
+
+          {/* ✅ Typ (FG/AG/SG...) nahoře */}
+          <div>
+            <b>Typ:</b> {(product as any).boot_type ?? "—"}
           </div>
+
           <div>
             <b>Stav:</b> {(product as any).condition ?? "—"}
           </div>
@@ -91,6 +95,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
         </div>
       </div>
 
+      {/* FOTO */}
       {mainImg ? (
         <div className="card" style={{ marginTop: 12, overflow: "hidden" }}>
           <img
@@ -105,9 +110,13 @@ export default async function ProductPage({ params }: { params: { slug: string }
         </div>
       )}
 
+      {/* BOTY */}
       {isShoesCategory((product as any).category ?? null) ? (
         <div className="card" style={{ marginTop: 12, padding: 12, display: "grid", gap: 6 }}>
           <div style={{ fontWeight: 800 }}>Velikosti</div>
+
+          {/* ❌ Typ je pryč z velikostí */}
+
           <div className="small muted">
             <b>EU:</b> {formatEUSize((product as any).size_eu ?? null)}
           </div>
@@ -120,6 +129,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
         </div>
       ) : null}
 
+      {/* POPIS */}
       <div className="card" style={{ marginTop: 12, padding: 12, display: "grid", gap: 8 }}>
         <div style={{ fontWeight: 800 }}>Popis</div>
         <div style={{ whiteSpace: "pre-wrap", lineHeight: 1.5 }}>
@@ -127,6 +137,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
         </div>
       </div>
 
+      {/* GALERIE */}
       {gallery.length ? (
         <div className="card" style={{ marginTop: 12, padding: 12, display: "grid", gap: 10 }}>
           <div style={{ fontWeight: 800 }}>Galerie</div>
@@ -151,6 +162,28 @@ export default async function ProductPage({ params }: { params: { slug: string }
           </div>
         </div>
       ) : null}
+
+      {/* ✅ MOBILE BUY BAR */}
+      <div
+        style={{
+          position: "sticky",
+          bottom: 0,
+          background: "var(--card)",
+          borderTop: "1px solid var(--border)",
+          padding: "12px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 12,
+          marginTop: 14,
+        }}
+      >
+        <div style={{ fontWeight: 900, fontSize: 18 }}>{money((product as any).sale_price ?? null)}</div>
+
+        <a href="https://wa.me/420605171216" className="btn btnPrimary" style={{ whiteSpace: "nowrap" }}>
+          Kontaktovat
+        </a>
+      </div>
     </main>
   );
 }
