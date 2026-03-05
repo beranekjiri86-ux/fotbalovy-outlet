@@ -1,3 +1,3 @@
-import { createSupabaseBrowserClient } from "@/lib/supabase";
+import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 export const supabase = createSupabaseBrowserClient();
