@@ -52,6 +52,19 @@ function badgeStyle(active?: boolean) {
   };
 }
 
+// Supabase "or" filter string je citlivý na čárky, závorky apod.
+// Tohle je jednoduché, praktické minimum pro fulltext-like vyhledávání přes ilike.
+function escapeForIlike(input: string) {
+  // escape backslash + uvozovky a odstraň nejproblematičtější oddělovače v or() syntaxi
+  return input
+    .replaceAll("\\", "\\\\")
+    .replaceAll('"', '\\"')
+    .replaceAll(",", " ")
+    .replaceAll("(", " ")
+    .replaceAll(")", " ")
+    .trim();
+}
+
 export default function AdminProductsClient() {
   const [q, setQ] = useState("");
   const [rows, setRows] = useState<ProductRow[]>([]);
@@ -71,9 +84,10 @@ export default function AdminProductsClient() {
     return () => clearTimeout(t);
   }, [query]);
 
-  // když se změní dotaz, resetni stránkování
+  // když se změní dotaz, resetni stránkování + hasMore
   useEffect(() => {
     setPage(0);
+    setHasMore(true);
   }, [debounced]);
 
   useEffect(() => {
@@ -105,12 +119,17 @@ export default function AdminProductsClient() {
           ].join(",")
         )
         .order("name", { ascending: true })
-        .range(from, to);
+        .range(from, to)
+        // ✅ Tohle odstraní TS uniony typu GenericStringError[] atd.
+        .returns<ProductRow[]>();
 
       if (debounced.length > 0) {
+        const term = escapeForIlike(debounced);
+
         // hledání v názvu/kódu/značce (vždy používej EN názvy sloupců z DB)
+        // Pozn.: ilike s %...% je ok, ale dávej pozor na special chars v term.
         s = s.or(
-          `name.ilike.%${debounced}%,article_code.ilike.%${debounced}%,brand.ilike.%${debounced}%`
+          `name.ilike.%${term}%,article_code.ilike.%${term}%,brand.ilike.%${term}%`
         );
       }
 
@@ -126,7 +145,7 @@ export default function AdminProductsClient() {
         return;
       }
 
-      const incoming = (data ?? []) as ProductRow[];
+      const incoming = data ?? [];
 
       setHasMore(incoming.length === PAGE_SIZE);
 
@@ -220,9 +239,7 @@ export default function AdminProductsClient() {
               </div>
 
               <div style={{ flex: 1, display: "grid", gap: 6 }}>
-                <div style={{ fontWeight: 900, lineHeight: 1.2 }}>
-                  {p.name}
-                </div>
+                <div style={{ fontWeight: 900, lineHeight: 1.2 }}>{p.name}</div>
 
                 <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
                   <span style={badgeStyle()}>{p.category ?? "—"}</span>
