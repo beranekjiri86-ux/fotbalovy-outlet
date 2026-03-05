@@ -146,20 +146,27 @@ export default function AdminProductEditClient({ id }: { id: string }) {
     if (!p || p.id === "new") return;
 
     const { data: saved, error: dbErr } = await supabase
-      .from("products")
-      .update({ images: nextImages, image_url: nextThumb })
-      .eq("id", p.id)
-      .select("images,image_url")
-      .single();
+  .from("products")
+  .update({ images: merged, image_url: thumb })
+  .eq("id", p.id)
+  .select("id,images,image_url")
+  .single();
 
-    if (dbErr) {
-      console.error("DB UPDATE IMAGES ERROR:", dbErr);
-      setMsg(`DB update selhal: ${dbErr.message}`);
-      return;
-    }
+if (dbErr) {
+  console.error("DB UPDATE ERROR:", dbErr);
+  setMsg(`DB update selhal: ${dbErr.message}`);
+  return;
+}
 
-    setP({ ...p, images: (saved as any).images ?? [], image_url: (saved as any).image_url ?? null });
-  }
+// ✅ hned ověř, že DB opravdu vrátila uložené values
+const imgs = Array.isArray((saved as any).images) ? ((saved as any).images as string[]) : [];
+if (imgs.length === 0) {
+  setMsg("DB update proběhl, ale images je pořád prázdné. To je téměř jistě RLS/policy na UPDATE.");
+  return;
+}
+
+setP({ ...p, images: imgs, image_url: (saved as any).image_url ?? null });
+setMsg(`Hotovo ✅ v DB je teď ${imgs.length} fotek`);
 
   async function uploadFiles(files: FileList | null) {
     if (!p) return;
