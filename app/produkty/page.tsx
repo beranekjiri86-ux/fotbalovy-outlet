@@ -136,13 +136,23 @@ export default async function Produkty({ searchParams }: SP) {
 
   const isShoesCategory = category === "kopačky" || category === "běžecké boty" || category === "tenisky";
 
-  if (isShoesCategory) {
-    if (boot.length) query = query.in("boot_type", boot);
-    if (sizeEU.length) {
-      const nums = sizeEU.map(parseEUSizeLabel).filter((n) => Number.isFinite(n));
-      if (nums.length) query = query.in("size_eu", nums);
+if (isShoesCategory) {
+  if (boot.length) query = query.in("boot_type", boot);
+
+  if (sizeEU.length) {
+    const nums = sizeEU.map(parseEUSizeLabel).filter((n) => Number.isFinite(n));
+
+    if (nums.length) {
+      const parts = nums.map((n) => {
+        const min = Number((n - 0.02).toFixed(2));
+        const max = Number((n + 0.02).toFixed(2));
+        return `and(size_eu.gte.${min},size_eu.lte.${max})`;
+      });
+
+      query = query.or(parts.join(","));
     }
   }
+}
 
   if (category === "rukavice") {
     if (gloveSize.length) {
