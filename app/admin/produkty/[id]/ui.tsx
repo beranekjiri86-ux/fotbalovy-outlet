@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import heic2any from "heic2any";
 import { supabase } from "@/lib/supabaseClient";
 
 type Product = {
@@ -85,6 +86,84 @@ function makeEmptyProduct(): Product {
     velikost_obleceni: null,
     typ_obleceni: null,
   };
+}
+
+async function normalizeImageFile(inputFile: File): Promise<File> {
+  let file = inputFile;
+
+  // 1) HEIC -> JPEG
+  if (file.type === "image/heic" || file.type === "image/heif" || file.name.toLowerCase().endsWith(".heic")) {
+    const converted = await heic2any({
+      blob: file,
+      toType: "image/jpeg",
+      quality: 0.92,
+    });
+
+    const blob = Array.isArray(converted) ? converted[0] : converted;
+
+    file = new File(
+      [blob as Blob],
+      file.name.replace(/\.heic$/i, ".jpg").replace(/\.heif$/i, ".jpg"),
+      { type: "image/jpeg" }
+    );
+  }
+
+  // 2) resize + převod do WebP
+  const bitmapUrl = URL.createObjectURL(file);
+
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new Error("Nepodařilo se načíst obrázek."));
+      image.src = bitmapUrl;
+    });
+
+    const maxSize = 1600;
+    const width = img.width;
+    const height = img.height;
+
+    let targetWidth = width;
+    let targetHeight = height;
+
+    if (width > maxSize || height > maxSize) {
+      const ratio = Math.min(maxSize / width, maxSize / height);
+      targetWidth = Math.round(width * ratio);
+      targetHeight = Math.round(height * ratio);
+    }
+
+    const canvas = document.createElement("canvas");
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Nepodařilo se připravit canvas pro resize.");
+
+    ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+
+    const webpBlob = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            reject(new Error("Nepodařilo se převést obrázek do WebP."));
+            return;
+          }
+          resolve(blob);
+        },
+        "image/webp",
+        0.82
+      );
+    });
+
+    const nextName = file.name.replace(/\.[^.]+$/i, "") + ".webp";
+
+    return new File([webpBlob], nextName, {
+      type: "image/webp",
+      lastModified: Date.now(),
+    });
+  } finally {
+    URL.revokeObjectURL(bitmapUrl);
+  }
 }
 
 export default function AdminProductEditClient({ id }: { id: string }) {
@@ -191,20 +270,24 @@ export default function AdminProductEditClient({ id }: { id: string }) {
 
     try {
       const list = Array.from(files);
-      setMsg(`Nahrávám ${list.length} fotek...`);
+      setMsg(`Zpracovávám ${list.length} fotek...`);
 
       const newUrls: string[] = [];
 
       for (let i = 0; i < list.length; i++) {
-        const file = list[i];
-        const ext = file.name.split(".").pop() || "jpg";
+        const originalFile = list[i];
+        setMsg(`Zpracovávám ${i + 1}/${list.length}: ${originalFile.name}`);
+
+        const file = await normalizeImageFile(originalFile);
+
+        const ext = file.name.split(".").pop() || "webp";
         const path = `${p.id}/${crypto.randomUUID()}.${ext}`;
 
         const { error: upErr } = await supabase.storage
           .from("product-images")
           .upload(path, file, {
             upsert: false,
-            contentType: file.type || "image/jpeg",
+            contentType: file.type || "image/webp",
           });
 
         if (upErr) {
@@ -237,6 +320,32 @@ export default function AdminProductEditClient({ id }: { id: string }) {
 
     setP({ ...p, images: next, image_url: thumb });
     await persistImages(next, thumb);
+  }
+
+  async function removeProduct() {
+    if (!p || p.id === "new") return;
+
+    const ok = window.confirm(`Opravdu smazat produkt "${p.name}"? Tato akce nejde vrátit zpět.`);
+    if (!ok) return;
+
+    setSaving(true);
+    setMsg(null);
+
+    try {
+      const { error } = await supabase.from("products").delete().eq("id", p.id);
+
+      if (error) {
+        console.error(error);
+        setMsg(`Smazání selhalo: ${error.message}`);
+        return;
+      }
+
+      setMsg("Produkt byl smazán.");
+      router.replace("/admin/produkty");
+      router.refresh();
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function save() {
@@ -319,32 +428,6 @@ export default function AdminProductEditClient({ id }: { id: string }) {
         setMsg("Uloženo.");
         router.refresh();
       }
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function removeProduct() {
-    if (!p || p.id === "new") return;
-
-    const ok = window.confirm(`Opravdu smazat produkt "${p.name}"? Tato akce nejde vrátit zpět.`);
-    if (!ok) return;
-
-    setSaving(true);
-    setMsg(null);
-
-    try {
-      const { error } = await supabase.from("products").delete().eq("id", p.id);
-
-      if (error) {
-        console.error(error);
-        setMsg(`Smazání selhalo: ${error.message}`);
-        return;
-      }
-
-      setMsg("Produkt byl smazán.");
-      router.replace("/admin/produkty");
-      router.refresh();
     } finally {
       setSaving(false);
     }
@@ -578,7 +661,7 @@ export default function AdminProductEditClient({ id }: { id: string }) {
         ) : (
           <input
             type="file"
-            accept="image/*"
+            accept="image/*,.heic,.heif"
             multiple
             onChange={(e) => {
               const files = e.currentTarget.files;
