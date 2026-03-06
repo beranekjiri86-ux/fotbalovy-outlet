@@ -35,6 +35,7 @@ type ProductRow = {
 
 const CATEGORIES = ["kopačky", "běžecké boty", "tenisky", "rukavice", "dresy", "oblečení"] as const;
 const CONDITIONS = ["nové", "použité"] as const;
+const STATUSES = ["available", "reserved", "sold"] as const;
 const BOOT_TYPES = ["FG", "AG", "SG", "TF", "IC"] as const;
 const APPAREL_SIZES = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"] as const;
 const GLOVE_SIZES = [6, 7, 8, 9, 10, 11] as const;
@@ -72,9 +73,9 @@ export default function AdminProductsClient() {
   const [rows, setRows] = useState<ProductRow[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // filtry
   const [category, setCategory] = useState("");
   const [condition, setCondition] = useState("");
+  const [status, setStatus] = useState("");
   const [brand, setBrand] = useState("");
   const [bootType, setBootType] = useState("");
   const [sizeEU, setSizeEU] = useState("");
@@ -119,7 +120,7 @@ export default function AdminProductsClient() {
 
       if (!alive) return;
 
-            if (error) {
+      if (error) {
         console.error(error);
         setRows([]);
         setLoading(false);
@@ -147,6 +148,16 @@ export default function AdminProductsClient() {
     );
   }, [rows]);
 
+  const allShoesSizes = useMemo(() => {
+    return Array.from(
+      new Set(
+        rows
+          .map((r) => r.size_eu)
+          .filter((x): x is number => x != null && Number.isFinite(x))
+      )
+    ).sort((a, b) => a - b);
+  }, [rows]);
+
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase();
 
@@ -159,6 +170,7 @@ export default function AdminProductsClient() {
           p.note ?? "",
           p.category ?? "",
           p.typ_obleceni ?? "",
+          p.boot_type ?? "",
         ]
           .join(" ")
           .toLowerCase();
@@ -168,10 +180,12 @@ export default function AdminProductsClient() {
 
       if (category && p.category !== category) return false;
       if (condition && p.condition !== condition) return false;
+      if (status && p.status !== status) return false;
       if (brand && p.brand !== brand) return false;
 
       if (category && isShoesCategory(category)) {
         if (bootType && p.boot_type !== bootType) return false;
+
         if (sizeEU) {
           const wanted = Number(sizeEU.replace(",", "."));
           if (!Number.isFinite(wanted) || p.size_eu !== wanted) return false;
@@ -181,7 +195,7 @@ export default function AdminProductsClient() {
       if (category === "rukavice") {
         if (gloveSize) {
           const wanted = Number(gloveSize);
-          if (p.velikost_rukavic !== wanted) return false;
+          if (!Number.isFinite(wanted) || p.velikost_rukavic !== wanted) return false;
         }
       }
 
@@ -197,12 +211,13 @@ export default function AdminProductsClient() {
 
       return true;
     });
-  }, [rows, q, category, condition, brand, bootType, sizeEU, gloveSize, apparelSize, apparelType]);
+  }, [rows, q, category, condition, status, brand, bootType, sizeEU, gloveSize, apparelSize, apparelType]);
 
   const resetFilters = () => {
     setQ("");
     setCategory("");
     setCondition("");
+    setStatus("");
     setBrand("");
     setBootType("");
     setSizeEU("");
@@ -243,7 +258,6 @@ export default function AdminProductsClient() {
           </button>
         </div>
 
-        {/* hlavní filtry */}
         <div
           style={{
             display: "grid",
@@ -286,6 +300,18 @@ export default function AdminProductsClient() {
           </label>
 
           <label style={{ display: "grid", gap: 6 }}>
+            Status
+            <select value={status} onChange={(e) => setStatus(e.target.value)}>
+              <option value="">Vše</option>
+              {STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label style={{ display: "grid", gap: 6 }}>
             Značka
             <select value={brand} onChange={(e) => setBrand(e.target.value)}>
               <option value="">Vše</option>
@@ -296,25 +322,14 @@ export default function AdminProductsClient() {
               ))}
             </select>
           </label>
-
-          <div style={{ display: "grid", alignItems: "end" }}>
-            <div className="small muted">
-              Zobrazuji: <b>{filtered.length}</b> položek {loading ? "• Načítám..." : ""}
-            </div>
-          </div>
         </div>
 
-        {/* boty */}
+        <div className="small muted">
+          Zobrazuji: <b>{filtered.length}</b> položek {loading ? "• Načítám..." : ""}
+        </div>
+
         {showShoesFilters ? (
-          <div
-            className="card"
-            style={{
-              display: "grid",
-              gap: 10,
-              padding: 12,
-              background: "transparent",
-            }}
-          >
+          <div className="card" style={{ display: "grid", gap: 10, padding: 12, background: "transparent" }}>
             <div style={{ fontWeight: 800 }}>Filtry pro kopačky / běžecké boty / tenisky</div>
 
             <div
@@ -338,23 +353,23 @@ export default function AdminProductsClient() {
 
               <label style={{ display: "grid", gap: 6 }}>
                 Velikost EU
-                <input
-                  type="number"
-                  step="0.01"
-                  value={sizeEU}
-                  onChange={(e) => setSizeEU(e.target.value)}
-                  placeholder="např. 42.67"
-                />
+                <select value={sizeEU} onChange={(e) => setSizeEU(e.target.value)}>
+                  <option value="">Vše</option>
+                  {allShoesSizes.map((s) => (
+                    <option key={String(s)} value={String(s)}>
+                      {formatEUSize(s)}
+                    </option>
+                  ))}
+                </select>
               </label>
 
               <div className="small muted" style={{ alignSelf: "end" }}>
-                Např. 42.67 = 42 2/3
+                Filtrování pro boty
               </div>
             </div>
           </div>
         ) : null}
 
-        {/* rukavice */}
         {showGloveFilters ? (
           <div className="card" style={{ display: "grid", gap: 10, padding: 12, background: "transparent" }}>
             <div style={{ fontWeight: 800 }}>Filtry pro rukavice</div>
@@ -372,7 +387,6 @@ export default function AdminProductsClient() {
           </div>
         ) : null}
 
-        {/* dresy/oblečení */}
         {showApparelSizeFilters ? (
           <div className="card" style={{ display: "grid", gap: 10, padding: 12, background: "transparent" }}>
             <div style={{ fontWeight: 800 }}>Filtry pro dresy / oblečení</div>
@@ -414,7 +428,6 @@ export default function AdminProductsClient() {
         ) : null}
       </div>
 
-      {/* seznam produktů */}
       <div style={{ display: "grid", gap: 10 }}>
         {filtered.map((p) => {
           const showShoes = isShoesCategory(p.category);
