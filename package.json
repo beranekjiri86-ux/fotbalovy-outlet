@@ -9,13 +9,14 @@
     "start": "next start",
     "lint": "next lint"
   },
-"dependencies": {
-  "@supabase/ssr": "^0.4.0",
-  "@supabase/supabase-js": "^2.39.0",
-  "next": "14.2.35",
-  "react": "^18",
-  "react-dom": "^18"
-},
+  "dependencies": {
+    "@supabase/ssr": "^0.4.0",
+    "@supabase/supabase-js": "^2.39.0",
+    "heic2any": "^0.0.4",
+    "next": "14.2.35",
+    "react": "^18",
+    "react-dom": "^18"
+  },
   "devDependencies": {
     "@types/node": "^20.12.12",
     "@types/react": "^18.3.3",
