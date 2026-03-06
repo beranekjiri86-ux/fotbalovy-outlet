@@ -21,21 +21,29 @@ export default function ProductGallery({
 
   return (
     <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
-      <div className="card" style={{ overflow: "hidden" }}>
+      
+      {/* hlavní fotka */}
+      <div
+        className="card"
+        style={{
+          overflow: "hidden",
+          borderRadius: 12,
+        }}
+      >
         <img
           src={selected}
           alt={name}
           loading="eager"
           style={{
             width: "100%",
-            maxHeight: 520,
-            objectFit: "contain",
+            height: "520px",
+            objectFit: "cover",
             display: "block",
-            background: "#fff",
           }}
         />
       </div>
 
+      {/* galerie */}
       {images.length > 1 ? (
         <div
           style={{
@@ -54,10 +62,11 @@ export default function ProductGallery({
                 onClick={() => setSelected(url)}
                 style={{
                   padding: 0,
-                  borderRadius: 12,
+                  borderRadius: 10,
                   overflow: "hidden",
-                  border: active ? "2px solid var(--text)" : "1px solid var(--border)",
-                  background: "var(--card)",
+                  border: active
+                    ? "2px solid var(--text)"
+                    : "1px solid var(--border)",
                   cursor: "pointer",
                 }}
               >
@@ -67,10 +76,9 @@ export default function ProductGallery({
                   loading="lazy"
                   style={{
                     width: "100%",
-                    height: 90,
-                    objectFit: "contain",
+                    height: "90px",
+                    objectFit: "cover",
                     display: "block",
-                    background: "#fff",
                   }}
                 />
               </button>
