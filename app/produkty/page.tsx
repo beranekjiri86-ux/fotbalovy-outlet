@@ -91,12 +91,23 @@ export default async function Produkty({ searchParams }: SP) {
     (a: string, b: string) => a.localeCompare(b, "cs")
   );
 
-  const allSizesEU = Array.from(
-    new Set((sizesEURows ?? []).map((r) => (r as any).size_eu).filter((x: any) => x !== null))
-  )
-    .map((x: any) => Number(x))
-    .filter((n) => Number.isFinite(n))
-    .sort((a, b) => a - b);
+  if (isShoesCategory) {
+  if (boot.length) query = query.in("boot_type", boot);
+
+  if (sizeEU.length) {
+    const nums = sizeEU.map(parseEUSizeLabel).filter((n) => Number.isFinite(n));
+
+    if (nums.length) {
+      const parts = nums.map((n) => {
+        const min = Number((n - 0.02).toFixed(2));
+        const max = Number((n + 0.02).toFixed(2));
+        return `and(size_eu.gte.${min},size_eu.lte.${max})`;
+      });
+
+      query = query.or(parts.join(","));
+    }
+  }
+}
 
   const allApparelSizes = Array.from(
     new Set((apparelSizeRows ?? []).map((r) => (r as any).velikost_obleceni).filter(Boolean))
@@ -328,18 +339,15 @@ if (isShoesCategory) {
                 <details>
                   <summary style={{ fontWeight: 800, cursor: "pointer" }}>Velikost EU</summary>
                   <div className="filters" style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 8 }}>
-                    {allSizesEU.map((s) => {
-                      const label = formatEUSize(s);
-                      return (
-                        <Link
-                          key={label}
-                          className={"btn" + (sizeEU.includes(label) ? " btnPrimary" : "")}
-                          href={urlFor((u) => qpSet(u, "eu", toggle(sizeEU, label)))}
-                        >
-                          EU {label}
-                        </Link>
-                      );
-                    })}
+                {allSizesEU.map((label) => (
+  <Link
+    key={label}
+    className={"btn" + (sizeEU.includes(label) ? " btnPrimary" : "")}
+    href={urlFor((u) => qpSet(u, "eu", toggle(sizeEU, label)))}
+  >
+    EU {label}
+  </Link>
+))}
                   </div>
                 </details>
               </>
