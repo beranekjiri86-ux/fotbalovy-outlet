@@ -215,22 +215,23 @@ export default async function Produkty({ searchParams }: SP) {
   const showApparelTypeFilters = category === "oblečení";
 
   return (
-    <div className="container" style={{ paddingTop: 16 }}>
-      <div className="row" style={{ justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+    <div className="container" style={{ paddingTop: 16, paddingBottom: 24 }}>
+      <div
+        className="row"
+        style={{
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 16,
+          gap: 10,
+          flexWrap: "wrap",
+        }}
+      >
         <h1 className="h1" style={{ marginBottom: 0 }}>Produkty</h1>
         <div className="badge">{products.length} ks</div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "280px 1fr", gap: 18, alignItems: "start" }}>
-        <div
-          className="card"
-          style={{
-            position: "sticky",
-            top: 86,
-            maxHeight: "calc(100vh - 110px)",
-            overflow: "auto",
-          }}
-        >
+      <div className="productsLayout">
+        <div className="card filtersCard">
           <form action="/produkty" method="get" className="filters">
             <input name="q" defaultValue={q} placeholder="Hledat (název / kód / značka)..." />
             <button className="btn" type="submit">Hledat</button>
@@ -397,21 +398,28 @@ export default async function Produkty({ searchParams }: SP) {
           </div>
         </div>
 
-        <div className="productGrid">
+        <div className="productGrid productsGridMobile">
           {products.map((p: any) => (
-            <Link key={p.id} href={`/p/${p.slug}`} className="card product">
-              <div className="thumb">
+            <Link key={p.id} href={`/p/${p.slug}`} className="card productCardLarge">
+              <div className="productThumbLarge">
                 <img
                   src={p.image_url ?? "/no-photo.png"}
                   alt={p.name}
                   loading="lazy"
-                  style={{ width: "100%", height: "220px", objectFit: "cover" }}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "contain",
+                    padding: 10,
+                  }}
                 />
               </div>
 
-              <div style={{ fontWeight: 800, lineHeight: 1.25 }}>{p.name}</div>
+              <div style={{ fontWeight: 800, lineHeight: 1.3, fontSize: 15, minHeight: 40 }}>
+                {p.name}
+              </div>
 
-              <div className="tagRow">
+              <div className="tagRow" style={{ marginTop: 8 }}>
                 <span className="tag">{p.category}</span>
                 {p.brand ? <span className="tag">{p.brand}</span> : null}
                 {p.boot_type ? <span className="tag">{p.boot_type}</span> : null}
@@ -423,12 +431,12 @@ export default async function Produkty({ searchParams }: SP) {
                 {p.status === "reserved" ? <span className="tag">rezervováno</span> : null}
               </div>
 
-              <div className="priceRow">
+              <div className="priceRow" style={{ marginTop: 10 }}>
                 <span className="price">{Math.round(p.sale_price)} Kč</span>
                 {p.original_price ? <span className="priceOld">{Math.round(p.original_price)} Kč</span> : null}
               </div>
 
-              <div className="small">Kód: {p.article_code}</div>
+              <div className="small" style={{ marginTop: 6 }}>Kód: {p.article_code}</div>
             </Link>
           ))}
         </div>
