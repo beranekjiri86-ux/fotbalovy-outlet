@@ -324,6 +324,32 @@ export default function AdminProductEditClient({ id }: { id: string }) {
     }
   }
 
+  async function removeProduct() {
+    if (!p || p.id === "new") return;
+
+    const ok = window.confirm(`Opravdu smazat produkt "${p.name}"? Tato akce nejde vrátit zpět.`);
+    if (!ok) return;
+
+    setSaving(true);
+    setMsg(null);
+
+    try {
+      const { error } = await supabase.from("products").delete().eq("id", p.id);
+
+      if (error) {
+        console.error(error);
+        setMsg(`Smazání selhalo: ${error.message}`);
+        return;
+      }
+
+      setMsg("Produkt byl smazán.");
+      router.replace("/admin/produkty");
+      router.refresh();
+    } finally {
+      setSaving(false);
+    }
+  }
+
   if (!p) return <div>Načítám...</div>;
 
   return (
@@ -596,9 +622,34 @@ export default function AdminProductEditClient({ id }: { id: string }) {
         )}
       </div>
 
-      <button type="button" onClick={save} disabled={saving} className="btn btnPrimary" style={{ padding: 12 }}>
-        {saving ? (isNew ? "Vytvářím..." : "Ukládám...") : isNew ? "Vytvořit produkt" : "Uložit změny"}
-      </button>
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        {!isNew ? (
+          <button
+            type="button"
+            onClick={removeProduct}
+            disabled={saving}
+            className="btn"
+            style={{
+              padding: 12,
+              border: "1px solid #dc2626",
+              color: "#dc2626",
+              background: "transparent",
+            }}
+          >
+            Smazat produkt
+          </button>
+        ) : null}
+
+        <button
+          type="button"
+          onClick={save}
+          disabled={saving}
+          className="btn btnPrimary"
+          style={{ padding: 12 }}
+        >
+          {saving ? (isNew ? "Vytvářím..." : "Ukládám...") : isNew ? "Vytvořit produkt" : "Uložit změny"}
+        </button>
+      </div>
     </div>
   );
 }
