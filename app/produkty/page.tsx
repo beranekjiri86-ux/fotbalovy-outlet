@@ -401,20 +401,22 @@ export default async function Produkty({ searchParams }: SP) {
         <div className="productGrid productsGridMobile">
           {products.map((p: any) => (
             <Link key={p.id} href={`/p/${p.slug}`} className="card productCardLarge">
-              <div className="productThumbLarge">
-             .productThumbLarge {
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #0e1522;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  overflow: hidden;
-  padding: 0;
-}
-              </div>
+        <div className="productThumbLarge">
+  <img
+    src={p.image_url ?? "/no-photo.png"}
+    alt={p.name}
+    loading="lazy"
+    style={{
+      width: "100%",
+      height: "100%",
+      objectFit: "contain",
+      display: "block",
+      padding: 0,
+      margin: 0,
+      background: "transparent",
+    }}
+  />
+</div>
 
               <div style={{ fontWeight: 800, lineHeight: 1.3, fontSize: 15, minHeight: 40 }}>
                 {p.name}
