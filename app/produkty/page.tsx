@@ -3,7 +3,6 @@ export const revalidate = 300;
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { Product } from "@/lib/types";
-import ProductsSearchClient from "./ProductsSearchClient";
 
 type SP = { searchParams?: Record<string, string | string[] | undefined> };
 
@@ -140,6 +139,10 @@ export default async function Produkty({ searchParams }: SP) {
     .in("status", ["available", "reserved"])
     .order("sale_price", { ascending: true });
 
+  if (q) {
+    query = query.or(`name.ilike.%${q}%,article_code.ilike.%${q}%,brand.ilike.%${q}%`);
+  }
+
   if (category) query = query.eq("category", category);
   if (condition.length) query = query.in("condition", condition);
   if (brands.length) query = query.in("brand", brands);
@@ -186,6 +189,7 @@ export default async function Produkty({ searchParams }: SP) {
   const urlFor = (up: (u: URL) => void) => {
     const u = new URL(base.toString());
 
+    if (q) u.searchParams.set("q", q);
     if (category) u.searchParams.set("cat", category);
 
     if (condition.length) u.searchParams.set("cond", condition.join(","));
@@ -226,9 +230,29 @@ export default async function Produkty({ searchParams }: SP) {
         <div className="badge">{products.length} ks</div>
       </div>
 
-      <div className="productsLayout">
+      <div
+        className="productsLayout"
+        style={{
+          display: "grid",
+          gridTemplateColumns: "280px 1fr",
+          gap: 18,
+          alignItems: "start",
+        }}
+      >
         <div className="card filtersCard">
-          <ProductsSearchClient products={products as any[]} initialQuery={q} />
+          <form action="/produkty" method="get" className="filters">
+            <input name="q" defaultValue={q} placeholder="Hledat (název / kód / značka)..." />
+            <button className="btn" type="submit">Hledat</button>
+
+            {category ? <input type="hidden" name="cat" value={category} /> : null}
+            {condition.length ? <input type="hidden" name="cond" value={condition.join(",")} /> : null}
+            {brands.length ? <input type="hidden" name="brand" value={brands.join(",")} /> : null}
+            {boot.length ? <input type="hidden" name="boot" value={boot.join(",")} /> : null}
+            {sizeEU.length ? <input type="hidden" name="eu" value={sizeEU.join(",")} /> : null}
+            {apparelSize.length ? <input type="hidden" name="as" value={apparelSize.join(",")} /> : null}
+            {apparelType.length ? <input type="hidden" name="at" value={apparelType.join(",")} /> : null}
+            {gloveSize.length ? <input type="hidden" name="gs" value={gloveSize.join(",")} /> : null}
+          </form>
 
           <div className="hr" />
 
@@ -382,7 +406,42 @@ export default async function Produkty({ searchParams }: SP) {
           </div>
         </div>
 
-        <div />
+        <div className="productGrid productsGridMobile">
+          {products.map((p: any) => (
+            <Link key={p.id} href={`/p/${p.slug}`} className="card productCardLarge">
+              <div className="productThumbLarge">
+                <img
+                  src={p.image_url || "/no-photo.png"}
+                  alt={p.name}
+                  loading="lazy"
+                />
+              </div>
+
+              <div style={{ fontWeight: 800, lineHeight: 1.3, fontSize: 15, minHeight: 40 }}>
+                {p.name}
+              </div>
+
+              <div className="tagRow" style={{ marginTop: 8 }}>
+                <span className="tag">{p.category}</span>
+                {p.brand ? <span className="tag">{p.brand}</span> : null}
+                {p.boot_type ? <span className="tag">{p.boot_type}</span> : null}
+                {p.size_eu ? <span className="tag">EU {formatEUSize(Number(p.size_eu))}</span> : null}
+                {p.velikost_rukavic ? <span className="tag">Rukavice {p.velikost_rukavic}</span> : null}
+                {p.velikost_obleceni ? <span className="tag">{String(p.velikost_obleceni).toUpperCase()}</span> : null}
+                {p.typ_obleceni ? <span className="tag">{p.typ_obleceni}</span> : null}
+                {p.condition ? <span className="tag">{p.condition}</span> : null}
+                {p.status === "reserved" ? <span className="tag">rezervováno</span> : null}
+              </div>
+
+              <div className="priceRow" style={{ marginTop: 10 }}>
+                <span className="price">{Math.round(p.sale_price)} Kč</span>
+                {p.original_price ? <span className="priceOld">{Math.round(p.original_price)} Kč</span> : null}
+              </div>
+
+              <div className="small" style={{ marginTop: 6 }}>Kód: {p.article_code}</div>
+            </Link>
+          ))}
+        </div>
       </div>
     </div>
   );
