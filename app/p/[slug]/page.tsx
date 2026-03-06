@@ -1,7 +1,8 @@
-export const revalidate = 300; // ✅ 5 min ISR
+export const revalidate = 300;
 
 import { createSupabasePublicClient } from "@/lib/supabase/public";
 import { notFound } from "next/navigation";
+import ProductGallery from "./gallery";
 
 function isShoesCategory(cat: string | null) {
   return cat === "kopačky" || cat === "běžecké boty" || cat === "tenisky";
@@ -12,7 +13,6 @@ function money(n: number | null) {
   return `${Math.round(n)} Kč`;
 }
 
-// EU velikosti jako zlomek: 41.5 -> 41 1/2, 41.33 -> 41 1/3, 41.67 -> 41 2/3
 function formatEUSize(n: number | null) {
   if (n == null || !Number.isFinite(n)) return "—";
   const whole = Math.floor(n);
@@ -58,6 +58,8 @@ export default async function ProductPage({ params }: { params: { slug: string }
 
   const gallery: string[] = Array.isArray((product as any).images) ? ((product as any).images as string[]) : [];
   const mainImg = (product as any).image_url || gallery[0] || null;
+  const allImages = [mainImg, ...gallery].filter(Boolean) as string[];
+  const uniqueImages = Array.from(new Set(allImages));
 
   return (
     <main className="container" style={{ paddingTop: 18, paddingBottom: 30 }}>
@@ -94,20 +96,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
         </div>
       </div>
 
-      {mainImg ? (
-        <div className="card" style={{ marginTop: 12, overflow: "hidden" }}>
-          <img
-            src={mainImg}
-            alt={(product as any).name}
-            loading="eager"
-            style={{ width: "100%", maxHeight: 520, objectFit: "cover", display: "block" }}
-          />
-        </div>
-      ) : (
-        <div className="card small muted" style={{ marginTop: 12, padding: 12 }}>
-          Bez fotky.
-        </div>
-      )}
+      <ProductGallery name={(product as any).name} images={uniqueImages} />
 
       {isShoesCategory((product as any).category ?? null) ? (
         <div className="card" style={{ marginTop: 12, padding: 12, display: "grid", gap: 6 }}>
@@ -130,24 +119,6 @@ export default async function ProductPage({ params }: { params: { slug: string }
           {(product as any).note ? (product as any).note : "—"}
         </div>
       </div>
-
-      {gallery.length ? (
-        <div className="card" style={{ marginTop: 12, padding: 12, display: "grid", gap: 10 }}>
-          <div style={{ fontWeight: 800 }}>Galerie</div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
-            {gallery.slice(0, 10).map((url) => (
-              <div key={url} style={{ border: "1px solid var(--border)", borderRadius: 12, overflow: "hidden" }}>
-                <img
-                  src={url}
-                  alt=""
-                  loading="lazy"
-                  style={{ width: "100%", height: 140, objectFit: "cover", display: "block" }}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : null}
 
       <div
         style={{
