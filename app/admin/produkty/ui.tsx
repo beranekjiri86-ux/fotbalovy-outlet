@@ -64,7 +64,9 @@ function badgeStyle(active?: boolean) {
     background: active ? "rgba(34,197,94,.12)" : "transparent",
     color: active ? "var(--text)" : "var(--muted)",
     fontSize: 12,
-    whiteSpace: "nowrap" as const,
+    whiteSpace: "normal" as const,
+    wordBreak: "break-word" as const,
+    maxWidth: "100%",
   };
 }
 
@@ -232,7 +234,7 @@ export default function AdminProductsClient() {
   const showApparelTypeFilters = category === "oblečení";
 
   return (
-    <div style={{ display: "grid", gap: 12 }}>
+    <div style={{ display: "grid", gap: 12, width: "100%", minWidth: 0 }}>
       <div
         className="card"
         style={{
@@ -241,31 +243,58 @@ export default function AdminProductsClient() {
           position: "sticky",
           top: 86,
           zIndex: 10,
+          width: "100%",
+          minWidth: 0,
         }}
       >
-        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(0, 1fr)",
+            gap: 10,
+            width: "100%",
+            minWidth: 0,
+          }}
+        >
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Hledej: název / kód / značka / popis"
-            style={{ flex: 1, minWidth: 220 }}
+            style={{
+              width: "100%",
+              minWidth: 0,
+            }}
           />
-          <Link className="btn btnPrimary" href="/admin/produkty/new">
-            + Nový produkt
-          </Link>
-          <button type="button" className="btn" onClick={resetFilters}>
-            Reset filtrů
-          </button>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+              gap: 10,
+              width: "100%",
+              minWidth: 0,
+            }}
+          >
+            <Link className="btn btnPrimary" href="/admin/produkty/new">
+              + Nový produkt
+            </Link>
+
+            <button type="button" className="btn" onClick={resetFilters}>
+              Reset filtrů
+            </button>
+          </div>
         </div>
 
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))",
             gap: 10,
+            width: "100%",
+            minWidth: 0,
           }}
         >
-          <label style={{ display: "grid", gap: 6 }}>
+          <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
             Kategorie
             <select
               value={category}
@@ -287,7 +316,7 @@ export default function AdminProductsClient() {
             </select>
           </label>
 
-          <label style={{ display: "grid", gap: 6 }}>
+          <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
             Stav
             <select value={condition} onChange={(e) => setCondition(e.target.value)}>
               <option value="">Vše</option>
@@ -299,7 +328,7 @@ export default function AdminProductsClient() {
             </select>
           </label>
 
-          <label style={{ display: "grid", gap: 6 }}>
+          <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
             Status
             <select value={status} onChange={(e) => setStatus(e.target.value)}>
               <option value="">Vše</option>
@@ -311,7 +340,7 @@ export default function AdminProductsClient() {
             </select>
           </label>
 
-          <label style={{ display: "grid", gap: 6 }}>
+          <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
             Značka
             <select value={brand} onChange={(e) => setBrand(e.target.value)}>
               <option value="">Vše</option>
@@ -329,17 +358,19 @@ export default function AdminProductsClient() {
         </div>
 
         {showShoesFilters ? (
-          <div className="card" style={{ display: "grid", gap: 10, padding: 12, background: "transparent" }}>
+          <div className="card" style={{ display: "grid", gap: 10, padding: 12, background: "transparent", minWidth: 0 }}>
             <div style={{ fontWeight: 800 }}>Filtry pro kopačky / běžecké boty / tenisky</div>
 
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))",
                 gap: 10,
+                width: "100%",
+                minWidth: 0,
               }}
             >
-              <label style={{ display: "grid", gap: 6 }}>
+              <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
                 Typ povrchu
                 <select value={bootType} onChange={(e) => setBootType(e.target.value)}>
                   <option value="">Vše</option>
@@ -351,7 +382,7 @@ export default function AdminProductsClient() {
                 </select>
               </label>
 
-              <label style={{ display: "grid", gap: 6 }}>
+              <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
                 Velikost EU
                 <select value={sizeEU} onChange={(e) => setSizeEU(e.target.value)}>
                   <option value="">Vše</option>
@@ -371,9 +402,9 @@ export default function AdminProductsClient() {
         ) : null}
 
         {showGloveFilters ? (
-          <div className="card" style={{ display: "grid", gap: 10, padding: 12, background: "transparent" }}>
+          <div className="card" style={{ display: "grid", gap: 10, padding: 12, background: "transparent", minWidth: 0 }}>
             <div style={{ fontWeight: 800 }}>Filtry pro rukavice</div>
-            <label style={{ display: "grid", gap: 6 }}>
+            <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
               Velikost rukavic
               <select value={gloveSize} onChange={(e) => setGloveSize(e.target.value)}>
                 <option value="">Vše</option>
@@ -388,17 +419,19 @@ export default function AdminProductsClient() {
         ) : null}
 
         {showApparelSizeFilters ? (
-          <div className="card" style={{ display: "grid", gap: 10, padding: 12, background: "transparent" }}>
+          <div className="card" style={{ display: "grid", gap: 10, padding: 12, background: "transparent", minWidth: 0 }}>
             <div style={{ fontWeight: 800 }}>Filtry pro dresy / oblečení</div>
 
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: showApparelTypeFilters ? "1fr 1fr" : "1fr",
+                gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))",
                 gap: 10,
+                width: "100%",
+                minWidth: 0,
               }}
             >
-              <label style={{ display: "grid", gap: 6 }}>
+              <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
                 Velikost oblečení
                 <select value={apparelSize} onChange={(e) => setApparelSize(e.target.value)}>
                   <option value="">Vše</option>
@@ -411,7 +444,7 @@ export default function AdminProductsClient() {
               </label>
 
               {showApparelTypeFilters ? (
-                <label style={{ display: "grid", gap: 6 }}>
+                <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
                   Typ oblečení
                   <select value={apparelType} onChange={(e) => setApparelType(e.target.value)}>
                     <option value="">Vše</option>
@@ -428,7 +461,7 @@ export default function AdminProductsClient() {
         ) : null}
       </div>
 
-      <div style={{ display: "grid", gap: 10 }}>
+      <div style={{ display: "grid", gap: 10, width: "100%", minWidth: 0 }}>
         {filtered.map((p) => {
           const showShoes = isShoesCategory(p.category);
           const eu = formatEUSize(p.size_eu);
@@ -442,11 +475,14 @@ export default function AdminProductsClient() {
               href={`/admin/produkty/${p.id}`}
               className="card"
               style={{
-                display: "flex",
+                display: "grid",
+                gridTemplateColumns: "64px minmax(0, 1fr)",
                 gap: 12,
-                alignItems: "flex-start",
+                alignItems: "start",
                 padding: 12,
                 textDecoration: "none",
+                width: "100%",
+                minWidth: 0,
               }}
             >
               <div
@@ -470,15 +506,37 @@ export default function AdminProductsClient() {
                 ) : null}
               </div>
 
-              <div style={{ flex: 1, display: "grid", gap: 8 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "start" }}>
-                  <div style={{ fontWeight: 900, lineHeight: 1.2 }}>{p.name}</div>
-                  <div style={{ fontWeight: 900, whiteSpace: "nowrap" }}>
+              <div style={{ minWidth: 0, display: "grid", gap: 8 }}>
+                <div style={{ display: "grid", gap: 6, minWidth: 0 }}>
+                  <div
+                    style={{
+                      fontWeight: 900,
+                      lineHeight: 1.2,
+                      wordBreak: "break-word",
+                    }}
+                  >
+                    {p.name}
+                  </div>
+
+                  <div
+                    style={{
+                      fontWeight: 900,
+                      fontSize: 15,
+                    }}
+                  >
                     {p.sale_price != null ? `${Math.round(p.sale_price)} Kč` : ""}
                   </div>
                 </div>
 
-                <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 8,
+                    alignItems: "center",
+                    flexWrap: "wrap",
+                    minWidth: 0,
+                  }}
+                >
                   <span style={badgeStyle()}>{p.category ?? "—"}</span>
                   {p.brand ? <span style={badgeStyle()}>{p.brand}</span> : null}
                   {p.article_code ? <span style={badgeStyle()}>{p.article_code}</span> : null}
@@ -512,7 +570,13 @@ export default function AdminProductsClient() {
                 </div>
 
                 {notePreview ? (
-                  <div className="small muted" style={{ lineHeight: 1.4 }}>
+                  <div
+                    className="small muted"
+                    style={{
+                      lineHeight: 1.4,
+                      wordBreak: "break-word",
+                    }}
+                  >
                     {notePreview.length > 180 ? `${notePreview.slice(0, 180)}...` : notePreview}
                   </div>
                 ) : (
