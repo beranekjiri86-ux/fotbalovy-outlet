@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabaseClient";
 type ProductRow = {
   id: string;
   name: string;
+  slug: string | null;
   article_code: string | null;
   brand: string | null;
   category: string | null;
@@ -16,20 +17,32 @@ type ProductRow = {
   size_uk: number | null;
   size_cm: number | null;
 
-  condition: string | null; // nové/použité
-  status: string | null; // available/reserved/sold
+  condition: string | null;
+  status: string | null;
+
+  sale_price: number | null;
+  original_price: number | null;
+
+  note: string | null;
 
   image_url: string | null;
-  sale_price: number | null;
+  images: string[] | null;
 
-  created_at: string | null;
+  velikost_rukavic: number | null;
+  velikost_obleceni: string | null;
+  typ_obleceni: string | null;
 };
+
+const CATEGORIES = ["kopačky", "běžecké boty", "tenisky", "rukavice", "dresy", "oblečení"] as const;
+const CONDITIONS = ["nové", "použité"] as const;
+const BOOT_TYPES = ["FG", "AG", "SG", "TF", "IC"] as const;
+const APPAREL_SIZES = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"] as const;
+const GLOVE_SIZES = [6, 7, 8, 9, 10, 11] as const;
 
 function isShoesCategory(cat: string | null) {
   return cat === "kopačky" || cat === "běžecké boty" || cat === "tenisky";
 }
 
-/** EU velikosti jako zlomek: 41.5 -> 41 1/2, 41.33 -> 41 1/3, 41.67 -> 41 2/3 */
 function formatEUSize(n: number | null) {
   if (n == null || !Number.isFinite(n)) return "";
   const whole = Math.floor(n);
@@ -59,33 +72,15 @@ export default function AdminProductsClient() {
   const [rows, setRows] = useState<ProductRow[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // stránkování (pro 500+)
-  const PAGE_SIZE = 50;
-  const [page, setPage] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
-
-  // debounce, ať to není pomalé/žravé
-  const query = useMemo(() => q.trim(), [q]);
-  const [debounced, setDebounced] = useState(query);
-
-  // refetch po návratu do okna (typicky po editaci a návratu zpět)
-  const [refreshKey, setRefreshKey] = useState(0);
-  useEffect(() => {
-    const onFocus = () => setRefreshKey((x) => x + 1);
-    window.addEventListener("focus", onFocus);
-    return () => window.removeEventListener("focus", onFocus);
-  }, []);
-
-  useEffect(() => {
-    const t = setTimeout(() => setDebounced(query), 250);
-    return () => clearTimeout(t);
-  }, [query]);
-
-  // když se změní dotaz, resetni stránkování (+ hasMore)
-  useEffect(() => {
-    setPage(0);
-    setHasMore(true);
-  }, [debounced]);
+  // filtry
+  const [category, setCategory] = useState("");
+  const [condition, setCondition] = useState("");
+  const [brand, setBrand] = useState("");
+  const [bootType, setBootType] = useState("");
+  const [sizeEU, setSizeEU] = useState("");
+  const [gloveSize, setGloveSize] = useState("");
+  const [apparelSize, setApparelSize] = useState("");
+  const [apparelType, setApparelType] = useState("");
 
   useEffect(() => {
     let alive = true;
@@ -93,15 +88,13 @@ export default function AdminProductsClient() {
     (async () => {
       setLoading(true);
 
-      const from = page * PAGE_SIZE;
-      const to = from + PAGE_SIZE - 1;
-
-      let s = supabase
+      const { data, error } = await supabase
         .from("products")
         .select(
           [
             "id",
             "name",
+            "slug",
             "article_code",
             "brand",
             "category",
@@ -111,48 +104,117 @@ export default function AdminProductsClient() {
             "size_cm",
             "condition",
             "status",
-            "image_url",
             "sale_price",
-            "created_at",
+            "original_price",
+            "note",
+            "image_url",
+            "images",
+            "velikost_rukavic",
+            "velikost_obleceni",
+            "typ_obleceni",
           ].join(",")
         )
-        // ✅ ať je nový produkt hned vidět nahoře
-        .order("created_at", { ascending: false })
-        .range(from, to);
-
-      if (debounced.length > 0) {
-        // hledání v názvu/kódu/značce (vždy používej EN názvy sloupců z DB)
-        s = s.or(
-          `name.ilike.%${debounced}%,article_code.ilike.%${debounced}%,brand.ilike.%${debounced}%`
-        );
-      }
-
-      const { data, error } = await s.returns<ProductRow[]>();
+        .order("name", { ascending: true })
+        .limit(1000);
 
       if (!alive) return;
 
       if (error) {
         console.error(error);
         setRows([]);
-        setHasMore(false);
         setLoading(false);
         return;
       }
 
-      const incoming = data ?? [];
-
-      setHasMore(incoming.length === PAGE_SIZE);
-
-      if (page === 0) setRows(incoming);
-      else setRows((prev) => [...prev, ...incoming]);
-
+      setRows((data ?? []) as ProductRow[]);
       setLoading(false);
     })();
 
     return () => {
       alive = false;
     };
-  }, [debounced, page, refreshKey]);
+  }, []);
+
+  const allBrands = useMemo(() => {
+    return Array.from(new Set(rows.map((r) => r.brand).filter(Boolean) as string[])).sort((a, b) =>
+      a.localeCompare(b, "cs")
+    );
+  }, [rows]);
+
+  const allApparelTypes = useMemo(() => {
+    return Array.from(new Set(rows.map((r) => r.typ_obleceni).filter(Boolean) as string[])).sort((a, b) =>
+      a.localeCompare(b, "cs")
+    );
+  }, [rows]);
+
+  const filtered = useMemo(() => {
+    const term = q.trim().toLowerCase();
+
+    return rows.filter((p) => {
+      if (term) {
+        const hay = [
+          p.name,
+          p.article_code ?? "",
+          p.brand ?? "",
+          p.note ?? "",
+          p.category ?? "",
+          p.typ_obleceni ?? "",
+        ]
+          .join(" ")
+          .toLowerCase();
+
+        if (!hay.includes(term)) return false;
+      }
+
+      if (category && p.category !== category) return false;
+      if (condition && p.condition !== condition) return false;
+      if (brand && p.brand !== brand) return false;
+
+      if (category && isShoesCategory(category)) {
+        if (bootType && p.boot_type !== bootType) return false;
+        if (sizeEU) {
+          const wanted = Number(sizeEU.replace(",", "."));
+          if (!Number.isFinite(wanted) || p.size_eu !== wanted) return false;
+        }
+      }
+
+      if (category === "rukavice") {
+        if (gloveSize) {
+          const wanted = Number(gloveSize);
+          if (p.velikost_rukavic !== wanted) return false;
+        }
+      }
+
+      if (category === "dresy" || category === "oblečení") {
+        if (apparelSize && String(p.velikost_obleceni ?? "").toUpperCase() !== apparelSize.toUpperCase()) {
+          return false;
+        }
+      }
+
+      if (category === "oblečení") {
+        if (apparelType && (p.typ_obleceni ?? "") !== apparelType) return false;
+      }
+
+      return true;
+    });
+  }, [rows, q, category, condition, brand, bootType, sizeEU, gloveSize, apparelSize, apparelType]);
+
+  const resetFilters = () => {
+    setQ("");
+    setCategory("");
+    setCondition("");
+    setBrand("");
+    setBootType("");
+    setSizeEU("");
+    setGloveSize("");
+    setApparelSize("");
+    setApparelType("");
+  };
+
+  const showShoesFilters = isShoesCategory(category);
+  const showGloveFilters = category === "rukavice";
+  const showApparelSizeFilters = category === "dresy" || category === "oblečení";
+  const showApparelTypeFilters = category === "oblečení";
 
   return (
     <div style={{ display: "grid", gap: 12 }}>
@@ -166,38 +228,200 @@ export default function AdminProductsClient() {
           zIndex: 10,
         }}
       >
-        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Hledej: název / kód (article_code) / značka"
-            style={{ flex: 1 }}
+            placeholder="Hledej: název / kód / značka / popis"
+            style={{ flex: 1, minWidth: 220 }}
           />
           <Link className="btn btnPrimary" href="/admin/produkty/new">
             + Nový produkt
           </Link>
+          <button type="button" className="btn" onClick={resetFilters}>
+            Reset filtrů
+          </button>
         </div>
 
-        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-          <span className="small muted">
-            Zobrazuji: <b>{rows.length}</b> {rows.length === 1 ? "položku" : "položek"}
-            {debounced ? (
-              <>
-                {" "}
-                • filtr: <b>{debounced}</b>
-              </>
-            ) : null}
-          </span>
-          {loading ? <span className="small muted">Načítám…</span> : null}
+        {/* hlavní filtry */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+            gap: 10,
+          }}
+        >
+          <label style={{ display: "grid", gap: 6 }}>
+            Kategorie
+            <select
+              value={category}
+              onChange={(e) => {
+                setCategory(e.target.value);
+                setBootType("");
+                setSizeEU("");
+                setGloveSize("");
+                setApparelSize("");
+                setApparelType("");
+              }}
+            >
+              <option value="">Vše</option>
+              {CATEGORIES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label style={{ display: "grid", gap: 6 }}>
+            Stav
+            <select value={condition} onChange={(e) => setCondition(e.target.value)}>
+              <option value="">Vše</option>
+              {CONDITIONS.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label style={{ display: "grid", gap: 6 }}>
+            Značka
+            <select value={brand} onChange={(e) => setBrand(e.target.value)}>
+              <option value="">Vše</option>
+              {allBrands.map((b) => (
+                <option key={b} value={b}>
+                  {b}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <div style={{ display: "grid", alignItems: "end" }}>
+            <div className="small muted">
+              Zobrazuji: <b>{filtered.length}</b> položek {loading ? "• Načítám..." : ""}
+            </div>
+          </div>
         </div>
+
+        {/* boty */}
+        {showShoesFilters ? (
+          <div
+            className="card"
+            style={{
+              display: "grid",
+              gap: 10,
+              padding: 12,
+              background: "transparent",
+            }}
+          >
+            <div style={{ fontWeight: 800 }}>Filtry pro kopačky / běžecké boty / tenisky</div>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                gap: 10,
+              }}
+            >
+              <label style={{ display: "grid", gap: 6 }}>
+                Typ povrchu
+                <select value={bootType} onChange={(e) => setBootType(e.target.value)}>
+                  <option value="">Vše</option>
+                  {BOOT_TYPES.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label style={{ display: "grid", gap: 6 }}>
+                Velikost EU
+                <input
+                  type="number"
+                  step="0.01"
+                  value={sizeEU}
+                  onChange={(e) => setSizeEU(e.target.value)}
+                  placeholder="např. 42.67"
+                />
+              </label>
+
+              <div className="small muted" style={{ alignSelf: "end" }}>
+                Např. 42.67 = 42 2/3
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {/* rukavice */}
+        {showGloveFilters ? (
+          <div className="card" style={{ display: "grid", gap: 10, padding: 12, background: "transparent" }}>
+            <div style={{ fontWeight: 800 }}>Filtry pro rukavice</div>
+            <label style={{ display: "grid", gap: 6 }}>
+              Velikost rukavic
+              <select value={gloveSize} onChange={(e) => setGloveSize(e.target.value)}>
+                <option value="">Vše</option>
+                {GLOVE_SIZES.map((s) => (
+                  <option key={s} value={String(s)}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        ) : null}
+
+        {/* dresy/oblečení */}
+        {showApparelSizeFilters ? (
+          <div className="card" style={{ display: "grid", gap: 10, padding: 12, background: "transparent" }}>
+            <div style={{ fontWeight: 800 }}>Filtry pro dresy / oblečení</div>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: showApparelTypeFilters ? "1fr 1fr" : "1fr",
+                gap: 10,
+              }}
+            >
+              <label style={{ display: "grid", gap: 6 }}>
+                Velikost oblečení
+                <select value={apparelSize} onChange={(e) => setApparelSize(e.target.value)}>
+                  <option value="">Vše</option>
+                  {APPAREL_SIZES.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              {showApparelTypeFilters ? (
+                <label style={{ display: "grid", gap: 6 }}>
+                  Typ oblečení
+                  <select value={apparelType} onChange={(e) => setApparelType(e.target.value)}>
+                    <option value="">Vše</option>
+                    {allApparelTypes.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
       </div>
 
+      {/* seznam produktů */}
       <div style={{ display: "grid", gap: 10 }}>
-        {rows.map((p) => {
+        {filtered.map((p) => {
           const showShoes = isShoesCategory(p.category);
           const eu = formatEUSize(p.size_eu);
           const uk = p.size_uk != null ? String(p.size_uk).replace(".0", "") : "";
           const cm = p.size_cm != null ? String(p.size_cm).replace(".0", "") : "";
+          const notePreview = (p.note ?? "").trim();
 
           return (
             <Link
@@ -207,15 +431,15 @@ export default function AdminProductsClient() {
               style={{
                 display: "flex",
                 gap: 12,
-                alignItems: "center",
+                alignItems: "flex-start",
                 padding: 12,
                 textDecoration: "none",
               }}
             >
               <div
                 style={{
-                  width: 56,
-                  height: 56,
+                  width: 64,
+                  height: 64,
                   borderRadius: 12,
                   overflow: "hidden",
                   background: "#0e1522",
@@ -227,13 +451,19 @@ export default function AdminProductsClient() {
                   <img
                     src={p.image_url}
                     alt=""
-                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    loading="lazy"
+                    style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                   />
                 ) : null}
               </div>
 
-              <div style={{ flex: 1, display: "grid", gap: 6 }}>
-                <div style={{ fontWeight: 900, lineHeight: 1.2 }}>{p.name}</div>
+              <div style={{ flex: 1, display: "grid", gap: 8 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "start" }}>
+                  <div style={{ fontWeight: 900, lineHeight: 1.2 }}>{p.name}</div>
+                  <div style={{ fontWeight: 900, whiteSpace: "nowrap" }}>
+                    {p.sale_price != null ? `${Math.round(p.sale_price)} Kč` : ""}
+                  </div>
+                </div>
 
                 <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
                   <span style={badgeStyle()}>{p.category ?? "—"}</span>
@@ -241,15 +471,11 @@ export default function AdminProductsClient() {
                   {p.article_code ? <span style={badgeStyle()}>{p.article_code}</span> : null}
                   {p.condition ? <span style={badgeStyle()}>{p.condition}</span> : null}
                   {p.status ? (
-                    <span
-                      style={badgeStyle(p.status === "reserved")}
-                      title="available / reserved / sold"
-                    >
+                    <span style={badgeStyle(p.status === "reserved")} title="available / reserved / sold">
                       {p.status}
                     </span>
                   ) : null}
 
-                  {/* BOTY: boot_type + velikosti */}
                   {showShoes ? (
                     <>
                       {p.boot_type ? <span style={badgeStyle(true)}>{p.boot_type}</span> : null}
@@ -258,30 +484,31 @@ export default function AdminProductsClient() {
                       {cm ? <span style={badgeStyle()}>{cm} cm</span> : null}
                     </>
                   ) : null}
-                </div>
-              </div>
 
-              <div style={{ fontWeight: 900, whiteSpace: "nowrap" }}>
-                {p.sale_price != null ? `${Math.round(p.sale_price)} Kč` : ""}
+                  {p.category === "rukavice" && p.velikost_rukavic ? (
+                    <span style={badgeStyle()}>Rukavice {p.velikost_rukavic}</span>
+                  ) : null}
+
+                  {(p.category === "dresy" || p.category === "oblečení") && p.velikost_obleceni ? (
+                    <span style={badgeStyle()}>{String(p.velikost_obleceni).toUpperCase()}</span>
+                  ) : null}
+
+                  {p.category === "oblečení" && p.typ_obleceni ? (
+                    <span style={badgeStyle(true)}>{p.typ_obleceni}</span>
+                  ) : null}
+                </div>
+
+                {notePreview ? (
+                  <div className="small muted" style={{ lineHeight: 1.4 }}>
+                    {notePreview.length > 180 ? `${notePreview.slice(0, 180)}...` : notePreview}
+                  </div>
+                ) : (
+                  <div className="small muted">Bez popisu.</div>
+                )}
               </div>
             </Link>
           );
         })}
-      </div>
-
-      <div style={{ display: "flex", justifyContent: "center", padding: "6px 0 18px" }}>
-        {hasMore ? (
-          <button
-            type="button"
-            className="btn"
-            disabled={loading}
-            onClick={() => setPage((x) => x + 1)}
-          >
-            {loading ? "Načítám…" : "Načíst další"}
-          </button>
-        ) : (
-          <div className="small muted">Konec seznamu.</div>
-        )}
       </div>
     </div>
   );
