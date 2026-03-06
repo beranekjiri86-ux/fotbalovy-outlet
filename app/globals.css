@@ -381,7 +381,31 @@ input:focus,select:focus,textarea:focus{border-color:#2e425f}
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
   }
+/* =========================================
+ADMIN – mobilní oprava editace produktu
+========================================= */
 
+@media (max-width: 800px){
+
+  /* admin formulář bude jen jeden sloupec */
+  .adminGrid{
+    grid-template-columns: 1fr !important;
+  }
+
+  /* inputy se nepřetáhnou mimo obrazovku */
+  .adminGrid input,
+  .adminGrid select,
+  .adminGrid textarea{
+    width:100%;
+    max-width:100%;
+  }
+
+  /* karty formuláře budou mít správnou šířku */
+  .adminGrid .card{
+    width:100%;
+  }
+
+}
   .productCardLarge {
     padding: 10px;
   }
