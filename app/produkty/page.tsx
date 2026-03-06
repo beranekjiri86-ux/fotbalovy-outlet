@@ -145,7 +145,10 @@ export default async function Produkty({ searchParams }: SP) {
   if (condition.length) query = query.in("condition", condition);
   if (brands.length) query = query.in("brand", brands);
 
-  const isShoesCategory = category === "kopačky" || category === "běžecké boty" || category === "tenisky";
+  const isShoesCategory =
+  category === "kopačky" ||
+  category === "běžecké boty" ||
+  category === "tenisky";
 
 if (isShoesCategory) {
   if (boot.length) query = query.in("boot_type", boot);
