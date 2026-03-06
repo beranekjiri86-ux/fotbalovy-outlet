@@ -128,11 +128,9 @@ input:focus,select:focus,textarea:focus{border-color:#2e425f}
   padding:12px 16px;
   border-radius:999px;
   outline:none;
-
   background:rgba(255,255,255,0.10);
   border:1px solid rgba(255,255,255,0.22);
   color:#fff;
-
   transition: border-color .15s ease, background .15s ease, box-shadow .15s ease;
 }
 
@@ -242,6 +240,7 @@ input:focus,select:focus,textarea:focus{border-color:#2e425f}
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
+
 /* =========================================================
    DETAIL PRODUKTU - galerie
    ========================================================= */
@@ -261,7 +260,7 @@ input:focus,select:focus,textarea:focus{border-color:#2e425f}
   display:block;
   width:100%;
   height:auto;
-  max-height:75vh;
+  max-height:65vh;
   object-fit:contain;
   background:#0e1522;
 }
@@ -270,16 +269,18 @@ input:focus,select:focus,textarea:focus{border-color:#2e425f}
   display:grid;
   grid-template-columns:repeat(5, minmax(0, 1fr));
   gap:8px;
+  margin-top:2px;
 }
 
 .productGalleryThumb{
   appearance:none;
   border:1px solid var(--border);
   background:#0e1522;
-  border-radius:14px;
+  border-radius:12px;
   padding:0;
   overflow:hidden;
   cursor:pointer;
+  min-width:0;
 }
 
 .productGalleryThumb.isActive{
@@ -308,10 +309,10 @@ input:focus,select:focus,textarea:focus{border-color:#2e425f}
 
   .productGalleryThumbs{
     grid-template-columns:repeat(3, minmax(0, 1fr));
-    gap:8px;
+    gap:6px;
   }
 
   .productGalleryThumb{
-    border-radius:12px;
+    border-radius:10px;
   }
 }
