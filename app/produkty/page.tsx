@@ -134,10 +134,27 @@ export default async function Produkty({ searchParams }: SP) {
     .sort((a, b) => a - b);
 
   let query = supabase
-    .from("products")
-    .select("*")
-    .in("status", ["available", "reserved"])
-    .order("sale_price", { ascending: true });
+  .from("products")
+  .select(`
+    id,
+    slug,
+    name,
+    brand,
+    category,
+    boot_type,
+    size_eu,
+    velikost_rukavic,
+    velikost_obleceni,
+    typ_obleceni,
+    condition,
+    status,
+    sale_price,
+    original_price,
+    article_code,
+    image_url
+  `)
+  .in("status", ["available", "reserved"])
+  .order("sale_price", { ascending: true });
 
   if (q) {
     query = query.or(`name.ilike.%${q}%,article_code.ilike.%${q}%,brand.ilike.%${q}%`);
