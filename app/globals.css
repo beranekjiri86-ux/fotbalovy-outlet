@@ -242,3 +242,76 @@ input:focus,select:focus,textarea:focus{border-color:#2e425f}
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
+/* =========================================================
+   DETAIL PRODUKTU - galerie
+   ========================================================= */
+
+.productGalleryMain{
+  width:100%;
+  background:#0e1522;
+  border:1px solid var(--border);
+  border-radius:16px;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.productGalleryMainImage{
+  display:block;
+  width:100%;
+  height:auto;
+  max-height:75vh;
+  object-fit:contain;
+  background:#0e1522;
+}
+
+.productGalleryThumbs{
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:10px;
+}
+
+.productGalleryThumb{
+  appearance:none;
+  border:1px solid var(--border);
+  background:#0e1522;
+  border-radius:14px;
+  padding:0;
+  overflow:hidden;
+  cursor:pointer;
+}
+
+.productGalleryThumb.isActive{
+  border-color:var(--accent);
+  box-shadow:0 0 0 1px var(--accent) inset;
+}
+
+.productGalleryThumbImage{
+  display:block;
+  width:100%;
+  aspect-ratio:1 / 1;
+  object-fit:cover;
+}
+
+@media (max-width: 720px){
+  .productGalleryMain{
+    border-radius:14px;
+  }
+
+  .productGalleryMainImage{
+    width:100%;
+    height:auto;
+    max-height:none;
+    object-fit:contain;
+  }
+
+  .productGalleryThumbs{
+    grid-template-columns:repeat(3, minmax(0, 1fr));
+    gap:8px;
+  }
+
+  .productGalleryThumb{
+    border-radius:12px;
+  }
+}
