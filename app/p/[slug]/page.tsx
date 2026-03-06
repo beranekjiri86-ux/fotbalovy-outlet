@@ -93,13 +93,14 @@ export default async function ProductPage({ params }: { params: { slug: string }
           <div>
             <b>Původní cena:</b> {money((product as any).original_price ?? null)}
           </div>
-        </div>
-      </div>
 
-      <ProductGallery name={(product as any).name} images={uniqueImages} />
+          </div>
+           </div>
 
-      {isShoesCategory((product as any).category ?? null) ? (
-        <div className="card" style={{ marginTop: 12, padding: 12, display: "grid", gap: 6 }}>
+           <ProductGallery name={(product as any).name} images={uniqueImages} />
+
+          {isShoesCategory((product as any).category ?? null) ? (
+          <div className="card" style={{ marginTop: 12, padding: 12, display: "grid", gap: 6 }}>
           <div style={{ fontWeight: 800 }}>Velikosti</div>
           <div className="small muted">
             <b>EU:</b> {formatEUSize((product as any).size_eu ?? null)}
