@@ -91,7 +91,6 @@ function makeEmptyProduct(): Product {
 async function normalizeImageFile(inputFile: File): Promise<File> {
   let file = inputFile;
 
-  // 1) HEIC -> JPEG
   if (file.type === "image/heic" || file.type === "image/heif" || file.name.toLowerCase().endsWith(".heic")) {
     const converted = await heic2any({
       blob: file,
@@ -108,7 +107,6 @@ async function normalizeImageFile(inputFile: File): Promise<File> {
     );
   }
 
-  // 2) resize + převod do WebP
   const bitmapUrl = URL.createObjectURL(file);
 
   try {
@@ -169,10 +167,18 @@ async function normalizeImageFile(inputFile: File): Promise<File> {
 export default function AdminProductEditClient({ id }: { id: string }) {
   const router = useRouter();
   const isNew = id === "new";
+  const [isMobile, setIsMobile] = useState(false);
 
   const [p, setP] = useState<Product | null>(isNew ? makeEmptyProduct() : null);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 800);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   useEffect(() => {
     if (isNew) return;
@@ -436,7 +442,7 @@ export default function AdminProductEditClient({ id }: { id: string }) {
   if (!p) return <div>Načítám...</div>;
 
   return (
-    <div style={{ display: "grid", gap: 14 }}>
+    <div style={{ display: "grid", gap: 14, width: "100%", minWidth: 0 }}>
       {msg ? (
         <div
           style={{
@@ -444,51 +450,71 @@ export default function AdminProductEditClient({ id }: { id: string }) {
             border: "1px solid var(--border)",
             borderRadius: 12,
             background: "var(--card)",
+            width: "100%",
+            minWidth: 0,
+            wordBreak: "break-word",
           }}
         >
           {msg}
         </div>
       ) : null}
 
-      <div style={{ display: "grid", gap: 8 }}>
-        <div style={{ fontWeight: 800, fontSize: 18 }}>{isNew ? "Nový produkt" : p.name}</div>
-        <div style={{ opacity: 0.8, fontSize: 13 }}>
+      <div style={{ display: "grid", gap: 8, minWidth: 0 }}>
+        <div style={{ fontWeight: 800, fontSize: 18, wordBreak: "break-word" }}>
+          {isNew ? "Nový produkt" : p.name}
+        </div>
+        <div style={{ opacity: 0.8, fontSize: 13, wordBreak: "break-word" }}>
           {p.brand ?? ""} {p.article_code ? `• ${p.article_code}` : ""}
         </div>
       </div>
 
-      <label style={{ display: "grid", gap: 6 }}>
+      <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
         Název
         <input
           value={p.name}
           onChange={(e) => setP({ ...p, name: e.target.value })}
           placeholder="Např. Nike Mercurial Vapor 15"
+          style={{ width: "100%", minWidth: 0 }}
         />
       </label>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-        <label style={{ display: "grid", gap: 6 }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+          gap: 10,
+          width: "100%",
+          minWidth: 0,
+        }}
+      >
+        <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
           Kód artiklu
           <input
             value={p.article_code ?? ""}
             onChange={(e) => setP({ ...p, article_code: e.target.value || null })}
             placeholder="DJ4977-780"
+            style={{ width: "100%", minWidth: 0 }}
           />
         </label>
 
-        <label style={{ display: "grid", gap: 6 }}>
+        <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
           Značka
           <input
             value={p.brand ?? ""}
             onChange={(e) => setP({ ...p, brand: e.target.value || null })}
             placeholder="Nike / adidas / Puma"
+            style={{ width: "100%", minWidth: 0 }}
           />
         </label>
       </div>
 
-      <label style={{ display: "grid", gap: 6 }}>
+      <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
         Kategorie
-        <select value={p.category ?? ""} onChange={(e) => setP({ ...p, category: e.target.value || null })}>
+        <select
+          value={p.category ?? ""}
+          onChange={(e) => setP({ ...p, category: e.target.value || null })}
+          style={{ width: "100%", minWidth: 0 }}
+        >
           <option value="">— vyber —</option>
           {CATEGORIES.map((c) => (
             <option key={c} value={c}>
@@ -499,12 +525,16 @@ export default function AdminProductEditClient({ id }: { id: string }) {
       </label>
 
       {isShoesCategory(p.category) ? (
-        <div className="card" style={{ display: "grid", gap: 10, padding: 12 }}>
-          <div style={{ fontWeight: 800 }}>Kopačky / běžecké boty / tenisky</div>
+        <div className="card" style={{ display: "grid", gap: 10, padding: 12, minWidth: 0 }}>
+          <div style={{ fontWeight: 800, wordBreak: "break-word" }}>Kopačky / běžecké boty / tenisky</div>
 
-          <label style={{ display: "grid", gap: 6 }}>
+          <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
             Typ povrchu
-            <select value={p.boot_type ?? ""} onChange={(e) => setP({ ...p, boot_type: e.target.value || null })}>
+            <select
+              value={p.boot_type ?? ""}
+              onChange={(e) => setP({ ...p, boot_type: e.target.value || null })}
+              style={{ width: "100%", minWidth: 0 }}
+            >
               <option value="">— vyber —</option>
               {BOOT_TYPES.map((t) => (
                 <option key={t} value={t}>
@@ -514,34 +544,45 @@ export default function AdminProductEditClient({ id }: { id: string }) {
             </select>
           </label>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
-            <label style={{ display: "grid", gap: 6 }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr",
+              gap: 10,
+              width: "100%",
+              minWidth: 0,
+            }}
+          >
+            <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
               EU
               <input
                 type="number"
                 step="0.01"
                 value={p.size_eu ?? ""}
                 onChange={(e) => setP({ ...p, size_eu: e.target.value === "" ? null : Number(e.target.value) })}
+                style={{ width: "100%", minWidth: 0 }}
               />
             </label>
 
-            <label style={{ display: "grid", gap: 6 }}>
+            <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
               UK
               <input
                 type="number"
                 step="0.01"
                 value={p.size_uk ?? ""}
                 onChange={(e) => setP({ ...p, size_uk: e.target.value === "" ? null : Number(e.target.value) })}
+                style={{ width: "100%", minWidth: 0 }}
               />
             </label>
 
-            <label style={{ display: "grid", gap: 6 }}>
+            <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
               CM
               <input
                 type="number"
                 step="0.1"
                 value={p.size_cm ?? ""}
                 onChange={(e) => setP({ ...p, size_cm: e.target.value === "" ? null : Number(e.target.value) })}
+                style={{ width: "100%", minWidth: 0 }}
               />
             </label>
           </div>
@@ -549,13 +590,14 @@ export default function AdminProductEditClient({ id }: { id: string }) {
       ) : null}
 
       {p.category === "rukavice" ? (
-        <label style={{ display: "grid", gap: 6 }}>
+        <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
           Velikost rukavic
           <select
             value={p.velikost_rukavic ?? ""}
             onChange={(e) =>
               setP({ ...p, velikost_rukavic: e.target.value === "" ? null : Number(e.target.value) })
             }
+            style={{ width: "100%", minWidth: 0 }}
           >
             <option value="">— vyber —</option>
             {GLOVE_SIZES.map((s) => (
@@ -568,14 +610,15 @@ export default function AdminProductEditClient({ id }: { id: string }) {
       ) : null}
 
       {p.category === "dresy" || p.category === "oblečení" ? (
-        <div className="card" style={{ display: "grid", gap: 10, padding: 12 }}>
-          <div style={{ fontWeight: 800 }}>Dresy / oblečení</div>
+        <div className="card" style={{ display: "grid", gap: 10, padding: 12, minWidth: 0 }}>
+          <div style={{ fontWeight: 800, wordBreak: "break-word" }}>Dresy / oblečení</div>
 
-          <label style={{ display: "grid", gap: 6 }}>
+          <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
             Velikost oblečení
             <select
               value={(p.velikost_obleceni ?? "").toUpperCase()}
               onChange={(e) => setP({ ...p, velikost_obleceni: e.target.value || null })}
+              style={{ width: "100%", minWidth: 0 }}
             >
               <option value="">— vyber —</option>
               {APPAREL_SIZES.map((s) => (
@@ -587,22 +630,35 @@ export default function AdminProductEditClient({ id }: { id: string }) {
           </label>
 
           {p.category === "oblečení" ? (
-            <label style={{ display: "grid", gap: 6 }}>
+            <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
               Typ oblečení
               <input
                 value={p.typ_obleceni ?? ""}
                 onChange={(e) => setP({ ...p, typ_obleceni: e.target.value || null })}
                 placeholder="mikina / bunda / tričko..."
+                style={{ width: "100%", minWidth: 0 }}
               />
             </label>
           ) : null}
         </div>
       ) : null}
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-        <label style={{ display: "grid", gap: 6 }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+          gap: 10,
+          width: "100%",
+          minWidth: 0,
+        }}
+      >
+        <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
           Stav
-          <select value={p.condition ?? ""} onChange={(e) => setP({ ...p, condition: e.target.value || null })}>
+          <select
+            value={p.condition ?? ""}
+            onChange={(e) => setP({ ...p, condition: e.target.value || null })}
+            style={{ width: "100%", minWidth: 0 }}
+          >
             <option value="">—</option>
             {CONDITIONS.map((c) => (
               <option key={c} value={c}>
@@ -612,9 +668,13 @@ export default function AdminProductEditClient({ id }: { id: string }) {
           </select>
         </label>
 
-        <label style={{ display: "grid", gap: 6 }}>
+        <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
           Status
-          <select value={p.status ?? "available"} onChange={(e) => setP({ ...p, status: e.target.value || null })}>
+          <select
+            value={p.status ?? "available"}
+            onChange={(e) => setP({ ...p, status: e.target.value || null })}
+            style={{ width: "100%", minWidth: 0 }}
+          >
             {STATUSES.map((s) => (
               <option key={s} value={s}>
                 {s}
@@ -624,36 +684,47 @@ export default function AdminProductEditClient({ id }: { id: string }) {
         </label>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-        <label style={{ display: "grid", gap: 6 }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+          gap: 10,
+          width: "100%",
+          minWidth: 0,
+        }}
+      >
+        <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
           Prodejní cena
           <input
             type="number"
             value={p.sale_price ?? ""}
             onChange={(e) => setP({ ...p, sale_price: e.target.value === "" ? null : Number(e.target.value) })}
+            style={{ width: "100%", minWidth: 0 }}
           />
         </label>
 
-        <label style={{ display: "grid", gap: 6 }}>
+        <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
           Původní cena
           <input
             type="number"
             value={p.original_price ?? ""}
             onChange={(e) => setP({ ...p, original_price: e.target.value === "" ? null : Number(e.target.value) })}
+            style={{ width: "100%", minWidth: 0 }}
           />
         </label>
       </div>
 
-      <label style={{ display: "grid", gap: 6 }}>
+      <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
         Popis / poznámka
         <textarea
           value={p.note ?? ""}
           onChange={(e) => setP({ ...p, note: e.target.value || null })}
           rows={5}
+          style={{ width: "100%", minWidth: 0 }}
         />
       </label>
 
-      <div className="card" style={{ display: "grid", gap: 10, padding: 12 }}>
+      <div className="card" style={{ display: "grid", gap: 10, padding: 12, minWidth: 0 }}>
         <div style={{ fontWeight: 800 }}>Fotky (max 10)</div>
 
         {p.id === "new" ? (
@@ -676,13 +747,30 @@ export default function AdminProductEditClient({ id }: { id: string }) {
                 e.currentTarget.value = "";
               }, 50);
             }}
+            style={{ width: "100%", minWidth: 0 }}
           />
         )}
 
         {gallery.length ? (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(3, 1fr)",
+              gap: 8,
+              width: "100%",
+              minWidth: 0,
+            }}
+          >
             {gallery.map((url) => (
-              <div key={url} style={{ border: "1px solid var(--border)", borderRadius: 12, overflow: "hidden" }}>
+              <div
+                key={url}
+                style={{
+                  border: "1px solid var(--border)",
+                  borderRadius: 12,
+                  overflow: "hidden",
+                  minWidth: 0,
+                }}
+              >
                 <img
                   src={url}
                   alt=""
@@ -705,7 +793,14 @@ export default function AdminProductEditClient({ id }: { id: string }) {
         )}
       </div>
 
-      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+      <div
+        style={{
+          display: "flex",
+          gap: 10,
+          flexWrap: "wrap",
+          width: "100%",
+        }}
+      >
         {!isNew ? (
           <button
             type="button"
@@ -717,6 +812,7 @@ export default function AdminProductEditClient({ id }: { id: string }) {
               border: "1px solid #dc2626",
               color: "#dc2626",
               background: "transparent",
+              width: isMobile ? "100%" : "auto",
             }}
           >
             Smazat produkt
@@ -728,7 +824,10 @@ export default function AdminProductEditClient({ id }: { id: string }) {
           onClick={save}
           disabled={saving}
           className="btn btnPrimary"
-          style={{ padding: 12 }}
+          style={{
+            padding: 12,
+            width: isMobile ? "100%" : "auto",
+          }}
         >
           {saving ? (isNew ? "Vytvářím..." : "Ukládám...") : isNew ? "Vytvořit produkt" : "Uložit změny"}
         </button>
