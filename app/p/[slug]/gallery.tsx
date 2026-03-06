@@ -1,20 +1,28 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+
+type ProductGalleryProps = {
+  name: string;
+  images: string[];
+};
 
 export default function ProductGallery({
   name,
   images,
-}: {
-  name: string;
-  images: string[];
-}) {
-  const safeImages = useMemo(
-    () => images.filter((x) => typeof x === "string" && x.trim().length > 0),
-    [images]
-  );
+}: ProductGalleryProps) {
+  const safeImages = useMemo(() => {
+    if (!Array.isArray(images)) return [];
+    return images.filter(
+      (x): x is string => typeof x === "string" && x.trim().length > 0
+    );
+  }, [images]);
 
-  const [selected, setSelected] = useState(safeImages[0] ?? null);
+  const [selected, setSelected] = useState<string | null>(safeImages[0] ?? null);
+
+  useEffect(() => {
+    setSelected(safeImages[0] ?? null);
+  }, [safeImages]);
 
   if (!safeImages.length || !selected) {
     return (
@@ -32,6 +40,9 @@ export default function ProductGallery({
           alt={name}
           loading="eager"
           className="productGalleryMainImage"
+          onError={(e) => {
+            e.currentTarget.src = "/no-photo.png";
+          }}
         />
       </div>
 
@@ -53,6 +64,9 @@ export default function ProductGallery({
                   alt={`${name} ${index + 1}`}
                   loading="lazy"
                   className="productGalleryThumbImage"
+                  onError={(e) => {
+                    e.currentTarget.src = "/no-photo.png";
+                  }}
                 />
               </button>
             );
