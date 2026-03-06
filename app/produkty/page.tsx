@@ -31,9 +31,8 @@ function toggle(values: string[], v: string) {
   return values.includes(v) ? values.filter((x) => x !== v) : [...values, v];
 }
 
-/** EU velikosti jako zlomek: 41.5 -> 41 1/2, 41.33 -> 41 1/3, 41.67 -> 41 2/3 */
-function formatEUSize(n: number | null) {
-  if (n == null || !Number.isFinite(n)) return "";
+function formatEUSize(n: number) {
+  if (!Number.isFinite(n)) return "";
   const whole = Math.floor(n);
   if (Math.abs(n - (whole + 0.5)) < 0.02) return `${whole} 1/2`;
   if (Math.abs(n - (whole + 1 / 3)) < 0.03) return `${whole} 1/3`;
@@ -57,6 +56,11 @@ export default async function Produkty({ searchParams }: SP) {
   const q = getString(searchParams, "q");
   const category = getString(searchParams, "cat");
 
+  const isShoesCategory =
+    category === "kopačky" ||
+    category === "běžecké boty" ||
+    category === "tenisky";
+
   const condition = getMulti(searchParams, "cond");
   const brands = getMulti(searchParams, "brand");
 
@@ -69,7 +73,6 @@ export default async function Produkty({ searchParams }: SP) {
 
   const supabase = createSupabaseServerClient();
 
-  // hodnoty pro filtry (distinct)
   const [
     { data: brandsRows },
     { data: sizesEURows },
@@ -87,27 +90,21 @@ export default async function Produkty({ searchParams }: SP) {
     supabase.from("products").select("velikost_rukavic").not("velikost_rukavic", "is", null),
   ]);
 
-  const allBrands = Array.from(new Set((brandsRows ?? []).map((r) => (r as any).brand).filter(Boolean))).sort(
-    (a: string, b: string) => a.localeCompare(b, "cs")
-  );
+  const allBrands = Array.from(
+    new Set((brandsRows ?? []).map((r) => (r as any).brand).filter(Boolean))
+  ).sort((a: string, b: string) => a.localeCompare(b, "cs"));
 
-  if (isShoesCategory) {
-  if (boot.length) query = query.in("boot_type", boot);
-
-  if (sizeEU.length) {
-    const nums = sizeEU.map(parseEUSizeLabel).filter((n) => Number.isFinite(n));
-
-    if (nums.length) {
-      const parts = nums.map((n) => {
-        const min = Number((n - 0.02).toFixed(2));
-        const max = Number((n + 0.02).toFixed(2));
-        return `and(size_eu.gte.${min},size_eu.lte.${max})`;
-      });
-
-      query = query.or(parts.join(","));
-    }
-  }
-}
+  const allSizesEU = Array.from(
+    new Set(
+      (sizesEURows ?? [])
+        .map((r) => (r as any).size_eu)
+        .filter((x: any) => x !== null)
+        .map((x: any) => Number(x))
+        .filter((n) => Number.isFinite(n))
+        .map((n) => formatEUSize(n))
+        .filter(Boolean)
+    )
+  ).sort((a, b) => parseEUSizeLabel(a) - parseEUSizeLabel(b));
 
   const allApparelSizes = Array.from(
     new Set((apparelSizeRows ?? []).map((r) => (r as any).velikost_obleceni).filter(Boolean))
@@ -116,7 +113,8 @@ export default async function Produkty({ searchParams }: SP) {
     .filter((s: string) => (APPAREL_SIZES as readonly string[]).includes(s))
     .sort(
       (a: string, b: string) =>
-        (APPAREL_SIZES as readonly string[]).indexOf(a) - (APPAREL_SIZES as readonly string[]).indexOf(b)
+        (APPAREL_SIZES as readonly string[]).indexOf(a) -
+        (APPAREL_SIZES as readonly string[]).indexOf(b)
     );
 
   const allApparelTypes = Array.from(
@@ -133,40 +131,37 @@ export default async function Produkty({ searchParams }: SP) {
     .filter((n) => Number.isFinite(n))
     .sort((a, b) => a - b);
 
-  // dotaz na produkty
   let query = supabase
     .from("products")
     .select("*")
     .in("status", ["available", "reserved"])
     .order("sale_price", { ascending: true });
 
-  if (q) query = query.or(`name.ilike.%${q}%,article_code.ilike.%${q}%,brand.ilike.%${q}%`);
+  if (q) {
+    query = query.or(`name.ilike.%${q}%,article_code.ilike.%${q}%,brand.ilike.%${q}%`);
+  }
+
   if (category) query = query.eq("category", category);
   if (condition.length) query = query.in("condition", condition);
   if (brands.length) query = query.in("brand", brands);
 
-  const isShoesCategory =
-  category === "kopačky" ||
-  category === "běžecké boty" ||
-  category === "tenisky";
+  if (isShoesCategory) {
+    if (boot.length) query = query.in("boot_type", boot);
 
-if (isShoesCategory) {
-  if (boot.length) query = query.in("boot_type", boot);
+    if (sizeEU.length) {
+      const nums = sizeEU.map(parseEUSizeLabel).filter((n) => Number.isFinite(n));
 
-  if (sizeEU.length) {
-    const nums = sizeEU.map(parseEUSizeLabel).filter((n) => Number.isFinite(n));
+      if (nums.length) {
+        const parts = nums.map((n) => {
+          const min = Number((n - 0.02).toFixed(2));
+          const max = Number((n + 0.02).toFixed(2));
+          return `and(size_eu.gte.${min},size_eu.lte.${max})`;
+        });
 
-    if (nums.length) {
-      const parts = nums.map((n) => {
-        const min = Number((n - 0.02).toFixed(2));
-        const max = Number((n + 0.02).toFixed(2));
-        return `and(size_eu.gte.${min},size_eu.lte.${max})`;
-      });
-
-      query = query.or(parts.join(","));
+        query = query.or(parts.join(","));
+      }
     }
   }
-}
 
   if (category === "rukavice") {
     if (gloveSize.length) {
@@ -176,7 +171,9 @@ if (isShoesCategory) {
   }
 
   if (category === "dresy" || category === "oblečení") {
-    if (apparelSize.length) query = query.in("velikost_obleceni", apparelSize.map((x) => x.toUpperCase()));
+    if (apparelSize.length) {
+      query = query.in("velikost_obleceni", apparelSize.map((x) => x.toUpperCase()));
+    }
   }
 
   if (category === "oblečení") {
@@ -186,7 +183,6 @@ if (isShoesCategory) {
   const { data } = await query;
   const products = (data ?? []) as unknown as Product[];
 
-  // URL helper
   const base = new URL("https://example.local/produkty");
   const urlFor = (up: (u: URL) => void) => {
     const u = new URL(base.toString());
@@ -217,24 +213,13 @@ if (isShoesCategory) {
   const showApparelTypeFilters = category === "oblečení";
 
   return (
-    <div style={{ paddingTop: 16 }}>
+    <div className="container" style={{ paddingTop: 16 }}>
       <div className="row" style={{ justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-        <h1 className="h1" style={{ marginBottom: 0 }}>
-          Produkty
-        </h1>
+        <h1 className="h1" style={{ marginBottom: 0 }}>Produkty</h1>
         <div className="badge">{products.length} ks</div>
       </div>
 
-      {/* ✅ RESPONSIVE: na mobilu 1 sloupec */}
-      <div
-        style={{
-          display: "grid",
-          gap: 18,
-          alignItems: "start",
-          gridTemplateColumns: "280px 1fr",
-        }}
-      >
-        {/* FILTRY */}
+      <div style={{ display: "grid", gridTemplateColumns: "280px 1fr", gap: 18, alignItems: "start" }}>
         <div
           className="card"
           style={{
@@ -244,16 +229,9 @@ if (isShoesCategory) {
             overflow: "auto",
           }}
         >
-          {/* Mobilní rychlý přehled */}
-          <div className="small muted" style={{ marginBottom: 8 }}>
-            Tip: na mobilu se filtry zobrazí nahoře.
-          </div>
-
           <form action="/produkty" method="get" className="filters">
             <input name="q" defaultValue={q} placeholder="Hledat (název / kód / značka)..." />
-            <button className="btn" type="submit">
-              Hledat
-            </button>
+            <button className="btn" type="submit">Hledat</button>
 
             {category ? <input type="hidden" name="cat" value={category} /> : null}
             {condition.length ? <input type="hidden" name="cond" value={condition.join(",")} /> : null}
@@ -266,9 +244,8 @@ if (isShoesCategory) {
           </form>
 
           <div className="hr" />
-          <Link className="btn" href={urlFor((u) => (u.search = ""))}>
-            Reset filtrů
-          </Link>
+
+          <Link className="btn" href={urlFor((u) => (u.search = ""))}>Reset filtrů</Link>
 
           <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
             <details open>
@@ -317,7 +294,7 @@ if (isShoesCategory) {
                 </div>
               ) : (
                 <div className="small muted" style={{ marginTop: 10 }}>
-                  Žádné značky – zkontroluj DB sloupec <b>brand</b>.
+                  Žádné značky – zkontroluj, že máš v DB vyplněný sloupec <b>brand</b>.
                 </div>
               )}
             </details>
@@ -342,15 +319,15 @@ if (isShoesCategory) {
                 <details>
                   <summary style={{ fontWeight: 800, cursor: "pointer" }}>Velikost EU</summary>
                   <div className="filters" style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 8 }}>
-                {allSizesEU.map((label) => (
-  <Link
-    key={label}
-    className={"btn" + (sizeEU.includes(label) ? " btnPrimary" : "")}
-    href={urlFor((u) => qpSet(u, "eu", toggle(sizeEU, label)))}
-  >
-    EU {label}
-  </Link>
-))}
+                    {allSizesEU.map((label) => (
+                      <Link
+                        key={label}
+                        className={"btn" + (sizeEU.includes(label) ? " btnPrimary" : "")}
+                        href={urlFor((u) => qpSet(u, "eu", toggle(sizeEU, label)))}
+                      >
+                        EU {label}
+                      </Link>
+                    ))}
                   </div>
                 </details>
               </>
@@ -418,7 +395,6 @@ if (isShoesCategory) {
           </div>
         </div>
 
-        {/* PRODUKTY */}
         <div className="productGrid">
           {products.map((p: any) => (
             <Link key={p.id} href={`/p/${p.slug}`} className="card product">
@@ -427,7 +403,7 @@ if (isShoesCategory) {
                   src={p.image_url ?? "/no-photo.png"}
                   alt={p.name}
                   loading="lazy"
-                  style={{ width: "100%", height: "220px", objectFit: "cover", display: "block" }}
+                  style={{ width: "100%", height: "220px", objectFit: "cover" }}
                 />
               </div>
 
@@ -436,7 +412,7 @@ if (isShoesCategory) {
               <div className="tagRow">
                 <span className="tag">{p.category}</span>
                 {p.brand ? <span className="tag">{p.brand}</span> : null}
-                {/* ✅ boot_type v kartě NEukazujeme */}
+                {p.boot_type ? <span className="tag">{p.boot_type}</span> : null}
                 {p.size_eu ? <span className="tag">EU {formatEUSize(Number(p.size_eu))}</span> : null}
                 {p.velikost_rukavic ? <span className="tag">Rukavice {p.velikost_rukavic}</span> : null}
                 {p.velikost_obleceni ? <span className="tag">{String(p.velikost_obleceni).toUpperCase()}</span> : null}
@@ -450,25 +426,11 @@ if (isShoesCategory) {
                 {p.original_price ? <span className="priceOld">{Math.round(p.original_price)} Kč</span> : null}
               </div>
 
-              {p.article_code ? <div className="small">Kód: {p.article_code}</div> : null}
+              <div className="small">Kód: {p.article_code}</div>
             </Link>
           ))}
         </div>
       </div>
-
-      {/* ✅ extra CSS pouze pro tuto stránku */}
-      <style>{`
-        @media (max-width: 980px) {
-          div[style*="grid-template-columns: 280px 1fr"] {
-            grid-template-columns: 1fr !important;
-          }
-          .card[style*="position: sticky"]{
-            position: relative !important;
-            top: auto !important;
-            max-height: none !important;
-          }
-        }
-      `}</style>
     </div>
   );
 }
