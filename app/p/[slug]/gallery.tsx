@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 export default function ProductGallery({
   name,
@@ -9,9 +9,14 @@ export default function ProductGallery({
   name: string;
   images: string[];
 }) {
-  const [selected, setSelected] = useState(images[0] ?? null);
+  const safeImages = useMemo(
+    () => images.filter((x) => typeof x === "string" && x.trim().length > 0),
+    [images]
+  );
 
-  if (!images.length || !selected) {
+  const [selected, setSelected] = useState(safeImages[0] ?? null);
+
+  if (!safeImages.length || !selected) {
     return (
       <div className="card small muted" style={{ marginTop: 12, padding: 12 }}>
         Bez fotky.
@@ -21,65 +26,33 @@ export default function ProductGallery({
 
   return (
     <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
-      
-      {/* hlavní fotka */}
-      <div
-        className="card"
-        style={{
-          overflow: "hidden",
-          borderRadius: 12,
-        }}
-      >
+      <div className="productGalleryMain">
         <img
           src={selected}
           alt={name}
           loading="eager"
-          style={{
-            width: "100%",
-            height: "520px",
-            objectFit: "cover",
-            display: "block",
-          }}
+          className="productGalleryMainImage"
         />
       </div>
 
-      {/* galerie */}
-      {images.length > 1 ? (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(90px, 1fr))",
-            gap: 8,
-          }}
-        >
-          {images.map((url) => {
+      {safeImages.length > 1 ? (
+        <div className="productGalleryThumbs">
+          {safeImages.map((url, index) => {
             const active = url === selected;
 
             return (
               <button
-                key={url}
+                key={`${url}-${index}`}
                 type="button"
                 onClick={() => setSelected(url)}
-                style={{
-                  padding: 0,
-                  borderRadius: 10,
-                  overflow: "hidden",
-                  border: active
-                    ? "2px solid var(--text)"
-                    : "1px solid var(--border)",
-                  cursor: "pointer",
-                }}
+                className={`productGalleryThumb${active ? " isActive" : ""}`}
+                aria-label={`Zobrazit fotku ${index + 1}`}
               >
                 <img
                   src={url}
-                  alt=""
+                  alt={`${name} ${index + 1}`}
                   loading="lazy"
-                  style={{
-                    width: "100%",
-                    height: "90px",
-                    objectFit: "cover",
-                    display: "block",
-                  }}
+                  className="productGalleryThumbImage"
                 />
               </button>
             );
