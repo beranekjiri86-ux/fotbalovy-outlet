@@ -69,7 +69,7 @@ function badgeStyle(active?: boolean) {
 
 export default function AdminProductsClient() {
   const [q, setQ] = useState("");
-  const [rows, setRows] = useState<ProductRow[]>([]);
+  const [rows, ] = useState<ProductRow[]>([]);
   const [loading, setLoading] = useState(false);
 
   // filtry
@@ -119,14 +119,14 @@ export default function AdminProductsClient() {
 
       if (!alive) return;
 
-      if (error) {
+            if (error) {
         console.error(error);
         setRows([]);
         setLoading(false);
         return;
       }
 
-      setRows((data ?? []) as ProductRow[]);
+      setRows(((data ?? []) as unknown) as ProductRow[]);
       setLoading(false);
     })();
 
