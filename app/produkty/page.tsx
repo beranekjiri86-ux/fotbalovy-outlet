@@ -1,9 +1,8 @@
 export const revalidate = 300;
 
-import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { Product } from "@/lib/types";
-import LiveSearch from "./LiveSearch";
+import ProductsClient from "./ProductsClient";
 
 type SP = { searchParams?: Record<string, string | string[] | undefined> };
 
@@ -18,20 +17,6 @@ function getMulti(sp: SP["searchParams"], key: string): string[] {
   if (!v) return [];
   if (Array.isArray(v)) return v.flatMap((x) => x.split(",")).filter(Boolean);
   return v.split(",").filter(Boolean);
-}
-
-function qpSet(url: URL, key: string, values: string[] | string) {
-  if (Array.isArray(values)) {
-    if (values.length) url.searchParams.set(key, values.join(","));
-    else url.searchParams.delete(key);
-  } else {
-    if (values) url.searchParams.set(key, values);
-    else url.searchParams.delete(key);
-  }
-}
-
-function toggle(values: string[], v: string) {
-  return values.includes(v) ? values.filter((x) => x !== v) : [...values, v];
 }
 
 function formatEUSize(n: number) {
@@ -66,10 +51,8 @@ export default async function Produkty({ searchParams }: SP) {
 
   const condition = getMulti(searchParams, "cond");
   const brands = getMulti(searchParams, "brand");
-
   const boot = getMulti(searchParams, "boot");
   const sizeEU = getMulti(searchParams, "eu");
-
   const apparelSize = getMulti(searchParams, "as");
   const apparelType = getMulti(searchParams, "at");
   const gloveSize = getMulti(searchParams, "gs");
@@ -157,10 +140,6 @@ export default async function Produkty({ searchParams }: SP) {
     .in("status", ["available", "reserved"])
     .order("sale_price", { ascending: true });
 
-  if (q) {
-    query = query.or(`name.ilike.%${q}%,article_code.ilike.%${q}%,brand.ilike.%${q}%`);
-  }
-
   if (category) query = query.eq("category", category);
   if (condition.length) query = query.in("condition", condition);
   if (brands.length) query = query.in("brand", brands);
@@ -170,14 +149,12 @@ export default async function Produkty({ searchParams }: SP) {
 
     if (sizeEU.length) {
       const nums = sizeEU.map(parseEUSizeLabel).filter((n) => Number.isFinite(n));
-
       if (nums.length) {
         const parts = nums.map((n) => {
           const min = Number((n - 0.02).toFixed(2));
           const max = Number((n + 0.02).toFixed(2));
           return `and(size_eu.gte.${min},size_eu.lte.${max})`;
         });
-
         query = query.or(parts.join(","));
       }
     }
@@ -203,249 +180,24 @@ export default async function Produkty({ searchParams }: SP) {
   const { data } = await query;
   const products = (data ?? []) as unknown as Product[];
 
-  const base = new URL("https://example.local/produkty");
-  const urlFor = (up: (u: URL) => void) => {
-    const u = new URL(base.toString());
-
-    if (q) u.searchParams.set("q", q);
-    if (category) u.searchParams.set("cat", category);
-
-    if (condition.length) u.searchParams.set("cond", condition.join(","));
-    if (brands.length) u.searchParams.set("brand", brands.join(","));
-
-    if (boot.length) u.searchParams.set("boot", boot.join(","));
-    if (sizeEU.length) u.searchParams.set("eu", sizeEU.join(","));
-
-    if (apparelSize.length) u.searchParams.set("as", apparelSize.join(","));
-    if (apparelType.length) u.searchParams.set("at", apparelType.join(","));
-
-    if (gloveSize.length) u.searchParams.set("gs", gloveSize.join(","));
-
-    up(u);
-    return u.pathname + (u.search ? u.search : "");
-  };
-
-  const cats = ["kopačky", "běžecké boty", "tenisky", "rukavice", "dresy", "oblečení"];
-
-  const showShoesFilters = isShoesCategory;
-  const showGloveFilters = category === "rukavice";
-  const showApparelSizeFilters = category === "dresy" || category === "oblečení";
-  const showApparelTypeFilters = category === "oblečení";
-
   return (
-    <div className="container" style={{ paddingTop: 16, paddingBottom: 24 }}>
-      <div
-        className="row"
-        style={{
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 16,
-          gap: 10,
-          flexWrap: "wrap",
-        }}
-      >
-        <h1 className="h1" style={{ marginBottom: 0 }}>Produkty</h1>
-        <div className="badge">{products.length} ks</div>
-      </div>
-
-      <div style={{ marginBottom: 14 }}>
-        <LiveSearch
-          initialValue={q}
-          placeholder="Hledat produkty..."
-        />
-      </div>
-
-      <div className="productsLayout">
-        <div className="card filtersCard">
-          <Link className="btn" href={urlFor((u) => (u.search = ""))}>
-            Reset filtrů
-          </Link>
-
-          <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
-            <details open>
-              <summary style={{ fontWeight: 800, cursor: "pointer" }}>Kategorie</summary>
-              <div className="filters" style={{ marginTop: 10 }}>
-                {cats.map((c) => (
-                  <Link
-                    key={c}
-                    className={"btn" + (category === c ? " btnPrimary" : "")}
-                    href={urlFor((u) => qpSet(u, "cat", category === c ? "" : c))}
-                  >
-                    {c}
-                  </Link>
-                ))}
-              </div>
-            </details>
-
-            <details open>
-              <summary style={{ fontWeight: 800, cursor: "pointer" }}>Stav</summary>
-              <div className="filters" style={{ marginTop: 10 }}>
-                {(["nové", "použité"] as const).map((c) => (
-                  <Link
-                    key={c}
-                    className={"btn" + (condition.includes(c) ? " btnPrimary" : "")}
-                    href={urlFor((u) => qpSet(u, "cond", toggle(condition, c)))}
-                  >
-                    {c}
-                  </Link>
-                ))}
-              </div>
-            </details>
-
-            <details open>
-              <summary style={{ fontWeight: 800, cursor: "pointer" }}>Značka</summary>
-              {allBrands.length ? (
-                <div className="filters" style={{ marginTop: 10, maxHeight: 260, overflow: "auto", paddingRight: 6 }}>
-                  {allBrands.map((b) => (
-                    <Link
-                      key={b}
-                      className={"btn" + (brands.includes(b) ? " btnPrimary" : "")}
-                      href={urlFor((u) => qpSet(u, "brand", toggle(brands, b)))}
-                    >
-                      {b}
-                    </Link>
-                  ))}
-                </div>
-              ) : (
-                <div className="small muted" style={{ marginTop: 10 }}>
-                  Žádné značky – zkontroluj, že máš v DB vyplněný sloupec <b>brand</b>.
-                </div>
-              )}
-            </details>
-
-            {showShoesFilters ? (
-              <>
-                <details open>
-                  <summary style={{ fontWeight: 800, cursor: "pointer" }}>Typ / povrch</summary>
-                  <div className="filters" style={{ marginTop: 10 }}>
-                    {(["FG", "AG", "SG", "TF", "IC"] as const).map((t) => (
-                      <Link
-                        key={t}
-                        className={"btn" + (boot.includes(t) ? " btnPrimary" : "")}
-                        href={urlFor((u) => qpSet(u, "boot", toggle(boot, t)))}
-                      >
-                        {t}
-                      </Link>
-                    ))}
-                  </div>
-                </details>
-
-                <details>
-                  <summary style={{ fontWeight: 800, cursor: "pointer" }}>Velikost EU</summary>
-                  <div className="filters" style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 8 }}>
-                    {allSizesEU.map((label) => (
-                      <Link
-                        key={label}
-                        className={"btn" + (sizeEU.includes(label) ? " btnPrimary" : "")}
-                        href={urlFor((u) => qpSet(u, "eu", toggle(sizeEU, label)))}
-                      >
-                        EU {label}
-                      </Link>
-                    ))}
-                  </div>
-                </details>
-              </>
-            ) : null}
-
-            {showGloveFilters ? (
-              <details open>
-                <summary style={{ fontWeight: 800, cursor: "pointer" }}>Velikost rukavic</summary>
-                <div className="filters" style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 8 }}>
-                  {(allGloveSizes.length ? allGloveSizes : [...GLOVE_SIZES]).map((s) => {
-                    const ss = String(s);
-                    return (
-                      <Link
-                        key={ss}
-                        className={"btn" + (gloveSize.includes(ss) ? " btnPrimary" : "")}
-                        href={urlFor((u) => qpSet(u, "gs", toggle(gloveSize, ss)))}
-                      >
-                        {ss}
-                      </Link>
-                    );
-                  })}
-                </div>
-              </details>
-            ) : null}
-
-            {showApparelSizeFilters ? (
-              <details open>
-                <summary style={{ fontWeight: 800, cursor: "pointer" }}>Velikost</summary>
-                <div className="filters" style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 8 }}>
-                  {(allApparelSizes.length ? allApparelSizes : [...APPAREL_SIZES]).map((s) => (
-                    <Link
-                      key={s}
-                      className={"btn" + (apparelSize.includes(s) ? " btnPrimary" : "")}
-                      href={urlFor((u) => qpSet(u, "as", toggle(apparelSize, s)))}
-                    >
-                      {s}
-                    </Link>
-                  ))}
-                </div>
-              </details>
-            ) : null}
-
-            {showApparelTypeFilters ? (
-              <details>
-                <summary style={{ fontWeight: 800, cursor: "pointer" }}>Typ oblečení</summary>
-                {allApparelTypes.length ? (
-                  <div className="filters" style={{ marginTop: 10, maxHeight: 220, overflow: "auto", paddingRight: 6 }}>
-                    {allApparelTypes.map((t) => (
-                      <Link
-                        key={t}
-                        className={"btn" + (apparelType.includes(t) ? " btnPrimary" : "")}
-                        href={urlFor((u) => qpSet(u, "at", toggle(apparelType, t)))}
-                      >
-                        {t}
-                      </Link>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="small muted" style={{ marginTop: 10 }}>
-                    Doplň v adminu pár typů (mikina/bunda/…), pak se tu ukážou.
-                  </div>
-                )}
-              </details>
-            ) : null}
-          </div>
-        </div>
-
-        <div className="productGrid productsGridMobile">
-          {products.map((p: any) => (
-            <Link key={p.id} href={`/p/${p.slug}`} className="card productCardLarge">
-              <div className="productThumbLarge">
-                <img
-                  src={p.image_url || "/no-photo.png"}
-                  alt={p.name}
-                  loading="lazy"
-                />
-              </div>
-
-              <div style={{ fontWeight: 800, lineHeight: 1.3, fontSize: 15, minHeight: 40 }}>
-                {p.name}
-              </div>
-
-              <div className="tagRow" style={{ marginTop: 8 }}>
-                <span className="tag">{p.category}</span>
-                {p.brand ? <span className="tag">{p.brand}</span> : null}
-                {p.boot_type ? <span className="tag">{p.boot_type}</span> : null}
-                {p.size_eu ? <span className="tag">EU {formatEUSize(Number(p.size_eu))}</span> : null}
-                {p.velikost_rukavic ? <span className="tag">Rukavice {p.velikost_rukavic}</span> : null}
-                {p.velikost_obleceni ? <span className="tag">{String(p.velikost_obleceni).toUpperCase()}</span> : null}
-                {p.typ_obleceni ? <span className="tag">{p.typ_obleceni}</span> : null}
-                {p.condition ? <span className="tag">{p.condition}</span> : null}
-                {p.status === "reserved" ? <span className="tag">rezervováno</span> : null}
-              </div>
-
-              <div className="priceRow" style={{ marginTop: 10 }}>
-                <span className="price">{Math.round(p.sale_price)} Kč</span>
-                {p.original_price ? <span className="priceOld">{Math.round(p.original_price)} Kč</span> : null}
-              </div>
-
-              <div className="small" style={{ marginTop: 6 }}>Kód: {p.article_code}</div>
-            </Link>
-          ))}
-        </div>
-      </div>
-    </div>
+    <ProductsClient
+      initialQuery={q}
+      initialCategory={category}
+      initialCondition={condition}
+      initialBrands={brands}
+      initialBoot={boot}
+      initialSizeEU={sizeEU}
+      initialApparelSize={apparelSize}
+      initialApparelType={apparelType}
+      initialGloveSize={gloveSize}
+      products={products}
+      allBrands={allBrands}
+      allSizesEU={allSizesEU}
+      allApparelSizes={allApparelSizes}
+      allApparelTypes={allApparelTypes}
+      allGloveSizes={allGloveSizes}
+      cats={["kopačky", "běžecké boty", "tenisky", "rukavice", "dresy", "oblečení"]}
+    />
   );
 }
