@@ -417,3 +417,13 @@ input:focus,select:focus,textarea:focus{border-color:#2e425f}
     padding-top:10px;
   }
 }
+/* handle jako u Zalando */
+
+.drawerHandle{
+  width:42px;
+  height:5px;
+  border-radius:999px;
+  background:var(--border);
+  margin:0 auto 10px auto;
+  opacity:.7;
+}
