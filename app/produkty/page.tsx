@@ -414,16 +414,7 @@ export default async function Produkty({ searchParams }: SP) {
           </div>
         </div>
 
-        <div className="productGrid productsGridMobile">
-          {products.map((p: any) => (
-            <Link key={p.id} href={`/p/${p.slug}`} className="card productCardLarge">
-              <div className="productThumbLarge">
-                <img
-                  src={p.image_url || "/no-photo.png"}
-                  alt={p.name}
-                  loading="lazy"
-                />
-              </div>
+       <ProductsClient products={products as any} initialQuery={q} />
 
               <div style={{ fontWeight: 800, lineHeight: 1.3, fontSize: 15, minHeight: 40 }}>
                 {p.name}
