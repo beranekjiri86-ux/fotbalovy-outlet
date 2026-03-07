@@ -3,7 +3,7 @@ export const revalidate = 300;
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { Product } from "@/lib/types";
-import LiveSearch from "./LiveSearch";
+import ProductsClient from "./ProductsClient";
 type SP = { searchParams?: Record<string, string | string[] | undefined> };
 
 function getString(sp: SP["searchParams"], key: string) {
