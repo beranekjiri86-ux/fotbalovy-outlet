@@ -3,6 +3,7 @@ export const revalidate = 300;
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { Product } from "@/lib/types";
+import LiveSearch from "./LiveSearch";
 
 type SP = { searchParams?: Record<string, string | string[] | undefined> };
 
@@ -245,6 +246,13 @@ export default async function Produkty({ searchParams }: SP) {
       >
         <h1 className="h1" style={{ marginBottom: 0 }}>Produkty</h1>
         <div className="badge">{products.length} ks</div>
+      </div>
+
+      <div style={{ marginBottom: 14 }}>
+        <LiveSearch
+          initialValue={q}
+          placeholder="Hledat produkty..."
+        />
       </div>
 
       <div className="productsLayout">
