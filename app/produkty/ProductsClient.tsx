@@ -1,26 +1,31 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useMemo, useState } from "react";
+import { Product } from "@/lib/types";
 
-type ProductItem = {
-  id: string;
-  slug: string | null;
-  name: string;
-  brand: string | null;
-  category: string | null;
-  boot_type: string | null;
-  size_eu: number | null;
-  velikost_rukavic: number | null;
-  velikost_obleceni: string | null;
-  typ_obleceni: string | null;
-  condition: string | null;
-  status: string | null;
-  sale_price: number | null;
-  original_price: number | null;
-  article_code: string | null;
-  image_url: string | null;
+type Props = {
+  initialQuery: string;
+  initialCategory: string;
+  initialCondition: string[];
+  initialBrands: string[];
+  initialBoot: string[];
+  initialSizeEU: string[];
+  initialApparelSize: string[];
+  initialApparelType: string[];
+  initialGloveSize: string[];
+  products: Product[];
+  allBrands: string[];
+  allSizesEU: string[];
+  allApparelSizes: string[];
+  allApparelTypes: string[];
+  allGloveSizes: number[];
+  cats: string[];
 };
+
+function toggle(values: string[], v: string) {
+  return values.includes(v) ? values.filter((x) => x !== v) : [...values, v];
+}
 
 function formatEUSize(n: number) {
   if (!Number.isFinite(n)) return "";
@@ -31,91 +36,354 @@ function formatEUSize(n: number) {
   return String(n).replace(".0", "");
 }
 
+function parseEUSizeLabel(s: string) {
+  const t = s.trim();
+  if (t.includes("1/2")) return Number(t.replace("1/2", "").trim()) + 0.5;
+  if (t.includes("1/3")) return Number(t.replace("1/3", "").trim()) + 1 / 3;
+  if (t.includes("2/3")) return Number(t.replace("2/3", "").trim()) + 2 / 3;
+  const n = Number(t.replace(",", "."));
+  return Number.isFinite(n) ? n : NaN;
+}
+
 export default function ProductsClient({
+  initialQuery,
+  initialCategory,
+  initialCondition,
+  initialBrands,
+  initialBoot,
+  initialSizeEU,
+  initialApparelSize,
+  initialApparelType,
+  initialGloveSize,
   products,
-  initialQuery = "",
-}: {
-  products: ProductItem[];
-  initialQuery?: string;
-}) {
-  const [query, setQuery] = useState(initialQuery);
+  allBrands,
+  allSizesEU,
+  allApparelSizes,
+  allApparelTypes,
+  allGloveSizes,
+  cats,
+}: Props) {
+  const [q, setQ] = useState(initialQuery);
+  const [category, setCategory] = useState(initialCategory);
+  const [condition, setCondition] = useState<string[]>(initialCondition);
+  const [brands, setBrands] = useState<string[]>(initialBrands);
+  const [boot, setBoot] = useState<string[]>(initialBoot);
+  const [sizeEU, setSizeEU] = useState<string[]>(initialSizeEU);
+  const [apparelSize, setApparelSize] = useState<string[]>(initialApparelSize);
+  const [apparelType, setApparelType] = useState<string[]>(initialApparelType);
+  const [gloveSize, setGloveSize] = useState<string[]>(initialGloveSize);
+
+  const isShoesCategory =
+    category === "kopačky" ||
+    category === "běžecké boty" ||
+    category === "tenisky";
+
+  const showShoesFilters = isShoesCategory;
+  const showGloveFilters = category === "rukavice";
+  const showApparelSizeFilters = category === "dresy" || category === "oblečení";
+  const showApparelTypeFilters = category === "oblečení";
 
   const filteredProducts = useMemo(() => {
-    const term = query.trim().toLowerCase();
-    if (!term) return products;
+    const term = q.trim().toLowerCase();
 
-    return products.filter((p) => {
-      const haystack = [
-        p.name ?? "",
-        p.brand ?? "",
-        p.category ?? "",
-        p.boot_type ?? "",
-        p.article_code ?? "",
-        p.typ_obleceni ?? "",
-        p.velikost_obleceni ?? "",
-        p.condition ?? "",
-      ]
-        .join(" ")
-        .toLowerCase();
+    return products.filter((p: any) => {
+      if (term) {
+        const hay = [
+          p.name ?? "",
+          p.article_code ?? "",
+          p.brand ?? "",
+          p.category ?? "",
+          p.typ_obleceni ?? "",
+          p.boot_type ?? "",
+        ]
+          .join(" ")
+          .toLowerCase();
 
-      return haystack.includes(term);
+        if (!hay.includes(term)) return false;
+      }
+
+      if (category && p.category !== category) return false;
+      if (condition.length && !condition.includes(p.condition ?? "")) return false;
+      if (brands.length && !brands.includes(p.brand ?? "")) return false;
+
+      if (showShoesFilters) {
+        if (boot.length && !boot.includes(p.boot_type ?? "")) return false;
+
+        if (sizeEU.length) {
+          const current = Number(p.size_eu);
+          const labels = sizeEU.map(parseEUSizeLabel).filter((n) => Number.isFinite(n));
+          if (!labels.some((n) => Math.abs(current - n) < 0.03)) return false;
+        }
+      }
+
+      if (showGloveFilters && gloveSize.length) {
+        if (!gloveSize.includes(String(p.velikost_rukavic ?? ""))) return false;
+      }
+
+      if (showApparelSizeFilters && apparelSize.length) {
+        const current = String(p.velikost_obleceni ?? "").toUpperCase();
+        if (!apparelSize.includes(current)) return false;
+      }
+
+      if (showApparelTypeFilters && apparelType.length) {
+        if (!apparelType.includes(String(p.typ_obleceni ?? ""))) return false;
+      }
+
+      return true;
     });
-  }, [products, query]);
+  }, [
+    products,
+    q,
+    category,
+    condition,
+    brands,
+    boot,
+    sizeEU,
+    apparelSize,
+    apparelType,
+    gloveSize,
+    showShoesFilters,
+    showGloveFilters,
+    showApparelSizeFilters,
+    showApparelTypeFilters,
+  ]);
+
+  function resetFilters() {
+    setQ("");
+    setCategory("");
+    setCondition([]);
+    setBrands([]);
+    setBoot([]);
+    setSizeEU([]);
+    setApparelSize([]);
+    setApparelType([]);
+    setGloveSize([]);
+  }
 
   return (
-    <div style={{ display: "grid", gap: 12, width: "100%", minWidth: 0 }}>
-      <div style={{ display: "grid", gap: 10, width: "100%", minWidth: 0 }}>
+    <div className="container" style={{ paddingTop: 16, paddingBottom: 24 }}>
+      <div
+        className="row"
+        style={{
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 16,
+          gap: 10,
+          flexWrap: "wrap",
+        }}
+      >
+        <h1 className="h1" style={{ marginBottom: 0 }}>Produkty</h1>
+        <div className="badge">{filteredProducts.length} ks</div>
+      </div>
+
+      <div style={{ marginBottom: 14 }}>
         <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
           placeholder="Hledat produkty..."
-          style={{ width: "100%", minWidth: 0 }}
+          className="headerSearch"
           autoComplete="off"
           spellCheck={false}
         />
       </div>
 
-      <div className="small muted">
-        Zobrazeno: <b>{filteredProducts.length}</b> produktů
-      </div>
+      <div className="productsLayout">
+        <div className="card filtersCard">
+          <button className="btn" type="button" onClick={resetFilters}>
+            Reset filtrů
+          </button>
 
-      <div className="productGrid productsGridMobile">
-        {filteredProducts.map((p) => (
-          <Link key={p.id} href={`/p/${p.slug}`} className="card productCardLarge">
-            <div className="productThumbLarge">
-              <img
-                src={p.image_url || "/no-photo.png"}
-                alt={p.name}
-                loading="lazy"
-              />
-            </div>
+          <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
+            <details open>
+              <summary style={{ fontWeight: 800, cursor: "pointer" }}>Kategorie</summary>
+              <div className="filters" style={{ marginTop: 10 }}>
+                {cats.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    className={"btn" + (category === c ? " btnPrimary" : "")}
+                    onClick={() => {
+                      setCategory(category === c ? "" : c);
+                      setBoot([]);
+                      setSizeEU([]);
+                      setApparelSize([]);
+                      setApparelType([]);
+                      setGloveSize([]);
+                    }}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
+            </details>
 
-            <div style={{ fontWeight: 800, lineHeight: 1.3, fontSize: 15, minHeight: 40 }}>
-              {p.name}
-            </div>
+            <details open>
+              <summary style={{ fontWeight: 800, cursor: "pointer" }}>Stav</summary>
+              <div className="filters" style={{ marginTop: 10 }}>
+                {(["nové", "použité"] as const).map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    className={"btn" + (condition.includes(c) ? " btnPrimary" : "")}
+                    onClick={() => setCondition(toggle(condition, c))}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
+            </details>
 
-            <div className="tagRow" style={{ marginTop: 8 }}>
-              <span className="tag">{p.category}</span>
-              {p.brand ? <span className="tag">{p.brand}</span> : null}
-              {p.boot_type ? <span className="tag">{p.boot_type}</span> : null}
-              {p.size_eu ? <span className="tag">EU {formatEUSize(Number(p.size_eu))}</span> : null}
-              {p.velikost_rukavic ? <span className="tag">Rukavice {p.velikost_rukavic}</span> : null}
-              {p.velikost_obleceni ? <span className="tag">{String(p.velikost_obleceni).toUpperCase()}</span> : null}
-              {p.typ_obleceni ? <span className="tag">{p.typ_obleceni}</span> : null}
-              {p.condition ? <span className="tag">{p.condition}</span> : null}
-              {p.status === "reserved" ? <span className="tag">rezervováno</span> : null}
-            </div>
+            <details open>
+              <summary style={{ fontWeight: 800, cursor: "pointer" }}>Značka</summary>
+              {allBrands.length ? (
+                <div className="filters" style={{ marginTop: 10, maxHeight: 260, overflow: "auto", paddingRight: 6 }}>
+                  {allBrands.map((b) => (
+                    <button
+                      key={b}
+                      type="button"
+                      className={"btn" + (brands.includes(b) ? " btnPrimary" : "")}
+                      onClick={() => setBrands(toggle(brands, b))}
+                    >
+                      {b}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </details>
 
-            <div className="priceRow" style={{ marginTop: 10 }}>
-              <span className="price">{Math.round(p.sale_price ?? 0)} Kč</span>
-              {p.original_price ? <span className="priceOld">{Math.round(p.original_price)} Kč</span> : null}
-            </div>
+            {showShoesFilters ? (
+              <>
+                <details open>
+                  <summary style={{ fontWeight: 800, cursor: "pointer" }}>Typ / povrch</summary>
+                  <div className="filters" style={{ marginTop: 10 }}>
+                    {(["FG", "AG", "SG", "TF", "IC"] as const).map((t) => (
+                      <button
+                        key={t}
+                        type="button"
+                        className={"btn" + (boot.includes(t) ? " btnPrimary" : "")}
+                        onClick={() => setBoot(toggle(boot, t))}
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                </details>
 
-            <div className="small" style={{ marginTop: 6 }}>
-              Kód: {p.article_code}
-            </div>
-          </Link>
-        ))}
+                <details>
+                  <summary style={{ fontWeight: 800, cursor: "pointer" }}>Velikost EU</summary>
+                  <div className="filters" style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 8 }}>
+                    {allSizesEU.map((label) => (
+                      <button
+                        key={label}
+                        type="button"
+                        className={"btn" + (sizeEU.includes(label) ? " btnPrimary" : "")}
+                        onClick={() => setSizeEU(toggle(sizeEU, label))}
+                      >
+                        EU {label}
+                      </button>
+                    ))}
+                  </div>
+                </details>
+              </>
+            ) : null}
+
+            {showGloveFilters ? (
+              <details open>
+                <summary style={{ fontWeight: 800, cursor: "pointer" }}>Velikost rukavic</summary>
+                <div className="filters" style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {(allGloveSizes.length ? allGloveSizes : [6, 7, 8, 9, 10, 11]).map((s) => {
+                    const ss = String(s);
+                    return (
+                      <button
+                        key={ss}
+                        type="button"
+                        className={"btn" + (gloveSize.includes(ss) ? " btnPrimary" : "")}
+                        onClick={() => setGloveSize(toggle(gloveSize, ss))}
+                      >
+                        {ss}
+                      </button>
+                    );
+                  })}
+                </div>
+              </details>
+            ) : null}
+
+            {showApparelSizeFilters ? (
+              <details open>
+                <summary style={{ fontWeight: 800, cursor: "pointer" }}>Velikost</summary>
+                <div className="filters" style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {allApparelSizes.map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      className={"btn" + (apparelSize.includes(s) ? " btnPrimary" : "")}
+                      onClick={() => setApparelSize(toggle(apparelSize, s))}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </details>
+            ) : null}
+
+            {showApparelTypeFilters ? (
+              <details>
+                <summary style={{ fontWeight: 800, cursor: "pointer" }}>Typ oblečení</summary>
+                {allApparelTypes.length ? (
+                  <div className="filters" style={{ marginTop: 10, maxHeight: 220, overflow: "auto", paddingRight: 6 }}>
+                    {allApparelTypes.map((t) => (
+                      <button
+                        key={t}
+                        type="button"
+                        className={"btn" + (apparelType.includes(t) ? " btnPrimary" : "")}
+                        onClick={() => setApparelType(toggle(apparelType, t))}
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+              </details>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="productGrid productsGridMobile">
+          {filteredProducts.map((p: any) => (
+            <Link key={p.id} href={`/p/${p.slug}`} className="card productCardLarge">
+              <div className="productThumbLarge">
+                <img
+                  src={p.image_url || "/no-photo.png"}
+                  alt={p.name}
+                  loading="lazy"
+                />
+              </div>
+
+              <div style={{ fontWeight: 800, lineHeight: 1.3, fontSize: 15, minHeight: 40 }}>
+                {p.name}
+              </div>
+
+              <div className="tagRow" style={{ marginTop: 8 }}>
+                <span className="tag">{p.category}</span>
+                {p.brand ? <span className="tag">{p.brand}</span> : null}
+                {p.boot_type ? <span className="tag">{p.boot_type}</span> : null}
+                {p.size_eu ? <span className="tag">EU {formatEUSize(Number(p.size_eu))}</span> : null}
+                {p.velikost_rukavic ? <span className="tag">Rukavice {p.velikost_rukavic}</span> : null}
+                {p.velikost_obleceni ? <span className="tag">{String(p.velikost_obleceni).toUpperCase()}</span> : null}
+                {p.typ_obleceni ? <span className="tag">{p.typ_obleceni}</span> : null}
+                {p.condition ? <span className="tag">{p.condition}</span> : null}
+                {p.status === "reserved" ? <span className="tag">rezervováno</span> : null}
+              </div>
+
+              <div className="priceRow" style={{ marginTop: 10 }}>
+                <span className="price">{Math.round(p.sale_price)} Kč</span>
+                {p.original_price ? <span className="priceOld">{Math.round(p.original_price)} Kč</span> : null}
+              </div>
+
+              <div className="small" style={{ marginTop: 6 }}>Kód: {p.article_code}</div>
+            </Link>
+          ))}
+        </div>
       </div>
     </div>
   );
