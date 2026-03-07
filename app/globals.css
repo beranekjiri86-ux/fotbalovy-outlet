@@ -313,7 +313,7 @@ input:focus,select:focus,textarea:focus{border-color:#2e425f}
    ========================================================= */
 
 .adminProductsTopBar{
-  display:none;
+  display:block;
 }
 
 .adminFilterBackdrop{
@@ -434,4 +434,30 @@ input:focus,select:focus,textarea:focus{border-color:#2e425f}
   background:var(--border);
   margin:0 auto 10px auto;
   opacity:.7;
+}
+/* ADMIN – search bar visible on desktop + mobile */
+
+.adminProductsTopBar{
+  display:block;
+}
+
+.adminProductsMobileActions{
+  display:none;
+}
+
+@media (max-width: 768px){
+
+  .adminProductsTopBar{
+    display:block;
+    position:sticky;
+    top:76px;
+    z-index:20;
+  }
+
+  .adminProductsMobileActions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+
 }
