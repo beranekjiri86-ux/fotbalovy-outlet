@@ -18,13 +18,13 @@ export default function ProductGallery({
     );
   }, [images]);
 
-  const [selected, setSelected] = useState<string | null>(safeImages[0] ?? null);
+  const [selectedIndex, setSelectedIndex] = useState(0);
 
   useEffect(() => {
-    setSelected(safeImages[0] ?? null);
+    setSelectedIndex(0);
   }, [safeImages]);
 
-  if (!safeImages.length || !selected) {
+  if (!safeImages.length) {
     return (
       <div className="card small muted" style={{ marginTop: 12, padding: 12 }}>
         Bez fotky.
@@ -32,9 +32,41 @@ export default function ProductGallery({
     );
   }
 
+  const selected = safeImages[selectedIndex] ?? safeImages[0];
+
+  const goPrev = () => {
+    setSelectedIndex((prev) => (prev === 0 ? safeImages.length - 1 : prev - 1));
+  };
+
+  const goNext = () => {
+    setSelectedIndex((prev) => (prev === safeImages.length - 1 ? 0 : prev + 1));
+  };
+
   return (
     <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
-      <div className="productGalleryMain">
+      <div className="productGalleryMain productGalleryMainWithNav">
+        {safeImages.length > 1 ? (
+          <>
+            <button
+              type="button"
+              onClick={goPrev}
+              className="productGalleryNav productGalleryNavLeft"
+              aria-label="Předchozí fotka"
+            >
+              ‹
+            </button>
+
+            <button
+              type="button"
+              onClick={goNext}
+              className="productGalleryNav productGalleryNavRight"
+              aria-label="Další fotka"
+            >
+              ›
+            </button>
+          </>
+        ) : null}
+
         <img
           src={selected}
           alt={name}
@@ -49,13 +81,13 @@ export default function ProductGallery({
       {safeImages.length > 1 ? (
         <div className="productGalleryThumbs">
           {safeImages.map((url, index) => {
-            const active = url === selected;
+            const active = index === selectedIndex;
 
             return (
               <button
                 key={`${url}-${index}`}
                 type="button"
-                onClick={() => setSelected(url)}
+                onClick={() => setSelectedIndex(index)}
                 className={`productGalleryThumb${active ? " isActive" : ""}`}
                 aria-label={`Zobrazit fotku ${index + 1}`}
               >
