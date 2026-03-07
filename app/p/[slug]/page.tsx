@@ -1,5 +1,6 @@
 export const revalidate = 300;
 
+import Link from "next/link";
 import { createSupabasePublicClient } from "@/lib/supabase/public";
 import { notFound } from "next/navigation";
 import ProductGallery from "./gallery";
@@ -24,8 +25,19 @@ function formatEUSize(n: number | null) {
   return String(n).replace(".0", "");
 }
 
-export default async function ProductPage({ params }: { params: { slug: string } }) {
+export default async function ProductPage({
+  params,
+  searchParams,
+}: {
+  params: { slug: string };
+  searchParams?: { back?: string };
+}) {
   const slug = decodeURIComponent(params.slug);
+
+  const backHref =
+    typeof searchParams?.back === "string" && searchParams.back.startsWith("/produkty")
+      ? searchParams.back
+      : "/produkty";
 
   const supabase = createSupabasePublicClient();
 
@@ -56,13 +68,19 @@ export default async function ProductPage({ params }: { params: { slug: string }
 
   if (error || !product) notFound();
 
-  const gallery: string[] = Array.isArray((product as any).images) ? ((product as any).images as string[]) : [];
+  const gallery: string[] = Array.isArray((product as any).images)
+    ? ((product as any).images as string[])
+    : [];
   const mainImg = (product as any).image_url || gallery[0] || null;
   const allImages = [mainImg, ...gallery].filter(Boolean) as string[];
   const uniqueImages = Array.from(new Set(allImages));
 
   return (
     <main className="container" style={{ paddingTop: 18, paddingBottom: 30 }}>
+      <Link href={backHref} className="btn" style={{ marginBottom: 12 }}>
+        ← Zpět na výsledky
+      </Link>
+
       <h1 className="h1" style={{ margin: 0 }}>
         {(product as any).name}
       </h1>
@@ -93,14 +111,13 @@ export default async function ProductPage({ params }: { params: { slug: string }
           <div>
             <b>Původní cena:</b> {money((product as any).original_price ?? null)}
           </div>
+        </div>
+      </div>
 
-          </div>
-           </div>
+      <ProductGallery name={(product as any).name} images={uniqueImages} />
 
-           <ProductGallery name={(product as any).name} images={uniqueImages} />
-
-          {isShoesCategory((product as any).category ?? null) ? (
-          <div className="card" style={{ marginTop: 12, padding: 12, display: "grid", gap: 6 }}>
+      {isShoesCategory((product as any).category ?? null) ? (
+        <div className="card" style={{ marginTop: 12, padding: 12, display: "grid", gap: 6 }}>
           <div style={{ fontWeight: 800 }}>Velikosti</div>
           <div className="small muted">
             <b>EU:</b> {formatEUSize((product as any).size_eu ?? null)}
@@ -135,8 +152,14 @@ export default async function ProductPage({ params }: { params: { slug: string }
           marginTop: 14,
         }}
       >
-        <div style={{ fontWeight: 900, fontSize: 18 }}>{money((product as any).sale_price ?? null)}</div>
-        <a href="https://wa.me/420605171216" className="btn btnPrimary" style={{ whiteSpace: "nowrap" }}>
+        <div style={{ fontWeight: 900, fontSize: 18 }}>
+          {money((product as any).sale_price ?? null)}
+        </div>
+        <a
+          href="https://wa.me/420605171216"
+          className="btn btnPrimary"
+          style={{ whiteSpace: "nowrap" }}
+        >
           Kontaktovat
         </a>
       </div>
