@@ -247,7 +247,7 @@ export default async function Produkty({ searchParams }: SP) {
         <div className="badge">{products.length} ks</div>
       </div>
 
-      <div
+            <div
         className="productsLayout"
         style={{
           display: "grid",
@@ -256,14 +256,19 @@ export default async function Produkty({ searchParams }: SP) {
           alignItems: "start",
         }}
       >
-     <div className="filters" style={{ width: "100%", minWidth: 0 }}>
-  <LiveSearch
-    initialValue={q}
-    placeholder="Hledat (název / kód / značka)..."
-  />
-</div>
+        <div className="card filtersCard">
+          <div className="filters" style={{ width: "100%", minWidth: 0 }}>
+            <LiveSearch
+              initialValue={q}
+              placeholder="Hledat (název / kód / značka)..."
+            />
+          </div>
 
-          <Link className="btn" href={urlFor((u) => (u.search = ""))}>Reset filtrů</Link>
+          <div className="hr" />
+
+          <Link className="btn" href={urlFor((u) => (u.search = ""))}>
+            Reset filtrů
+          </Link>
 
           <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
             <details open>
