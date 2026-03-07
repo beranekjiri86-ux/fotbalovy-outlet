@@ -421,11 +421,14 @@ export default function ProductsClient({
                 sessionStorage.setItem(SCROLL_KEY, String(window.scrollY));
               }}
             >
-              <div className="productThumbLarge">
+              <div className="productThumbLarge productThumbLargeZoom">
                 <img
                   src={p.image_url || "/no-photo.png"}
                   alt={p.name}
                   loading="lazy"
+                  onError={(e) => {
+                    e.currentTarget.src = "/no-photo.png";
+                  }}
                 />
               </div>
 
