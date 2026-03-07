@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Product } from "@/lib/types";
 
 type Props = {
@@ -72,6 +72,21 @@ export default function ProductsClient({
   const [apparelSize, setApparelSize] = useState<string[]>(initialApparelSize);
   const [apparelType, setApparelType] = useState<string[]>(initialApparelType);
   const [gloveSize, setGloveSize] = useState<string[]>(initialGloveSize);
+
+  useEffect(() => {
+    const saved = sessionStorage.getItem("productsScroll");
+    if (!saved) return;
+
+    const y = Number(saved);
+    if (Number.isFinite(y) && y > 0) {
+      setTimeout(() => {
+        window.scrollTo(0, y);
+        sessionStorage.removeItem("productsScroll");
+      }, 60);
+    } else {
+      sessionStorage.removeItem("productsScroll");
+    }
+  }, []);
 
   const isShoesCategory =
     category === "kopačky" ||
@@ -176,6 +191,7 @@ export default function ProductsClient({
     setApparelSize([]);
     setApparelType([]);
     setGloveSize([]);
+    sessionStorage.removeItem("productsScroll");
   }
 
   return (
@@ -372,6 +388,9 @@ export default function ProductsClient({
               key={p.id}
               href={`/p/${p.slug}?back=${encodeURIComponent(backHref)}`}
               className="card productCardLarge"
+              onClick={() => {
+                sessionStorage.setItem("productsScroll", String(window.scrollY));
+              }}
             >
               <div className="productThumbLarge">
                 <img
