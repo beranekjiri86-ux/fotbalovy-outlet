@@ -422,19 +422,23 @@ export default function ProductsClient({
               }}
             >
               <div className="productThumbLarge productThumbLargeZoom">
-                <img
-                  src={p.image_url || "/no-photo.png"}
-                  alt={p.name}
-                  loading="lazy"
-                  onError={(e) => {
-                    e.currentTarget.src = "/no-photo.png";
-                  }}
-                />
-              </div>
-
-              <div style={{ fontWeight: 800, lineHeight: 1.3, fontSize: 15, minHeight: 40 }}>
-                {p.name}
-              </div>
+  {p.image_url ? (
+    <img
+      src={p.image_url}
+      alt={p.name}
+      loading="lazy"
+      onError={(e) => {
+        e.currentTarget.src = "/no-photo.png";
+      }}
+    />
+  ) : (
+    <img
+      src="/no-photo.png"
+      alt="Bez fotky"
+      loading="lazy"
+    />
+  )}
+</div>
 
               <div className="tagRow" style={{ marginTop: 8 }}>
                 <span className="tag">{p.category}</span>
