@@ -256,22 +256,12 @@ export default async function Produkty({ searchParams }: SP) {
           alignItems: "start",
         }}
       >
-        <div className="card filtersCard">
-          <form action="/produkty" method="get" className="filters">
-            <input name="q" defaultValue={q} placeholder="Hledat (název / kód / značka)..." />
-            <button className="btn" type="submit">Hledat</button>
-
-            {category ? <input type="hidden" name="cat" value={category} /> : null}
-            {condition.length ? <input type="hidden" name="cond" value={condition.join(",")} /> : null}
-            {brands.length ? <input type="hidden" name="brand" value={brands.join(",")} /> : null}
-            {boot.length ? <input type="hidden" name="boot" value={boot.join(",")} /> : null}
-            {sizeEU.length ? <input type="hidden" name="eu" value={sizeEU.join(",")} /> : null}
-            {apparelSize.length ? <input type="hidden" name="as" value={apparelSize.join(",")} /> : null}
-            {apparelType.length ? <input type="hidden" name="at" value={apparelType.join(",")} /> : null}
-            {gloveSize.length ? <input type="hidden" name="gs" value={gloveSize.join(",")} /> : null}
-          </form>
-
-          <div className="hr" />
+     <div className="filters" style={{ width: "100%", minWidth: 0 }}>
+  <LiveSearch
+    initialValue={q}
+    placeholder="Hledat (název / kód / značka)..."
+  />
+</div>
 
           <Link className="btn" href={urlFor((u) => (u.search = ""))}>Reset filtrů</Link>
 
