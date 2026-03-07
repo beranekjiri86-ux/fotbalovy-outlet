@@ -419,21 +419,22 @@ export default function AdminProductEditClient({ id }: { id: string }) {
           return;
         }
 
-        setMsg("Vytvořeno. Teď můžeš přidat fotky.");
-        router.replace(`/admin/produkty/${(data as any).id}`);
-        router.refresh();
-        return;
+       setMsg("Vytvořeno.");
+router.replace("/admin/produkty");
+router.refresh();
+return;
       }
 
       const { error } = await supabase.from("products").update(payload).eq("id", p.id);
 
-      if (error) {
-        console.error(error);
-        setMsg(error.message);
-      } else {
-        setMsg("Uloženo.");
-        router.refresh();
-      }
+   if (error) {
+  console.error(error);
+  setMsg(error.message);
+} else {
+  setMsg("Uloženo.");
+  router.replace("/admin/produkty");
+  router.refresh();
+}
     } finally {
       setSaving(false);
     }
