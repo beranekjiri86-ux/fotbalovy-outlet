@@ -256,13 +256,9 @@ export default async function Produkty({ searchParams }: SP) {
           alignItems: "start",
         }}
       >
-        <div className="card filtersCard">
-          <div className="filters" style={{ width: "100%", minWidth: 0 }}>
-            <LiveSearch
-              initialValue={q}
-              placeholder="Hledat (název / kód / značka)..."
-            />
-          </div>
+        <div className="small muted" style={{ marginBottom: 4 }}>
+  Filtrování podle textu je níže nad produkty.
+</div>
 
           <div className="hr" />
 
