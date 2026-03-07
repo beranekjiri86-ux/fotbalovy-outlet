@@ -308,28 +308,29 @@ export default function AdminProductsClient() {
         aria-hidden={!showFilters}
       >
         <div className="adminFilterDrawerInner">
-          <div className="adminFilterDrawerHeader">
-            <div className="drawerHandle" />
+         <div className="adminFilterDrawerHeader">
+  <div className="drawerHandle" />
 
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                gap: 10,
-              }}
-            >
-              <div style={{ fontWeight: 900, fontSize: 18 }}>Filtry</div>
+  <div
+    style={{
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      gap: 10,
+    }}
+  >
+    <div style={{ fontWeight: 900, fontSize: 18 }}>Filtry</div>
 
-              <button
-                type="button"
-                className="btn"
-                onClick={() => setShowFilters(false)}
-              >
-                ✕
-              </button>
-            </div>
-          </div>
+    <button
+      type="button"
+      className="btn"
+      onClick={() => setShowFilters(false)}
+      aria-label="Zavřít filtry"
+    >
+      Zavřít
+    </button>
+  </div>
+</div>
 
           <div
             className="card adminFiltersCard"
