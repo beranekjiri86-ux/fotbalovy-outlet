@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { DragEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import heic2any from "heic2any";
 import { supabase } from "@/lib/supabaseClient";
@@ -91,7 +91,12 @@ function makeEmptyProduct(): Product {
 async function normalizeImageFile(inputFile: File): Promise<File> {
   let file = inputFile;
 
-  if (file.type === "image/heic" || file.type === "image/heif" || file.name.toLowerCase().endsWith(".heic")) {
+  if (
+    file.type === "image/heic" ||
+    file.type === "image/heif" ||
+    file.name.toLowerCase().endsWith(".heic") ||
+    file.name.toLowerCase().endsWith(".heif")
+  ) {
     const converted = await heic2any({
       blob: file,
       toType: "image/jpeg",
@@ -167,18 +172,13 @@ async function normalizeImageFile(inputFile: File): Promise<File> {
 export default function AdminProductEditClient({ id }: { id: string }) {
   const router = useRouter();
   const isNew = id === "new";
-  const [isMobile, setIsMobile] = useState(false);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   const [p, setP] = useState<Product | null>(isNew ? makeEmptyProduct() : null);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
-
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 800);
-    check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
-  }, []);
+  const [dragOverUpload, setDragOverUpload] = useState(false);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
 
   useEffect(() => {
     if (isNew) return;
@@ -238,12 +238,14 @@ export default function AdminProductEditClient({ id }: { id: string }) {
 
   const gallery = useMemo(() => p?.images ?? [], [p]);
 
-  async function persistImages(nextImages: string[], nextThumb: string | null) {
+  async function persistImages(nextImages: string[]) {
     if (!p || p.id === "new") return;
+
+    const thumb = nextImages[0] ?? null;
 
     const { data, error } = await supabase
       .from("products")
-      .update({ images: nextImages, image_url: nextThumb })
+      .update({ images: nextImages, image_url: thumb })
       .eq("id", p.id)
       .select("images,image_url")
       .single();
@@ -261,7 +263,7 @@ export default function AdminProductEditClient({ id }: { id: string }) {
     });
   }
 
-  async function uploadFiles(files: FileList | null) {
+  async function uploadFiles(files: FileList | File[] | null) {
     if (!p) return;
 
     if (!files || files.length === 0) {
@@ -275,7 +277,13 @@ export default function AdminProductEditClient({ id }: { id: string }) {
     }
 
     try {
-      const list = Array.from(files);
+      const list = Array.from(files).slice(0, Math.max(0, 10 - gallery.length));
+
+      if (!list.length) {
+        setMsg("Produkt už má maximum 10 fotek.");
+        return;
+      }
+
       setMsg(`Zpracovávám ${list.length} fotek...`);
 
       const newUrls: string[] = [];
@@ -307,10 +315,9 @@ export default function AdminProductEditClient({ id }: { id: string }) {
       }
 
       const merged = [...gallery, ...newUrls].slice(0, 10);
-      const thumb = p.image_url || merged[0] || null;
 
-      setP({ ...p, images: merged, image_url: thumb });
-      await persistImages(merged, thumb);
+      setP({ ...p, images: merged, image_url: merged[0] ?? null });
+      await persistImages(merged);
 
       setMsg(`Hotovo: nahráno ${newUrls.length} fotek`);
     } catch (e: any) {
@@ -322,10 +329,75 @@ export default function AdminProductEditClient({ id }: { id: string }) {
   async function removeImage(url: string) {
     if (!p) return;
     const next = gallery.filter((x) => x !== url);
-    const thumb = next[0] ?? null;
 
-    setP({ ...p, images: next, image_url: thumb });
-    await persistImages(next, thumb);
+    setP({ ...p, images: next, image_url: next[0] ?? null });
+    await persistImages(next);
+  }
+
+  async function makePrimary(index: number) {
+    if (!p) return;
+    if (index < 0 || index >= gallery.length) return;
+    if (index === 0) return;
+
+    const next = [...gallery];
+    const [selected] = next.splice(index, 1);
+    next.unshift(selected);
+
+    setP({ ...p, images: next, image_url: next[0] ?? null });
+    await persistImages(next);
+    setMsg("Hlavní fotka nastavena.");
+  }
+
+  async function moveImage(from: number, to: number) {
+    if (!p) return;
+    if (from === to) return;
+    if (from < 0 || to < 0 || from >= gallery.length || to >= gallery.length) return;
+
+    const next = [...gallery];
+    const [item] = next.splice(from, 1);
+    next.splice(to, 0, item);
+
+    setP({ ...p, images: next, image_url: next[0] ?? null });
+    await persistImages(next);
+  }
+
+  async function moveLeft(index: number) {
+    if (index <= 0) return;
+    await moveImage(index, index - 1);
+  }
+
+  async function moveRight(index: number) {
+    if (index >= gallery.length - 1) return;
+    await moveImage(index, index + 1);
+  }
+
+  function handleDragStart(index: number) {
+    setDragIndex(index);
+  }
+
+  async function handleDrop(index: number) {
+    if (dragIndex == null) return;
+    const from = dragIndex;
+    setDragIndex(null);
+    await moveImage(from, index);
+  }
+
+  function handleUploadDragOver(e: DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    setDragOverUpload(true);
+  }
+
+  function handleUploadDragLeave(e: DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    setDragOverUpload(false);
+  }
+
+  function handleUploadDrop(e: DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    setDragOverUpload(false);
+
+    if (!e.dataTransfer?.files?.length) return;
+    uploadFiles(e.dataTransfer.files);
   }
 
   async function removeProduct() {
@@ -391,7 +463,7 @@ export default function AdminProductEditClient({ id }: { id: string }) {
       original_price: p.original_price ?? null,
 
       note: p.note?.trim() || null,
-      image_url: p.image_url?.trim() || null,
+      image_url: (p.images ?? [])[0] ?? null,
       images: p.images ?? [],
 
       velikost_rukavic: p.category === "rukavice" ? (p.velikost_rukavic ?? null) : null,
@@ -419,22 +491,22 @@ export default function AdminProductEditClient({ id }: { id: string }) {
           return;
         }
 
-       setMsg("Vytvořeno.");
-router.replace("/admin/produkty");
-router.refresh();
-return;
+        setMsg("Vytvořeno. Teď můžeš přidat fotky.");
+        router.replace(`/admin/produkty/${(data as any).id}`);
+        router.refresh();
+        return;
       }
 
       const { error } = await supabase.from("products").update(payload).eq("id", p.id);
 
-   if (error) {
-  console.error(error);
-  setMsg(error.message);
-} else {
-  setMsg("Uloženo.");
-  router.replace("/admin/produkty");
-  router.refresh();
-}
+      if (error) {
+        console.error(error);
+        setMsg(error.message);
+      } else {
+        setMsg("Uloženo.");
+        router.replace("/admin/produkty");
+        router.refresh();
+      }
     } finally {
       setSaving(false);
     }
@@ -451,71 +523,51 @@ return;
             border: "1px solid var(--border)",
             borderRadius: 12,
             background: "var(--card)",
-            width: "100%",
-            minWidth: 0,
-            wordBreak: "break-word",
           }}
         >
           {msg}
         </div>
       ) : null}
 
-      <div style={{ display: "grid", gap: 8, minWidth: 0 }}>
-        <div style={{ fontWeight: 800, fontSize: 18, wordBreak: "break-word" }}>
-          {isNew ? "Nový produkt" : p.name}
-        </div>
-        <div style={{ opacity: 0.8, fontSize: 13, wordBreak: "break-word" }}>
+      <div style={{ display: "grid", gap: 8 }}>
+        <div style={{ fontWeight: 800, fontSize: 18 }}>{isNew ? "Nový produkt" : p.name}</div>
+        <div style={{ opacity: 0.8, fontSize: 13 }}>
           {p.brand ?? ""} {p.article_code ? `• ${p.article_code}` : ""}
         </div>
       </div>
 
-      <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
+      <label style={{ display: "grid", gap: 6 }}>
         Název
         <input
           value={p.name}
           onChange={(e) => setP({ ...p, name: e.target.value })}
           placeholder="Např. Nike Mercurial Vapor 15"
-          style={{ width: "100%", minWidth: 0 }}
         />
       </label>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
-          gap: 10,
-          width: "100%",
-          minWidth: 0,
-        }}
-      >
-        <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 10 }}>
+        <label style={{ display: "grid", gap: 6 }}>
           Kód artiklu
           <input
             value={p.article_code ?? ""}
             onChange={(e) => setP({ ...p, article_code: e.target.value || null })}
             placeholder="DJ4977-780"
-            style={{ width: "100%", minWidth: 0 }}
           />
         </label>
 
-        <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
+        <label style={{ display: "grid", gap: 6 }}>
           Značka
           <input
             value={p.brand ?? ""}
             onChange={(e) => setP({ ...p, brand: e.target.value || null })}
             placeholder="Nike / adidas / Puma"
-            style={{ width: "100%", minWidth: 0 }}
           />
         </label>
       </div>
 
-      <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
+      <label style={{ display: "grid", gap: 6 }}>
         Kategorie
-        <select
-          value={p.category ?? ""}
-          onChange={(e) => setP({ ...p, category: e.target.value || null })}
-          style={{ width: "100%", minWidth: 0 }}
-        >
+        <select value={p.category ?? ""} onChange={(e) => setP({ ...p, category: e.target.value || null })}>
           <option value="">— vyber —</option>
           {CATEGORIES.map((c) => (
             <option key={c} value={c}>
@@ -526,16 +578,12 @@ return;
       </label>
 
       {isShoesCategory(p.category) ? (
-        <div className="card" style={{ display: "grid", gap: 10, padding: 12, minWidth: 0 }}>
-          <div style={{ fontWeight: 800, wordBreak: "break-word" }}>Kopačky / běžecké boty / tenisky</div>
+        <div className="card" style={{ display: "grid", gap: 10, padding: 12 }}>
+          <div style={{ fontWeight: 800 }}>Kopačky / běžecké boty / tenisky</div>
 
-          <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
+          <label style={{ display: "grid", gap: 6 }}>
             Typ povrchu
-            <select
-              value={p.boot_type ?? ""}
-              onChange={(e) => setP({ ...p, boot_type: e.target.value || null })}
-              style={{ width: "100%", minWidth: 0 }}
-            >
+            <select value={p.boot_type ?? ""} onChange={(e) => setP({ ...p, boot_type: e.target.value || null })}>
               <option value="">— vyber —</option>
               {BOOT_TYPES.map((t) => (
                 <option key={t} value={t}>
@@ -545,45 +593,34 @@ return;
             </select>
           </label>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr",
-              gap: 10,
-              width: "100%",
-              minWidth: 0,
-            }}
-          >
-            <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10 }}>
+            <label style={{ display: "grid", gap: 6 }}>
               EU
               <input
                 type="number"
                 step="0.01"
                 value={p.size_eu ?? ""}
                 onChange={(e) => setP({ ...p, size_eu: e.target.value === "" ? null : Number(e.target.value) })}
-                style={{ width: "100%", minWidth: 0 }}
               />
             </label>
 
-            <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
+            <label style={{ display: "grid", gap: 6 }}>
               UK
               <input
                 type="number"
                 step="0.01"
                 value={p.size_uk ?? ""}
                 onChange={(e) => setP({ ...p, size_uk: e.target.value === "" ? null : Number(e.target.value) })}
-                style={{ width: "100%", minWidth: 0 }}
               />
             </label>
 
-            <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
+            <label style={{ display: "grid", gap: 6 }}>
               CM
               <input
                 type="number"
                 step="0.1"
                 value={p.size_cm ?? ""}
                 onChange={(e) => setP({ ...p, size_cm: e.target.value === "" ? null : Number(e.target.value) })}
-                style={{ width: "100%", minWidth: 0 }}
               />
             </label>
           </div>
@@ -591,14 +628,13 @@ return;
       ) : null}
 
       {p.category === "rukavice" ? (
-        <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
+        <label style={{ display: "grid", gap: 6 }}>
           Velikost rukavic
           <select
             value={p.velikost_rukavic ?? ""}
             onChange={(e) =>
               setP({ ...p, velikost_rukavic: e.target.value === "" ? null : Number(e.target.value) })
             }
-            style={{ width: "100%", minWidth: 0 }}
           >
             <option value="">— vyber —</option>
             {GLOVE_SIZES.map((s) => (
@@ -611,15 +647,14 @@ return;
       ) : null}
 
       {p.category === "dresy" || p.category === "oblečení" ? (
-        <div className="card" style={{ display: "grid", gap: 10, padding: 12, minWidth: 0 }}>
-          <div style={{ fontWeight: 800, wordBreak: "break-word" }}>Dresy / oblečení</div>
+        <div className="card" style={{ display: "grid", gap: 10, padding: 12 }}>
+          <div style={{ fontWeight: 800 }}>Dresy / oblečení</div>
 
-          <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
+          <label style={{ display: "grid", gap: 6 }}>
             Velikost oblečení
             <select
               value={(p.velikost_obleceni ?? "").toUpperCase()}
               onChange={(e) => setP({ ...p, velikost_obleceni: e.target.value || null })}
-              style={{ width: "100%", minWidth: 0 }}
             >
               <option value="">— vyber —</option>
               {APPAREL_SIZES.map((s) => (
@@ -631,35 +666,22 @@ return;
           </label>
 
           {p.category === "oblečení" ? (
-            <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
+            <label style={{ display: "grid", gap: 6 }}>
               Typ oblečení
               <input
                 value={p.typ_obleceni ?? ""}
                 onChange={(e) => setP({ ...p, typ_obleceni: e.target.value || null })}
                 placeholder="mikina / bunda / tričko..."
-                style={{ width: "100%", minWidth: 0 }}
               />
             </label>
           ) : null}
         </div>
       ) : null}
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
-          gap: 10,
-          width: "100%",
-          minWidth: 0,
-        }}
-      >
-        <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 10 }}>
+        <label style={{ display: "grid", gap: 6 }}>
           Stav
-          <select
-            value={p.condition ?? ""}
-            onChange={(e) => setP({ ...p, condition: e.target.value || null })}
-            style={{ width: "100%", minWidth: 0 }}
-          >
+          <select value={p.condition ?? ""} onChange={(e) => setP({ ...p, condition: e.target.value || null })}>
             <option value="">—</option>
             {CONDITIONS.map((c) => (
               <option key={c} value={c}>
@@ -669,13 +691,9 @@ return;
           </select>
         </label>
 
-        <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
+        <label style={{ display: "grid", gap: 6 }}>
           Status
-          <select
-            value={p.status ?? "available"}
-            onChange={(e) => setP({ ...p, status: e.target.value || null })}
-            style={{ width: "100%", minWidth: 0 }}
-          >
+          <select value={p.status ?? "available"} onChange={(e) => setP({ ...p, status: e.target.value || null })}>
             {STATUSES.map((s) => (
               <option key={s} value={s}>
                 {s}
@@ -685,123 +703,172 @@ return;
         </label>
       </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
-          gap: 10,
-          width: "100%",
-          minWidth: 0,
-        }}
-      >
-        <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 10 }}>
+        <label style={{ display: "grid", gap: 6 }}>
           Prodejní cena
           <input
             type="number"
             value={p.sale_price ?? ""}
             onChange={(e) => setP({ ...p, sale_price: e.target.value === "" ? null : Number(e.target.value) })}
-            style={{ width: "100%", minWidth: 0 }}
           />
         </label>
 
-        <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
+        <label style={{ display: "grid", gap: 6 }}>
           Původní cena
           <input
             type="number"
             value={p.original_price ?? ""}
             onChange={(e) => setP({ ...p, original_price: e.target.value === "" ? null : Number(e.target.value) })}
-            style={{ width: "100%", minWidth: 0 }}
           />
         </label>
       </div>
 
-      <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
+      <label style={{ display: "grid", gap: 6 }}>
         Popis / poznámka
         <textarea
           value={p.note ?? ""}
           onChange={(e) => setP({ ...p, note: e.target.value || null })}
           rows={5}
-          style={{ width: "100%", minWidth: 0 }}
         />
       </label>
 
-      <div className="card" style={{ display: "grid", gap: 10, padding: 12, minWidth: 0 }}>
-        <div style={{ fontWeight: 800 }}>Fotky (max 10)</div>
+      <div className="card" style={{ display: "grid", gap: 12, padding: 12 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+          <div>
+            <div style={{ fontWeight: 800 }}>Fotky (max 10)</div>
+            <div className="small muted">
+              První fotka je hlavní. Na PC můžeš měnit pořadí přetažením. Na mobilu tlačítky.
+            </div>
+          </div>
+
+          {gallery.length ? (
+            <div className="small muted">
+              Hlavní fotka: <b>#{1}</b>
+            </div>
+          ) : null}
+        </div>
 
         {p.id === "new" ? (
           <div className="small muted">Nejdřív vytvoř produkt, potom můžeš nahrávat fotky.</div>
         ) : (
-          <input
-            type="file"
-            accept="image/*,.heic,.heif"
-            multiple
-            onChange={(e) => {
-              const files = e.currentTarget.files;
-              if (!files || files.length === 0) {
-                setMsg("Nebyl vybrán žádný soubor.");
-                return;
-              }
+          <>
+            <div
+              className={`adminUploadDropzone${dragOverUpload ? " isDragOver" : ""}`}
+              onDragOver={handleUploadDragOver}
+              onDragLeave={handleUploadDragLeave}
+              onDrop={handleUploadDrop}
+              onClick={() => inputRef.current?.click()}
+            >
+              <div style={{ fontWeight: 700 }}>Nahraj fotky</div>
+              <div className="small muted">
+                Klikni sem nebo přetáhni soubory z plochy. Můžeš nahrát více fotek najednou.
+              </div>
+            </div>
 
-              const copy = files;
-              setTimeout(() => {
-                uploadFiles(copy);
-                e.currentTarget.value = "";
-              }, 50);
-            }}
-            style={{ width: "100%", minWidth: 0 }}
-          />
+            <input
+              ref={inputRef}
+              type="file"
+              accept="image/*,.heic,.heif"
+              multiple
+              style={{ display: "none" }}
+              onChange={(e) => {
+                const files = e.currentTarget.files;
+                if (!files || files.length === 0) {
+                  setMsg("Nebyl vybrán žádný soubor.");
+                  return;
+                }
+
+                const copy = files;
+                setTimeout(() => {
+                  uploadFiles(copy);
+                  e.currentTarget.value = "";
+                }, 50);
+              }}
+            />
+          </>
         )}
 
         {gallery.length ? (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(3, 1fr)",
-              gap: 8,
-              width: "100%",
-              minWidth: 0,
-            }}
-          >
-            {gallery.map((url) => (
-              <div
-                key={url}
-                style={{
-                  border: "1px solid var(--border)",
-                  borderRadius: 12,
-                  overflow: "hidden",
-                  minWidth: 0,
-                }}
-              >
-                <img
-                  src={url}
-                  alt=""
-                  loading="lazy"
-                  style={{ width: "100%", height: 120, objectFit: "cover", display: "block" }}
-                />
-                <button
-                  type="button"
-                  onClick={() => removeImage(url)}
-                  className="btn"
-                  style={{ width: "100%", borderRadius: 0, border: 0, borderTop: "1px solid var(--border)" }}
+          <div className="adminImageGrid">
+            {gallery.map((url, index) => {
+              const isMain = index === 0;
+
+              return (
+                <div
+                  key={url}
+                  className={`adminImageCard${dragIndex === index ? " isDragging" : ""}${isMain ? " isMain" : ""}`}
+                  draggable
+                  onDragStart={() => handleDragStart(index)}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={() => handleDrop(index)}
+                  onDragEnd={() => setDragIndex(null)}
                 >
-                  Smazat
-                </button>
-              </div>
-            ))}
+                  <div className="adminImageThumbWrap">
+                    {isMain ? <div className="adminImageBadge">Hlavní</div> : null}
+
+                    <img
+                      src={url}
+                      alt={`Produkt ${index + 1}`}
+                      loading="lazy"
+                      className="adminImageThumb"
+                    />
+                  </div>
+
+                  <div className="adminImageActions">
+                    <div className="adminImageOrderRow">
+                      <button
+                        type="button"
+                        className="btn adminMiniBtn"
+                        onClick={() => moveLeft(index)}
+                        disabled={index === 0}
+                        title="Posunout vlevo"
+                      >
+                        ←
+                      </button>
+
+                      <button
+                        type="button"
+                        className="btn adminMiniBtn"
+                        onClick={() => moveRight(index)}
+                        disabled={index === gallery.length - 1}
+                        title="Posunout vpravo"
+                      >
+                        →
+                      </button>
+
+                      {!isMain ? (
+                        <button
+                          type="button"
+                          className="btn adminMiniBtn"
+                          onClick={() => makePrimary(index)}
+                          title="Nastavit jako hlavní"
+                        >
+                          Hlavní
+                        </button>
+                      ) : (
+                        <div className="small muted">Hlavní fotka</div>
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => removeImage(url)}
+                      className="btn adminDeleteBtn"
+                      title="Smazat fotku"
+                    >
+                      🗑 Smazat
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         ) : (
           <div className="small muted">Zatím žádné fotky.</div>
         )}
       </div>
 
-      <div
-        style={{
-          display: "flex",
-          gap: 10,
-          flexWrap: "wrap",
-          width: "100%",
-        }}
-      >
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
         {!isNew ? (
           <button
             type="button"
@@ -813,7 +880,6 @@ return;
               border: "1px solid #dc2626",
               color: "#dc2626",
               background: "transparent",
-              width: isMobile ? "100%" : "auto",
             }}
           >
             Smazat produkt
@@ -825,10 +891,7 @@ return;
           onClick={save}
           disabled={saving}
           className="btn btnPrimary"
-          style={{
-            padding: 12,
-            width: isMobile ? "100%" : "auto",
-          }}
+          style={{ padding: 12 }}
         >
           {saving ? (isNew ? "Vytvářím..." : "Ukládám...") : isNew ? "Vytvořit produkt" : "Uložit změny"}
         </button>
