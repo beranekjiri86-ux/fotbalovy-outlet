@@ -74,6 +74,7 @@ export default function AdminProductsClient() {
   const [q, setQ] = useState("");
   const [rows, setRows] = useState<ProductRow[]>([]);
   const [loading, setLoading] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
 
   const [category, setCategory] = useState("");
   const [condition, setCondition] = useState("");
@@ -137,6 +138,29 @@ export default function AdminProductsClient() {
       alive = false;
     };
   }, []);
+
+  useEffect(() => {
+    const closeOnDesktop = () => {
+      if (window.innerWidth > 768) {
+        setShowFilters(false);
+      }
+    };
+
+    closeOnDesktop();
+    window.addEventListener("resize", closeOnDesktop);
+    return () => window.removeEventListener("resize", closeOnDesktop);
+  }, []);
+
+  useEffect(() => {
+    if (!showFilters) return;
+
+    const original = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = original;
+    };
+  }, [showFilters]);
 
   const allBrands = useMemo(() => {
     return Array.from(new Set(rows.map((r) => r.brand).filter(Boolean) as string[])).sort((a, b) =>
@@ -233,194 +257,95 @@ export default function AdminProductsClient() {
   const showApparelSizeFilters = category === "dresy" || category === "oblečení";
   const showApparelTypeFilters = category === "oblečení";
 
+  const activeFiltersCount = [
+    category,
+    condition,
+    status,
+    brand,
+    bootType,
+    sizeEU,
+    gloveSize,
+    apparelSize,
+    apparelType,
+  ].filter(Boolean).length;
+
   return (
     <div style={{ display: "grid", gap: 12, width: "100%", minWidth: 0 }}>
-      <div
-        className="card"
-        style={{
-          display: "grid",
-          gap: 10,
-          position: "sticky",
-          top: 86,
-          zIndex: 10,
-          width: "100%",
-          minWidth: 0,
-        }}
-      >
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "minmax(0, 1fr)",
-            gap: 10,
-            width: "100%",
-            minWidth: 0,
-          }}
-        >
+      <div className="adminProductsTopBar">
+        <div style={{ display: "grid", gap: 10, width: "100%", minWidth: 0 }}>
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Hledej: název / kód / značka / popis"
-            style={{
-              width: "100%",
-              minWidth: 0,
-            }}
+            style={{ width: "100%", minWidth: 0 }}
           />
 
+          <div className="adminProductsMobileActions">
+            <button
+              type="button"
+              className="btn"
+              onClick={() => setShowFilters(true)}
+            >
+              Filtry{activeFiltersCount ? ` (${activeFiltersCount})` : ""}
+            </button>
+
+            <Link className="btn btnPrimary" href="/admin/produkty/new">
+              + Nový produkt
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {showFilters ? (
+        <div
+          className="adminFilterBackdrop"
+          onClick={() => setShowFilters(false)}
+        />
+      ) : null}
+
+      <div
+        className={`adminFilterDrawer ${showFilters ? "open" : ""}`}
+        aria-hidden={!showFilters}
+      >
+        <div className="adminFilterDrawerInner">
+          <div className="adminFilterDrawerHeader">
+            <div style={{ fontWeight: 900, fontSize: 18 }}>Filtry</div>
+            <button
+              type="button"
+              className="btn"
+              onClick={() => setShowFilters(false)}
+            >
+              Zavřít
+            </button>
+          </div>
+
           <div
+            className="card adminFiltersCard"
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
               gap: 10,
               width: "100%",
               minWidth: 0,
             }}
           >
-            <Link className="btn btnPrimary" href="/admin/produkty/new">
-              + Nový produkt
-            </Link>
-
-            <button type="button" className="btn" onClick={resetFilters}>
-              Reset filtrů
-            </button>
-          </div>
-        </div>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))",
-            gap: 10,
-            width: "100%",
-            minWidth: 0,
-          }}
-        >
-          <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
-            Kategorie
-            <select
-              value={category}
-              onChange={(e) => {
-                setCategory(e.target.value);
-                setBootType("");
-                setSizeEU("");
-                setGloveSize("");
-                setApparelSize("");
-                setApparelType("");
-              }}
-            >
-              <option value="">Vše</option>
-              {CATEGORIES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
-            Stav
-            <select value={condition} onChange={(e) => setCondition(e.target.value)}>
-              <option value="">Vše</option>
-              {CONDITIONS.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
-            Status
-            <select value={status} onChange={(e) => setStatus(e.target.value)}>
-              <option value="">Vše</option>
-              {STATUSES.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
-            Značka
-            <select value={brand} onChange={(e) => setBrand(e.target.value)}>
-              <option value="">Vše</option>
-              {allBrands.map((b) => (
-                <option key={b} value={b}>
-                  {b}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-
-        <div className="small muted">
-          Zobrazuji: <b>{filtered.length}</b> položek {loading ? "• Načítám..." : ""}
-        </div>
-
-        {showShoesFilters ? (
-          <div className="card" style={{ display: "grid", gap: 10, padding: 12, background: "transparent", minWidth: 0 }}>
-            <div style={{ fontWeight: 800 }}>Filtry pro kopačky / běžecké boty / tenisky</div>
-
             <div
+              className="adminDesktopActions"
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))",
+                gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
                 gap: 10,
                 width: "100%",
                 minWidth: 0,
               }}
             >
-              <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
-                Typ povrchu
-                <select value={bootType} onChange={(e) => setBootType(e.target.value)}>
-                  <option value="">Vše</option>
-                  {BOOT_TYPES.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <Link className="btn btnPrimary" href="/admin/produkty/new">
+                + Nový produkt
+              </Link>
 
-              <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
-                Velikost EU
-                <select value={sizeEU} onChange={(e) => setSizeEU(e.target.value)}>
-                  <option value="">Vše</option>
-                  {allShoesSizes.map((s) => (
-                    <option key={String(s)} value={String(s)}>
-                      {formatEUSize(s)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <div className="small muted" style={{ alignSelf: "end" }}>
-                Filtrování pro boty
-              </div>
+              <button type="button" className="btn" onClick={resetFilters}>
+                Reset filtrů
+              </button>
             </div>
-          </div>
-        ) : null}
-
-        {showGloveFilters ? (
-          <div className="card" style={{ display: "grid", gap: 10, padding: 12, background: "transparent", minWidth: 0 }}>
-            <div style={{ fontWeight: 800 }}>Filtry pro rukavice</div>
-            <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
-              Velikost rukavic
-              <select value={gloveSize} onChange={(e) => setGloveSize(e.target.value)}>
-                <option value="">Vše</option>
-                {GLOVE_SIZES.map((s) => (
-                  <option key={s} value={String(s)}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-        ) : null}
-
-        {showApparelSizeFilters ? (
-          <div className="card" style={{ display: "grid", gap: 10, padding: 12, background: "transparent", minWidth: 0 }}>
-            <div style={{ fontWeight: 800 }}>Filtry pro dresy / oblečení</div>
 
             <div
               style={{
@@ -432,10 +357,44 @@ export default function AdminProductsClient() {
               }}
             >
               <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
-                Velikost oblečení
-                <select value={apparelSize} onChange={(e) => setApparelSize(e.target.value)}>
+                Kategorie
+                <select
+                  value={category}
+                  onChange={(e) => {
+                    setCategory(e.target.value);
+                    setBootType("");
+                    setSizeEU("");
+                    setGloveSize("");
+                    setApparelSize("");
+                    setApparelType("");
+                  }}
+                >
                   <option value="">Vše</option>
-                  {APPAREL_SIZES.map((s) => (
+                  {CATEGORIES.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
+                Stav
+                <select value={condition} onChange={(e) => setCondition(e.target.value)}>
+                  <option value="">Vše</option>
+                  {CONDITIONS.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
+                Status
+                <select value={status} onChange={(e) => setStatus(e.target.value)}>
+                  <option value="">Vše</option>
+                  {STATUSES.map((s) => (
                     <option key={s} value={s}>
                       {s}
                     </option>
@@ -443,22 +402,144 @@ export default function AdminProductsClient() {
                 </select>
               </label>
 
-              {showApparelTypeFilters ? (
+              <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
+                Značka
+                <select value={brand} onChange={(e) => setBrand(e.target.value)}>
+                  <option value="">Vše</option>
+                  {allBrands.map((b) => (
+                    <option key={b} value={b}>
+                      {b}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            <div className="small muted">
+              Zobrazuji: <b>{filtered.length}</b> položek {loading ? "• Načítám..." : ""}
+            </div>
+
+            {showShoesFilters ? (
+              <div className="card" style={{ display: "grid", gap: 10, padding: 12, background: "transparent", minWidth: 0 }}>
+                <div style={{ fontWeight: 800 }}>Filtry pro kopačky / běžecké boty / tenisky</div>
+
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))",
+                    gap: 10,
+                    width: "100%",
+                    minWidth: 0,
+                  }}
+                >
+                  <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
+                    Typ povrchu
+                    <select value={bootType} onChange={(e) => setBootType(e.target.value)}>
+                      <option value="">Vše</option>
+                      {BOOT_TYPES.map((t) => (
+                        <option key={t} value={t}>
+                          {t}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
+                    Velikost EU
+                    <select value={sizeEU} onChange={(e) => setSizeEU(e.target.value)}>
+                      <option value="">Vše</option>
+                      {allShoesSizes.map((s) => (
+                        <option key={String(s)} value={String(s)}>
+                          {formatEUSize(s)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <div className="small muted" style={{ alignSelf: "end" }}>
+                    Filtrování pro boty
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            {showGloveFilters ? (
+              <div className="card" style={{ display: "grid", gap: 10, padding: 12, background: "transparent", minWidth: 0 }}>
+                <div style={{ fontWeight: 800 }}>Filtry pro rukavice</div>
                 <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
-                  Typ oblečení
-                  <select value={apparelType} onChange={(e) => setApparelType(e.target.value)}>
+                  Velikost rukavic
+                  <select value={gloveSize} onChange={(e) => setGloveSize(e.target.value)}>
                     <option value="">Vše</option>
-                    {allApparelTypes.map((t) => (
-                      <option key={t} value={t}>
-                        {t}
+                    {GLOVE_SIZES.map((s) => (
+                      <option key={s} value={String(s)}>
+                        {s}
                       </option>
                     ))}
                   </select>
                 </label>
-              ) : null}
+              </div>
+            ) : null}
+
+            {showApparelSizeFilters ? (
+              <div className="card" style={{ display: "grid", gap: 10, padding: 12, background: "transparent", minWidth: 0 }}>
+                <div style={{ fontWeight: 800 }}>Filtry pro dresy / oblečení</div>
+
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))",
+                    gap: 10,
+                    width: "100%",
+                    minWidth: 0,
+                  }}
+                >
+                  <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
+                    Velikost oblečení
+                    <select value={apparelSize} onChange={(e) => setApparelSize(e.target.value)}>
+                      <option value="">Vše</option>
+                      {APPAREL_SIZES.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  {showApparelTypeFilters ? (
+                    <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
+                      Typ oblečení
+                      <select value={apparelType} onChange={(e) => setApparelType(e.target.value)}>
+                        <option value="">Vše</option>
+                        {allApparelTypes.map((t) => (
+                          <option key={t} value={t}>
+                            {t}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
+
+            <div className="adminFilterDrawerFooter">
+              <button
+                type="button"
+                className="btn"
+                onClick={resetFilters}
+              >
+                Reset
+              </button>
+              <button
+                type="button"
+                className="btn btnPrimary"
+                onClick={() => setShowFilters(false)}
+              >
+                Zobrazit {filtered.length} položek
+              </button>
             </div>
           </div>
-        ) : null}
+        </div>
       </div>
 
       <div style={{ display: "grid", gap: 10, width: "100%", minWidth: 0 }}>
