@@ -53,6 +53,8 @@ function normalizeText(s: string) {
     .trim();
 }
 
+const SCROLL_KEY = "productsScroll";
+
 export default function ProductsClient({
   initialQuery,
   initialCategory,
@@ -82,18 +84,35 @@ export default function ProductsClient({
   const [gloveSize, setGloveSize] = useState<string[]>(initialGloveSize);
 
   useEffect(() => {
-    const saved = sessionStorage.getItem("productsScroll");
+    const saved = sessionStorage.getItem(SCROLL_KEY);
     if (!saved) return;
 
     const y = Number(saved);
-    if (Number.isFinite(y) && y > 0) {
-      setTimeout(() => {
-        window.scrollTo(0, y);
-        sessionStorage.removeItem("productsScroll");
-      }, 60);
-    } else {
-      sessionStorage.removeItem("productsScroll");
+    if (!Number.isFinite(y) || y <= 0) {
+      sessionStorage.removeItem(SCROLL_KEY);
+      return;
     }
+
+    let tries = 0;
+    const maxTries = 12;
+
+    const restore = () => {
+      window.scrollTo(0, y);
+      tries += 1;
+
+      if (tries >= maxTries) {
+        sessionStorage.removeItem(SCROLL_KEY);
+        return;
+      }
+
+      setTimeout(restore, 120);
+    };
+
+    const start = setTimeout(restore, 80);
+
+    return () => {
+      clearTimeout(start);
+    };
   }, []);
 
   const isShoesCategory =
@@ -201,7 +220,7 @@ export default function ProductsClient({
     setApparelSize([]);
     setApparelType([]);
     setGloveSize([]);
-    sessionStorage.removeItem("productsScroll");
+    sessionStorage.removeItem(SCROLL_KEY);
   }
 
   return (
@@ -399,7 +418,7 @@ export default function ProductsClient({
               href={`/p/${p.slug}?back=${encodeURIComponent(backHref)}`}
               className="card productCardLarge"
               onClick={() => {
-                sessionStorage.setItem("productsScroll", String(window.scrollY));
+                sessionStorage.setItem(SCROLL_KEY, String(window.scrollY));
               }}
             >
               <div className="productThumbLarge">
