@@ -303,29 +303,33 @@ export default function AdminProductsClient() {
         />
       ) : null}
 
-      <div
+            <div
         className={`adminFilterDrawer ${showFilters ? "open" : ""}`}
         aria-hidden={!showFilters}
       >
-        <div className="adminFilterDrawerHeader">
+        <div className="adminFilterDrawerInner">
+          <div className="adminFilterDrawerHeader">
+            <div className="drawerHandle" />
 
-  <div className="drawerHandle" />
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: 10,
+              }}
+            >
+              <div style={{ fontWeight: 900, fontSize: 18 }}>Filtry</div>
 
-  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-    <div style={{ fontWeight: 900, fontSize: 18 }}>
-      Filtry
-    </div>
-
-    <button
-      type="button"
-      className="btn"
-      onClick={() => setShowFilters(false)}
-    >
-      ✕
-    </button>
-  </div>
-
-</div>
+              <button
+                type="button"
+                className="btn"
+                onClick={() => setShowFilters(false)}
+              >
+                ✕
+              </button>
+            </div>
+          </div>
 
           <div
             className="card adminFiltersCard"
@@ -428,7 +432,10 @@ export default function AdminProductsClient() {
             </div>
 
             {showShoesFilters ? (
-              <div className="card" style={{ display: "grid", gap: 10, padding: 12, background: "transparent", minWidth: 0 }}>
+              <div
+                className="card"
+                style={{ display: "grid", gap: 10, padding: 12, background: "transparent", minWidth: 0 }}
+              >
                 <div style={{ fontWeight: 800 }}>Filtry pro kopačky / běžecké boty / tenisky</div>
 
                 <div
@@ -472,7 +479,10 @@ export default function AdminProductsClient() {
             ) : null}
 
             {showGloveFilters ? (
-              <div className="card" style={{ display: "grid", gap: 10, padding: 12, background: "transparent", minWidth: 0 }}>
+              <div
+                className="card"
+                style={{ display: "grid", gap: 10, padding: 12, background: "transparent", minWidth: 0 }}
+              >
                 <div style={{ fontWeight: 800 }}>Filtry pro rukavice</div>
                 <label style={{ display: "grid", gap: 6, minWidth: 0 }}>
                   Velikost rukavic
@@ -489,7 +499,10 @@ export default function AdminProductsClient() {
             ) : null}
 
             {showApparelSizeFilters ? (
-              <div className="card" style={{ display: "grid", gap: 10, padding: 12, background: "transparent", minWidth: 0 }}>
+              <div
+                className="card"
+                style={{ display: "grid", gap: 10, padding: 12, background: "transparent", minWidth: 0 }}
+              >
                 <div style={{ fontWeight: 800 }}>Filtry pro dresy / oblečení</div>
 
                 <div
