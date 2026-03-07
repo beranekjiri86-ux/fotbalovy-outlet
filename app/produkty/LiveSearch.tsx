@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 type Props = {
@@ -20,32 +20,49 @@ export default function LiveSearch({
   const [isPending, startTransition] = useTransition();
 
   const [value, setValue] = useState(initialValue);
+  const lastCommittedRef = useRef(initialValue);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    setValue(initialValue);
-  }, [initialValue]);
+    const currentQ = searchParams.get("q") ?? "";
 
-  const paramsString = useMemo(() => searchParams.toString(), [searchParams]);
+    if (currentQ !== lastCommittedRef.current && currentQ !== value) {
+      setValue(currentQ);
+      lastCommittedRef.current = currentQ;
+    }
+  }, [searchParams, value]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const params = new URLSearchParams(paramsString);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
 
-      const current = params.get("q") ?? "";
-      const next = value.trim();
+    debounceRef.current = setTimeout(() => {
+      const params = new URLSearchParams(searchParams.toString());
+      const trimmed = value.trim();
+      const currentQ = params.get("q") ?? "";
 
-      if (next === current) return;
+      if (trimmed === currentQ) return;
 
-      if (next) params.set("q", next);
-      else params.delete("q");
+      if (trimmed) {
+        params.set("q", trimmed);
+      } else {
+        params.delete("q");
+      }
+
+      lastCommittedRef.current = trimmed;
+
+      const nextUrl = params.toString()
+        ? `${pathname}?${params.toString()}`
+        : pathname;
 
       startTransition(() => {
-        router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+        router.replace(nextUrl, { scroll: false });
       });
-    }, 250);
+    }, 300);
 
-    return () => clearTimeout(timer);
-  }, [value, paramsString, pathname, router]);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [value, pathname, router, searchParams]);
 
   return (
     <div style={{ display: "grid", gap: 6, width: "100%" }}>
@@ -58,9 +75,7 @@ export default function LiveSearch({
         autoComplete="off"
         spellCheck={false}
       />
-      {isPending ? (
-        <div className="small muted">Hledám...</div>
-      ) : null}
+      {isPending ? <div className="small muted">Hledám...</div> : null}
     </div>
   );
 }
