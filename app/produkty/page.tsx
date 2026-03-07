@@ -4,6 +4,7 @@ import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { Product } from "@/lib/types";
 import ProductsClient from "./ProductsClient";
+
 type SP = { searchParams?: Record<string, string | string[] | undefined> };
 
 function getString(sp: SP["searchParams"], key: string) {
@@ -134,27 +135,27 @@ export default async function Produkty({ searchParams }: SP) {
     .sort((a, b) => a - b);
 
   let query = supabase
-  .from("products")
-  .select(`
-    id,
-    slug,
-    name,
-    brand,
-    category,
-    boot_type,
-    size_eu,
-    velikost_rukavic,
-    velikost_obleceni,
-    typ_obleceni,
-    condition,
-    status,
-    sale_price,
-    original_price,
-    article_code,
-    image_url
-  `)
-  .in("status", ["available", "reserved"])
-  .order("sale_price", { ascending: true });
+    .from("products")
+    .select(`
+      id,
+      slug,
+      name,
+      brand,
+      category,
+      boot_type,
+      size_eu,
+      velikost_rukavic,
+      velikost_obleceni,
+      typ_obleceni,
+      condition,
+      status,
+      sale_price,
+      original_price,
+      article_code,
+      image_url
+    `)
+    .in("status", ["available", "reserved"])
+    .order("sale_price", { ascending: true });
 
   if (q) {
     query = query.or(`name.ilike.%${q}%,article_code.ilike.%${q}%,brand.ilike.%${q}%`);
@@ -247,7 +248,7 @@ export default async function Produkty({ searchParams }: SP) {
         <div className="badge">{products.length} ks</div>
       </div>
 
-            <div
+      <div
         className="productsLayout"
         style={{
           display: "grid",
@@ -256,9 +257,10 @@ export default async function Produkty({ searchParams }: SP) {
           alignItems: "start",
         }}
       >
-        <div className="small muted" style={{ marginBottom: 4 }}>
-  Filtrování podle textu je níže nad produkty.
-</div>
+        <div className="card filtersCard">
+          <div className="small muted" style={{ marginBottom: 4 }}>
+            Filtrování podle textu je níže nad produkty.
+          </div>
 
           <div className="hr" />
 
@@ -414,33 +416,7 @@ export default async function Produkty({ searchParams }: SP) {
           </div>
         </div>
 
-       <ProductsClient products={products as any} initialQuery={q} />
-
-              <div style={{ fontWeight: 800, lineHeight: 1.3, fontSize: 15, minHeight: 40 }}>
-                {p.name}
-              </div>
-
-              <div className="tagRow" style={{ marginTop: 8 }}>
-                <span className="tag">{p.category}</span>
-                {p.brand ? <span className="tag">{p.brand}</span> : null}
-                {p.boot_type ? <span className="tag">{p.boot_type}</span> : null}
-                {p.size_eu ? <span className="tag">EU {formatEUSize(Number(p.size_eu))}</span> : null}
-                {p.velikost_rukavic ? <span className="tag">Rukavice {p.velikost_rukavic}</span> : null}
-                {p.velikost_obleceni ? <span className="tag">{String(p.velikost_obleceni).toUpperCase()}</span> : null}
-                {p.typ_obleceni ? <span className="tag">{p.typ_obleceni}</span> : null}
-                {p.condition ? <span className="tag">{p.condition}</span> : null}
-                {p.status === "reserved" ? <span className="tag">rezervováno</span> : null}
-              </div>
-
-              <div className="priceRow" style={{ marginTop: 10 }}>
-                <span className="price">{Math.round(p.sale_price)} Kč</span>
-                {p.original_price ? <span className="priceOld">{Math.round(p.original_price)} Kč</span> : null}
-              </div>
-
-              <div className="small" style={{ marginTop: 6 }}>Kód: {p.article_code}</div>
-            </Link>
-          ))}
-        </div>
+        <ProductsClient products={products as any} initialQuery={q} />
       </div>
     </div>
   );
