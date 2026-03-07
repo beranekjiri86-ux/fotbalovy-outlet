@@ -148,6 +148,24 @@ export default function ProductsClient({
     showApparelTypeFilters,
   ]);
 
+  const backHref = useMemo(() => {
+    const params = new URLSearchParams();
+
+    const trimmedQ = q.trim();
+    if (trimmedQ) params.set("q", trimmedQ);
+    if (category) params.set("cat", category);
+    if (condition.length) params.set("cond", condition.join(","));
+    if (brands.length) params.set("brand", brands.join(","));
+    if (boot.length) params.set("boot", boot.join(","));
+    if (sizeEU.length) params.set("eu", sizeEU.join(","));
+    if (apparelSize.length) params.set("as", apparelSize.join(","));
+    if (apparelType.length) params.set("at", apparelType.join(","));
+    if (gloveSize.length) params.set("gs", gloveSize.join(","));
+
+    const qs = params.toString();
+    return qs ? `/produkty?${qs}` : "/produkty";
+  }, [q, category, condition, brands, boot, sizeEU, apparelSize, apparelType, gloveSize]);
+
   function resetFilters() {
     setQ("");
     setCategory("");
@@ -350,7 +368,11 @@ export default function ProductsClient({
 
         <div className="productGrid productsGridMobile">
           {filteredProducts.map((p: any) => (
-            <Link key={p.id} href={`/p/${p.slug}`} className="card productCardLarge">
+            <Link
+              key={p.id}
+              href={`/p/${p.slug}?back=${encodeURIComponent(backHref)}`}
+              className="card productCardLarge"
+            >
               <div className="productThumbLarge">
                 <img
                   src={p.image_url || "/no-photo.png"}
