@@ -121,7 +121,7 @@ input:focus,select:focus,textarea:focus{border-color:#2e425f}
 .small{font-size:12px;color:var(--muted)}
 
 /* =========================================================
-   HEADER SEARCH (11teamsports-ish)
+   HEADER SEARCH
    ========================================================= */
 .headerSearch{
   width:100%;
@@ -157,36 +157,36 @@ input:focus,select:focus,textarea:focus{border-color:#2e425f}
 }
 
 /* =========================================================
-   PRODUKTY - mobil layout
+   PRODUKTY - stabilni layout
    ========================================================= */
 
-.productsLayout {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
-  align-items: start;
+.productsLayout{
+  display:grid;
+  grid-template-columns:280px 1fr;
+  gap:18px;
+  align-items:start;
 }
 
-.filtersCard {
-  position: static;
-  top: auto;
-  max-height: none;
-  overflow: visible;
+.filtersCard{
+  position:sticky;
+  top:86px;
+  max-height:calc(100vh - 110px);
+  overflow:auto;
 }
 
-.productsGridMobile {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+.productsGridMobile{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:14px;
 }
 
-.productCardLarge {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 12px;
-  border-radius: 16px;
-  text-decoration: none;
+.productCardLarge{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  padding:12px;
+  border-radius:16px;
+  text-decoration:none;
 }
 
 .productThumbLarge{
@@ -205,39 +205,32 @@ input:focus,select:focus,textarea:focus{border-color:#2e425f}
   display:block;
 }
 
-@media (max-width: 640px) {
-  .productsGridMobile {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
+@media (max-width: 900px){
+  .productsLayout{
+    grid-template-columns:1fr;
   }
 
-  .productCardLarge {
-    padding: 10px;
-  }
-}
-
-@media (min-width: 900px) {
-  .productsLayout {
-    grid-template-columns: 280px 1fr;
-    gap: 18px;
+  .filtersCard{
+    position:static;
+    top:auto;
+    max-height:none;
+    overflow:visible;
+    margin-bottom:12px;
   }
 
-  .filtersCard {
-    position: sticky;
-    top: 86px;
-    max-height: calc(100vh - 110px);
-    overflow: auto;
+  .productsGridMobile{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:10px;
   }
 
-  .productsGridMobile {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 14px;
+  .productCardLarge{
+    padding:10px;
   }
 }
 
-@media (min-width: 1200px) {
-  .productsGridMobile {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+@media (min-width: 1200px){
+  .productsGridMobile{
+    grid-template-columns:repeat(4,minmax(0,1fr));
   }
 }
 
@@ -260,7 +253,7 @@ input:focus,select:focus,textarea:focus{border-color:#2e425f}
   display:block;
   width:100%;
   height:auto;
-  max-height:65vh;
+  max-height:75vh;
   object-fit:contain;
   background:#0e1522;
 }
@@ -269,18 +262,16 @@ input:focus,select:focus,textarea:focus{border-color:#2e425f}
   display:grid;
   grid-template-columns:repeat(5, minmax(0, 1fr));
   gap:8px;
-  margin-top:2px;
 }
 
 .productGalleryThumb{
   appearance:none;
   border:1px solid var(--border);
   background:#0e1522;
-  border-radius:12px;
+  border-radius:14px;
   padding:0;
   overflow:hidden;
   cursor:pointer;
-  min-width:0;
 }
 
 .productGalleryThumb.isActive{
@@ -313,191 +304,6 @@ input:focus,select:focus,textarea:focus{border-color:#2e425f}
   }
 
   .productGalleryThumb{
-    border-radius:10px;
-  }
-}
-/* =========================================================
-   PRODUKTY PAGE LAYOUT
-   ========================================================= */
-
-.productsLayout {
-  display: grid;
-  grid-template-columns: 280px 1fr;
-  gap: 18px;
-  align-items: start;
-}
-
-.filtersCard {
-  position: sticky;
-  top: 86px;
-  max-height: calc(100vh - 110px);
-  overflow: auto;
-}
-
-.productsGridMobile {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
-}
-
-.productCardLarge {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 12px;
-  border-radius: 16px;
-  text-decoration: none;
-}
-
-.productThumbLarge{
-  width:100%;
-  aspect-ratio:1/1;
-  background:#0e1522;
-  border:1px solid var(--border);
-  border-radius:14px;
-  overflow:hidden;
-}
-
-.productThumbLarge img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  display:block;
-}
-
-@media (max-width: 900px) {
-  .productsLayout{
-    grid-template-columns:1fr !important;
-  }
-
-  .filtersCard {
-    position: static;
-    top: auto;
-    max-height: none;
-    overflow: visible;
-  }
-
-  .productsGridMobile {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-  }
-/* =========================================
-ADMIN – mobilní oprava editace produktu
-========================================= */
-
-@media (max-width: 800px){
-
-  /* admin formulář bude jen jeden sloupec */
-  .adminGrid{
-    grid-template-columns: 1fr !important;
-  }
-
-  /* inputy se nepřetáhnou mimo obrazovku */
-  .adminGrid input,
-  .adminGrid select,
-  .adminGrid textarea{
-    width:100%;
-    max-width:100%;
-  }
-
-  /* karty formuláře budou mít správnou šířku */
-  .adminGrid .card{
-    width:100%;
-  }
-
-}
-  .productCardLarge {
-    padding: 10px;
-  }
-}
-.productsLayout{
-  display:grid;
-  grid-template-columns:280px 1fr;
-  gap:18px;
-  align-items:start;
-}
-
-.productsContent{
-  display:grid;
-  gap:14px;
-  min-width:0;
-}
-
-.productsSearchTop{
-  display:none;
-}
-
-.filtersCard {
-  position: sticky;
-  top: 86px;
-  max-height: calc(100vh - 110px);
-  overflow: auto;
-}
-
-.productsGridMobile {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
-}
-
-.productCardLarge {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 12px;
-  border-radius: 16px;
-  text-decoration: none;
-}
-
-.productThumbLarge{
-  width:100%;
-  aspect-ratio:1/1;
-  background:#0e1522;
-  border:1px solid var(--border);
-  border-radius:14px;
-  overflow:hidden;
-}
-
-.productThumbLarge img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  display:block;
-}
-
-@media (max-width: 900px){
-  .productsLayout{
-    grid-template-columns:1fr;
-  }
-
-  .productsContent{
-    order:1;
-  }
-
-  .filtersCard{
-    order:2;
-    position:static;
-    top:auto;
-    max-height:none;
-    overflow:visible;
-  }
-
-  .productsSearchTop{
-    display:block;
-  }
-
-  .productsGridMobile{
-    grid-template-columns:repeat(2, minmax(0, 1fr));
-    gap:10px;
-  }
-
-  .productCardLarge{
-    padding:10px;
-  }
-}
-
-@media (min-width: 1200px){
-  .productsGridMobile{
-    grid-template-columns:repeat(4, minmax(0, 1fr));
+    border-radius:12px;
   }
 }
