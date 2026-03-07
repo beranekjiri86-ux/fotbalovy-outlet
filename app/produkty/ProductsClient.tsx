@@ -45,6 +45,14 @@ function parseEUSizeLabel(s: string) {
   return Number.isFinite(n) ? n : NaN;
 }
 
+function normalizeText(s: string) {
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
+
 export default function ProductsClient({
   initialQuery,
   initialCategory,
@@ -99,22 +107,24 @@ export default function ProductsClient({
   const showApparelTypeFilters = category === "oblečení";
 
   const filteredProducts = useMemo(() => {
-    const term = q.trim().toLowerCase();
+    const term = normalizeText(q);
+    const words = term.split(/\s+/).filter(Boolean);
 
     return products.filter((p: any) => {
-      if (term) {
-        const hay = [
-          p.name ?? "",
-          p.article_code ?? "",
-          p.brand ?? "",
-          p.category ?? "",
-          p.typ_obleceni ?? "",
-          p.boot_type ?? "",
-        ]
-          .join(" ")
-          .toLowerCase();
+      if (words.length) {
+        const hay = normalizeText(
+          [
+            p.name ?? "",
+            p.article_code ?? "",
+            p.brand ?? "",
+            p.category ?? "",
+            p.typ_obleceni ?? "",
+            p.boot_type ?? "",
+          ].join(" ")
+        );
 
-        if (!hay.includes(term)) return false;
+        const matchesAllWords = words.every((word) => hay.includes(word));
+        if (!matchesAllWords) return false;
       }
 
       if (category && p.category !== category) return false;
