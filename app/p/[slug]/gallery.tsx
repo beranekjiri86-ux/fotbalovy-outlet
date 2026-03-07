@@ -11,7 +11,6 @@ export default function ProductGallery({
   name,
   images,
 }: ProductGalleryProps) {
-
   const safeImages = useMemo(() => {
     if (!Array.isArray(images)) return [];
     return images.filter(
@@ -64,11 +63,11 @@ export default function ProductGallery({
     const distance = touchStartX.current - touchEndX.current;
 
     if (distance > 50) {
-      goNext(); // swipe left
+      goNext();
     }
 
     if (distance < -50) {
-      goPrev(); // swipe right
+      goPrev();
     }
 
     touchStartX.current = null;
@@ -77,20 +76,19 @@ export default function ProductGallery({
 
   return (
     <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
-
       <div
         className="productGalleryMain productGalleryMainWithNav"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-
-        {safeImages.length > 1 && (
+        {safeImages.length > 1 ? (
           <>
             <button
               type="button"
               onClick={goPrev}
               className="productGalleryNav productGalleryNavLeft"
+              aria-label="Předchozí fotka"
             >
               ‹
             </button>
@@ -99,11 +97,12 @@ export default function ProductGallery({
               type="button"
               onClick={goNext}
               className="productGalleryNav productGalleryNavRight"
+              aria-label="Další fotka"
             >
               ›
             </button>
           </>
-        )}
+        ) : null}
 
         <img
           src={selected}
@@ -114,10 +113,9 @@ export default function ProductGallery({
             e.currentTarget.src = "/no-photo.png";
           }}
         />
-
       </div>
 
-      {safeImages.length > 1 && (
+      {safeImages.length > 1 ? (
         <div className="productGalleryThumbs">
           {safeImages.map((url, index) => {
             const active = index === selectedIndex;
@@ -128,18 +126,22 @@ export default function ProductGallery({
                 type="button"
                 onClick={() => setSelectedIndex(index)}
                 className={`productGalleryThumb${active ? " isActive" : ""}`}
+                aria-label={`Zobrazit fotku ${index + 1}`}
               >
                 <img
                   src={url}
                   alt={`${name} ${index + 1}`}
                   loading="lazy"
                   className="productGalleryThumbImage"
+                  onError={(e) => {
+                    e.currentTarget.src = "/no-photo.png";
+                  }}
                 />
               </button>
             );
           })}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
