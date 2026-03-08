@@ -2143,7 +2143,7 @@ body{
 .mobileFiltersDrawerInner{
   overflow:auto;
   max-height:85vh;
-  padding:0 14px 14px;
+  padding:14px;
 }
 
 .mobileFiltersHeader{
@@ -2226,5 +2226,42 @@ body{
     order:2;
     flex:1 1 auto;
     min-width:0;
+  }
+}
+@media (max-width: 900px){
+  .productsTopActions{
+    display:grid;
+    grid-template-columns: 110px minmax(0, 1fr);
+    align-items:end;
+    gap:10px;
+    width:100%;
+  }
+
+  .productsFilterToggle{
+    display:inline-flex !important;
+    align-items:center;
+    justify-content:center;
+    width:100%;
+    min-height:54px;
+    padding:0 16px;
+    font-size:18px;
+    border-radius:18px;
+  }
+
+  .productsSortWrap{
+    min-width:0;
+    width:100%;
+  }
+
+  .productsSortWrap .small{
+    display:block;
+    margin-bottom:6px;
+  }
+
+  .productsSortSelect{
+    width:100%;
+    min-height:54px;
+    font-size:18px;
+    border-radius:18px;
   }
 }
