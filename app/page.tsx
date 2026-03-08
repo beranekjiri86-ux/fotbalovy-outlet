@@ -1,119 +1,38 @@
-import "./globals.css";
 import Link from "next/link";
 
-export const metadata = {
-  title: "Fotbalový Outlet CZ",
-  description: "Kopačky, běžecké boty a tenisky – nové i použité.",
-};
-
-function getEnv(name: string, fallback = "") {
-  return process.env[name] ?? fallback;
-}
-
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const ig = getEnv("SHOP_IG", "fotbalovy_outlet_cz");
-
+export default function Home() {
   return (
-    <html lang="cs">
-      <body>
-        <header
-          className="header"
-          style={{
-            position: "sticky", // ✅ přebije případné fixed z CSS
-            top: 0,
-            zIndex: 100,
-            background: "var(--bg)",
-            borderBottom: "1px solid var(--border)",
-          }}
-        >
-          <div
-            className="container"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 12,
-              padding: "10px 0",
-              flexWrap: "wrap", // ✅ na mobilu se to zalomí místo překrývání
-            }}
-          >
-            {/* LOGO */}
-            <Link
-              href="/"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                textDecoration: "none",
-                color: "inherit",
-                flexShrink: 0,
-              }}
-            >
-              <img src="/logo.png" alt="Fotbalový Outlet CZ" style={{ height: 60 }} />
-              <div style={{ lineHeight: 1 }}>
-                <div style={{ fontWeight: 800, fontSize: 18 }}>Fotbalový Outlet CZ</div>
-                <div style={{ fontSize: 12, opacity: 0.6 }}>nové i použité kopačky</div>
-              </div>
+    <>
+      <section className="homeHero">
+        <Link href="/produkty" className="homeHeroBannerLink">
+          <img
+            src="/baner.png"
+            alt="Fotbalový Outlet CZ"
+            className="homeHeroBanner"
+          />
+        </Link>
+
+        <div className="homeHeroCard">
+          <div className="homeHeroEyebrow">Fotbalový outlet</div>
+
+          <h1 className="homeHeroTitle">
+            Kopačky, běžecké boty a tenisky
+            <br />
+            nové i použité
+          </h1>
+
+          <p className="homeHeroText">
+            Značkové fotbalové kopačky, běžecké boty a tenisky za výhodné ceny.
+            Rychlé filtrování podle značky, velikosti, stavu i typu podrážky.
+          </p>
+
+          <div className="homeHeroActions">
+            <Link className="btn btnPrimary" href="/produkty">
+              Prohlédnout nabídku
             </Link>
-
-            {/* SEARCH */}
-            <form
-              action="/produkty"
-              method="GET"
-              style={{
-                flex: 1,
-                maxWidth: 520,
-                minWidth: 220,
-              }}
-            >
-              <input
-                name="q"
-                className="headerSearch"
-                placeholder="Hledej (Nike, Mercurial, DJ4977, 44...)"
-              />
-            </form>
-
-            {/* MENU */}
-            <nav
-              style={{
-                display: "flex",
-                gap: 10,
-                alignItems: "center",
-                flexShrink: 0,
-              }}
-            >
-              <Link className="btn" href="/produkty">
-                Produkty
-              </Link>
-              <Link className="btn" href="/kosik">
-                Košík
-              </Link>
-              <a
-                className="btn"
-                href={`https://instagram.com/${ig}`}
-                target="_blank"
-                rel="noreferrer"
-              >
-                Instagram
-              </a>
-            </nav>
           </div>
-        </header>
-
-        {/* ✅ pojistka: kdyby header byl někde fixed, tak to nepřekryje obsah */}
-        <main className="container" style={{ paddingTop: 12 }}>
-          {children}
-        </main>
-
-        <footer className="container" style={{ paddingTop: 24, paddingBottom: 40 }}>
-          <div className="small">
-            © {new Date().getFullYear()} Fotbalový Outlet CZ • Dotazy/objednávky:{" "}
-            <a href={`mailto:${getEnv("SHOP_EMAIL_TO", "objednavky@fotbalovyoutletcz.cz")}`}>
-              {getEnv("SHOP_EMAIL_TO", "objednavky@fotbalovyoutletcz.cz")}
-            </a>
-          </div>
-        </footer>
-      </body>
-    </html>
+        </div>
+      </section>
+    </>
   );
 }
