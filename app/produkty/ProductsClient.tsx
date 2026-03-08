@@ -401,7 +401,7 @@ export default function ProductsClient({
                 className="btn productsFilterToggle"
                 onClick={() => setShowMobileFilters(true)}
               >
-                Filtr{activeFiltersCount ? ` (${activeFiltersCount})` : ""}
+                Filtr
               </button>
             ) : null}
           </div>
