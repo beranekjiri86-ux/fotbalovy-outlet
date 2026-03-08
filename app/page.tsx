@@ -11,39 +11,39 @@ export default function Home() {
             className="homeHeroBanner"
           />
         </Link>
-<div className="homeCategories">
 
-  <Link href="/produkty?kategorie=kopačky" className="homeCategory">
-    ⚽
-    <span>Kopačky</span>
-  </Link>
+        <div className="homeCategories">
+          <Link href="/produkty?cat=kopačky" className="homeCategory">
+            ⚽
+            <span>Kopačky</span>
+          </Link>
 
-  <Link href="/produkty?kategorie=běžecké boty" className="homeCategory">
-    🏃
-    <span>Běžecké boty</span>
-  </Link>
+          <Link href="/produkty?cat=běžecké boty" className="homeCategory">
+            🏃
+            <span>Běžecké boty</span>
+          </Link>
 
-  <Link href="/produkty?kategorie=tenisky" className="homeCategory">
-    👟
-    <span>Tenisky</span>
-  </Link>
+          <Link href="/produkty?cat=tenisky" className="homeCategory">
+            👟
+            <span>Tenisky</span>
+          </Link>
 
-  <Link href="/produkty?kategorie=rukavice" className="homeCategory">
-    🧤
-    <span>Rukavice</span>
-  </Link>
+          <Link href="/produkty?cat=rukavice" className="homeCategory">
+            🧤
+            <span>Rukavice</span>
+          </Link>
 
-  <Link href="/produkty?kategorie=dresy" className="homeCategory">
-    👕
-    <span>Dresy</span>
-  </Link>
+          <Link href="/produkty?cat=dresy" className="homeCategory">
+            👕
+            <span>Dresy</span>
+          </Link>
 
-  <Link href="/produkty?kategorie=oblečení" className="homeCategory">
-    🧥
-    <span>Oblečení</span>
-  </Link>
+          <Link href="/produkty?cat=oblečení" className="homeCategory">
+            🧥
+            <span>Oblečení</span>
+          </Link>
+        </div>
 
-</div>
         <div className="homeHeroCard">
           <div className="homeHeroEyebrow">Fotbalový outlet</div>
 
