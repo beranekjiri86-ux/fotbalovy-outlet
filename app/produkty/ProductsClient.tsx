@@ -177,19 +177,33 @@ export default function ProductsClient({
       return true;
     });
 
+    function imageRank(item: any) {
+      return item.image_url ? 0 : 1;
+    }
+
     if (sort === "price_asc") {
-      result.sort((a: any, b: any) => (a.sale_price ?? 0) - (b.sale_price ?? 0));
+      result.sort((a: any, b: any) => {
+        const priceDiff = (a.sale_price ?? 0) - (b.sale_price ?? 0);
+        if (priceDiff !== 0) return priceDiff;
+        return imageRank(a) - imageRank(b);
+      });
     }
 
     if (sort === "price_desc") {
-      result.sort((a: any, b: any) => (b.sale_price ?? 0) - (a.sale_price ?? 0));
+      result.sort((a: any, b: any) => {
+        const priceDiff = (b.sale_price ?? 0) - (a.sale_price ?? 0);
+        if (priceDiff !== 0) return priceDiff;
+        return imageRank(a) - imageRank(b);
+      });
     }
 
     if (sort === "discount") {
       result.sort((a: any, b: any) => {
         const discountA = (a.original_price ?? 0) - (a.sale_price ?? 0);
         const discountB = (b.original_price ?? 0) - (b.sale_price ?? 0);
-        return discountB - discountA;
+        const discountDiff = discountB - discountA;
+        if (discountDiff !== 0) return discountDiff;
+        return imageRank(a) - imageRank(b);
       });
     }
 
@@ -457,24 +471,36 @@ export default function ProductsClient({
                 sessionStorage.setItem(SCROLL_KEY, String(window.scrollY));
               }}
             >
-          <div className="productThumbLarge">
-
-  {p.image_url ? (
-    <img
-      src={p.image_url}
-      alt={p.name}
-      loading="lazy"
-      onError={(e)=>{
-        e.currentTarget.style.display="none"
-      }}
-    />
-  ) : (
-    <div className="productThumbPlaceholder">
-      Bez fotky
-    </div>
-  )}
-
-</div>
+              <div className="productThumbLarge">
+                {p.image_url ? (
+                  <img
+                    src={p.image_url}
+                    alt={p.name}
+                    loading="lazy"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
+                ) : (
+                  <div className="productThumbPlaceholder">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="42"
+                      height="42"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M23 7l-7 5 7 5V7z" />
+                      <rect x="1" y="5" width="15" height="14" rx="2" />
+                      <line x1="1" y1="1" x2="23" y2="23" />
+                    </svg>
+                  </div>
+                )}
+              </div>
 
               <div
                 style={{
