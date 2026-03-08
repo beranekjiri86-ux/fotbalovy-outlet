@@ -1,108 +1,119 @@
+import "./globals.css";
 import Link from "next/link";
 
-function env(name: string, fallback = "") {
+export const metadata = {
+  title: "Fotbalový Outlet CZ",
+  description: "Kopačky, běžecké boty a tenisky – nové i použité.",
+};
+
+function getEnv(name: string, fallback = "") {
   return process.env[name] ?? fallback;
 }
 
-export default function Home() {
-  const phone = env("SHOP_PHONE", "+420605171216");
-  const email = env("SHOP_EMAIL_TO", "objednavky@fotbalovyoutletcz.cz");
-  const ig = env("SHOP_IG", "fotbalovy_outlet_cz");
-  const fb = env("SHOP_FB", "");
-  const bank = env("SHOP_BANK_ACCOUNT", "36493003/5500");
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const ig = getEnv("SHOP_IG", "fotbalovy_outlet_cz");
 
   return (
-    <>
-      <div style={{ marginTop: 20 }}>
-        <Link href="/produkty">
-          <img
-            src="/baner.png"
-            alt="Fotbalový Outlet CZ"
+    <html lang="cs">
+      <body>
+        <header
+          className="header"
+          style={{
+            position: "sticky", // ✅ přebije případné fixed z CSS
+            top: 0,
+            zIndex: 100,
+            background: "var(--bg)",
+            borderBottom: "1px solid var(--border)",
+          }}
+        >
+          <div
+            className="container"
             style={{
-              width: "100%",
-              borderRadius: 12,
-              display: "block",
-              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 12,
+              padding: "10px 0",
+              flexWrap: "wrap", // ✅ na mobilu se to zalomí místo překrývání
             }}
-          />
-        </Link>
-      </div>
-
-      <div className="grid" style={{ gap: 16, paddingTop: 16 }}>
-        <div className="card">
-          <h1 className="h1">Kopačky, běžecké boty a tenisky – nové i použité</h1>
-          <p className="muted" style={{ marginTop: 0 }}>
-            Rychlé filtrování podle kategorie, stavu, velikosti (EU), značky a typu
-            kopaček (FG/AG/SG/TF/IC).
-          </p>
-
-          <div className="row" style={{ marginTop: 12 }}>
-            <Link className="btn btnPrimary" href="/produkty">
-              Prohlédnout nabídku
-            </Link>
-          </div>
-
-          <div className="hr" />
-
-          <div className="kpis">
-            <div className="kpi">
-              <strong>Platba</strong>
-              <span>Dobírka / převod / domluva</span>
-            </div>
-            <div className="kpi">
-              <strong>Převod</strong>
-              <span>{bank}</span>
-            </div>
-            <div className="kpi">
-              <strong>Kontakt</strong>
-              <span>
-                {phone} • {email}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid2 grid">
-          <div className="card">
-            <h2 className="h2">Rychlý start</h2>
-            <p className="muted" style={{ marginTop: 0 }}>
-              Nejrychlejší cesta je přidat položky do košíku a odeslat objednávku
-              (dobírka/převod), nebo zvolit „Domluva“ a napsat nám přes IG/FB.
-            </p>
-
-            <div className="row">
-              <a className="btn" href={`https://instagram.com/${ig}`} target="_blank" rel="noreferrer">
-                Napsat na Instagram
-              </a>
-              {fb ? (
-                <a className="btn" href={fb} target="_blank" rel="noreferrer">
-                  Messenger (FB)
-                </a>
-              ) : null}
-              <a className="btn" href={`tel:${phone.replaceAll(" ", "")}`}>
-                Zavolat
-              </a>
-            </div>
-          </div>
-
-          <div className="card">
-            <h2 className="h2">Doprava</h2>
-            <ul className="muted" style={{ marginTop: 0, paddingLeft: 18 }}>
-              <li>Zásilkovna</li>
-              <li>PPL/DPD</li>
-              <li>Osobní předání</li>
-              <li>Dle domluvy</li>
-            </ul>
-
-            <div className="notice">
-              <div style={{ fontWeight: 700 }}>Rezervace</div>
-              <div className="small">
-                Po odeslání objednávky se položky automaticky rezervují na 24 hodin.
+          >
+            {/* LOGO */}
+            <Link
+              href="/"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                textDecoration: "none",
+                color: "inherit",
+                flexShrink: 0,
+              }}
+            >
+              <img src="/logo.png" alt="Fotbalový Outlet CZ" style={{ height: 60 }} />
+              <div style={{ lineHeight: 1 }}>
+                <div style={{ fontWeight: 800, fontSize: 18 }}>Fotbalový Outlet CZ</div>
+                <div style={{ fontSize: 12, opacity: 0.6 }}>nové i použité kopačky</div>
               </div>
-            </div>
+            </Link>
+
+            {/* SEARCH */}
+            <form
+              action="/produkty"
+              method="GET"
+              style={{
+                flex: 1,
+                maxWidth: 520,
+                minWidth: 220,
+              }}
+            >
+              <input
+                name="q"
+                className="headerSearch"
+                placeholder="Hledej (Nike, Mercurial, DJ4977, 44...)"
+              />
+            </form>
+
+            {/* MENU */}
+            <nav
+              style={{
+                display: "flex",
+                gap: 10,
+                alignItems: "center",
+                flexShrink: 0,
+              }}
+            >
+              <Link className="btn" href="/produkty">
+                Produkty
+              </Link>
+              <Link className="btn" href="/kosik">
+                Košík
+              </Link>
+              <a
+                className="btn"
+                href={`https://instagram.com/${ig}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Instagram
+              </a>
+            </nav>
           </div>
-        </div>
-      </div>
-    </>
+        </header>
+
+        {/* ✅ pojistka: kdyby header byl někde fixed, tak to nepřekryje obsah */}
+        <main className="container" style={{ paddingTop: 12 }}>
+          {children}
+        </main>
+
+        <footer className="container" style={{ paddingTop: 24, paddingBottom: 40 }}>
+          <div className="small">
+            © {new Date().getFullYear()} Fotbalový Outlet CZ • Dotazy/objednávky:{" "}
+            <a href={`mailto:${getEnv("SHOP_EMAIL_TO", "objednavky@fotbalovyoutletcz.cz")}`}>
+              {getEnv("SHOP_EMAIL_TO", "objednavky@fotbalovyoutletcz.cz")}
+            </a>
+          </div>
+        </footer>
+      </body>
+    </html>
   );
 }
