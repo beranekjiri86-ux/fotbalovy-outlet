@@ -12,60 +12,25 @@ function getEnv(name: string, fallback = "") {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const ig = getEnv("SHOP_IG", "fotbalovy_outlet_cz");
+  const fb = getEnv(
+    "SHOP_FB",
+    "https://www.facebook.com/profile.php?id=61581311155200"
+  );
 
   return (
     <html lang="cs">
       <body>
-        <header
-          className="header"
-          style={{
-            position: "sticky", // ✅ přebije případné fixed z CSS
-            top: 0,
-            zIndex: 100,
-            background: "var(--bg)",
-            borderBottom: "1px solid var(--border)",
-          }}
-        >
-          <div
-            className="container"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 12,
-              padding: "10px 0",
-              flexWrap: "wrap", // ✅ na mobilu se to zalomí místo překrývání
-            }}
-          >
-            {/* LOGO */}
-            <Link
-              href="/"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                textDecoration: "none",
-                color: "inherit",
-                flexShrink: 0,
-              }}
-            >
-              <img src="/logo.png" alt="Fotbalový Outlet CZ" style={{ height: 60 }} />
-              <div style={{ lineHeight: 1 }}>
-                <div style={{ fontWeight: 800, fontSize: 18 }}>Fotbalový Outlet CZ</div>
-                <div style={{ fontSize: 12, opacity: 0.6 }}>nové i použité kopačky</div>
+        <header className="siteHeader">
+          <div className="container siteHeaderInner">
+            <Link href="/" className="siteLogoWrap">
+              <img src="/logo.png" alt="Fotbalový Outlet CZ" className="siteLogoImg" />
+              <div className="siteLogoText">
+                <div className="siteLogoTitle">Fotbalový Outlet CZ</div>
+                <div className="siteLogoSub">nové i použité kopačky</div>
               </div>
             </Link>
 
-            {/* SEARCH */}
-            <form
-              action="/produkty"
-              method="GET"
-              style={{
-                flex: 1,
-                maxWidth: 520,
-                minWidth: 220,
-              }}
-            >
+            <form action="/produkty" method="GET" className="siteHeaderSearchWrap">
               <input
                 name="q"
                 className="headerSearch"
@@ -73,35 +38,77 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               />
             </form>
 
-            {/* MENU */}
-            <nav
-              style={{
-                display: "flex",
-                gap: 10,
-                alignItems: "center",
-                flexShrink: 0,
-              }}
-            >
+            <nav className="siteHeaderNav">
               <Link className="btn" href="/produkty">
                 Produkty
               </Link>
-              <Link className="btn" href="/kosik">
-                Košík
+
+              <Link className="btn iconBtn" href="/kosik" aria-label="Košík" title="Košík">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.9"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="9" cy="21" r="1" />
+                  <circle cx="20" cy="21" r="1" />
+                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+                </svg>
               </Link>
+
               <a
-                className="btn"
+                className="btn iconBtn"
                 href={`https://instagram.com/${ig}`}
                 target="_blank"
                 rel="noreferrer"
+                aria-label="Instagram"
+                title="Instagram"
               >
-                Instagram
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.9"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                  <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+                </svg>
+              </a>
+
+              <a
+                className="btn iconBtn"
+                href={fb}
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Facebook"
+                title="Facebook"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <path d="M22 12a10 10 0 1 0-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.78-3.89 1.1 0 2.24.2 2.24.2v2.46H15.2c-1.24 0-1.63.77-1.63 1.56V12h2.77l-.44 2.89h-2.33v6.99A10 10 0 0 0 22 12z" />
+                </svg>
               </a>
             </nav>
           </div>
         </header>
 
-        {/* ✅ pojistka: kdyby header byl někde fixed, tak to nepřekryje obsah */}
-        <main className="container" style={{ paddingTop: 12 }}>
+        <main className="container" style={{ paddingTop: 14 }}>
           {children}
         </main>
 
