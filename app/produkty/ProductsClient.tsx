@@ -23,6 +23,11 @@ type Props = {
   cats: string[];
 };
 
+type GroupedProduct = Product & {
+  stock_count: number;
+  ids: string[];
+};
+
 function toggle(values: string[], v: string) {
   return values.includes(v) ? values.filter((x) => x !== v) : [...values, v];
 }
@@ -51,6 +56,63 @@ function normalizeText(s: string) {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .trim();
+}
+
+function groupKey(p: any) {
+  const sizePart =
+    p.category === "rukavice"
+      ? `glove:${p.velikost_rukavic ?? ""}`
+      : p.category === "dresy" || p.category === "oblečení"
+      ? `apparel:${String(p.velikost_obleceni ?? "").toUpperCase()}`
+      : `shoe:${p.size_eu ?? ""}`;
+
+  return [
+    p.name?.trim().toLowerCase() ?? "",
+    p.article_code?.trim().toLowerCase() ?? "",
+    sizePart,
+  ].join("|");
+}
+
+function groupProducts(products: Product[]): GroupedProduct[] {
+  const map = new Map<string, GroupedProduct>();
+
+  for (const product of products as any[]) {
+    const key = groupKey(product);
+    const existing = map.get(key);
+
+    if (!existing) {
+      map.set(key, {
+        ...product,
+        ids: [product.id],
+        stock_count: 1,
+      });
+      continue;
+    }
+
+    existing.ids.push(product.id);
+    existing.stock_count += 1;
+
+    if (!existing.image_url && product.image_url) existing.image_url = product.image_url;
+
+    const existingStatusWeight =
+      existing.status === "available" ? 3 : existing.status === "reserved" ? 2 : existing.status === "sold" ? 1 : 0;
+    const nextStatusWeight =
+      product.status === "available" ? 3 : product.status === "reserved" ? 2 : product.status === "sold" ? 1 : 0;
+
+    if (nextStatusWeight > existingStatusWeight) {
+      existing.status = product.status;
+    }
+
+    const existingPrice = existing.sale_price ?? Number.MAX_SAFE_INTEGER;
+    const nextPrice = product.sale_price ?? Number.MAX_SAFE_INTEGER;
+    if (nextPrice < existingPrice) {
+      existing.sale_price = product.sale_price;
+      existing.original_price = product.original_price;
+      existing.slug = product.slug;
+    }
+  }
+
+  return Array.from(map.values());
 }
 
 const SCROLL_KEY = "productsScroll";
@@ -116,6 +178,8 @@ export default function ProductsClient({
     };
   }, []);
 
+  const groupedProducts = useMemo(() => groupProducts(products), [products]);
+
   const isShoesCategory =
     category === "kopačky" ||
     category === "běžecké boty" ||
@@ -130,7 +194,7 @@ export default function ProductsClient({
     const term = normalizeText(q);
     const words = term.split(/\s+/).filter(Boolean);
 
-    let result = products.filter((p: any) => {
+    let result = groupedProducts.filter((p: any) => {
       if (words.length) {
         const hay = normalizeText(
           [
@@ -209,7 +273,7 @@ export default function ProductsClient({
 
     return result;
   }, [
-    products,
+    groupedProducts,
     q,
     category,
     condition,
@@ -464,7 +528,7 @@ export default function ProductsClient({
         <div className="productGrid productsGridMobile">
           {filteredProducts.map((p: any) => (
             <Link
-              key={p.id}
+              key={groupKey(p)}
               href={`/p/${p.slug}?back=${encodeURIComponent(backHref)}`}
               className="card productCardLarge"
               onClick={() => {
@@ -525,6 +589,7 @@ export default function ProductsClient({
                 {p.typ_obleceni ? <span className="tag">{p.typ_obleceni}</span> : null}
                 {p.condition ? <span className="tag">{p.condition}</span> : null}
                 {p.status === "reserved" ? <span className="tag">rezervováno</span> : null}
+                <span className="tag">Skladem {p.stock_count} ks</span>
               </div>
 
               <div className="priceRow" style={{ marginTop: 10 }}>
