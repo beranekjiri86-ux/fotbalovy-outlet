@@ -616,138 +616,137 @@ export default function AdminProductsClient() {
           const notePreview = (p.note ?? "").trim();
 
           return (
-            <div
-              key={groupKey(p)}
-              className="card"
-              style={{
-                display: "grid",
-                gridTemplateColumns: "64px minmax(0, 1fr) auto",
-                gap: 12,
-                alignItems: "start",
-                padding: 12,
-                width: "100%",
-                minWidth: 0,
-              }}
-            >
-              <div
-                style={{
-                  width: 64,
-                  height: 64,
-                  borderRadius: 12,
-                  overflow: "hidden",
-                  background: "#0e1522",
-                  border: "1px solid var(--border)",
-                  flexShrink: 0,
-                }}
-              >
-                {p.image_url ? (
-                  <img
-                    src={p.image_url}
-                    alt=""
-                    loading="lazy"
-                    style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                  />
-                ) : null}
-              </div>
+           return (
+  <div
+    key={groupKey(p)}
+    className="card adminGroupedProductCard"
+    style={{
+      padding: 12,
+      width: "100%",
+      minWidth: 0,
+    }}
+  >
+    <div className="adminGroupedProductTop">
+      <div
+        style={{
+          width: 64,
+          height: 64,
+          borderRadius: 12,
+          overflow: "hidden",
+          background: "#0e1522",
+          border: "1px solid var(--border)",
+          flexShrink: 0,
+        }}
+      >
+        {p.image_url ? (
+          <img
+            src={p.image_url}
+            alt=""
+            loading="lazy"
+            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+          />
+        ) : null}
+      </div>
 
-              <div style={{ minWidth: 0, display: "grid", gap: 8 }}>
-                <div style={{ display: "grid", gap: 6, minWidth: 0 }}>
-              <div
-  style={{
-    fontWeight: 900,
-    lineHeight: 1.25,
-    overflow: "hidden",
-    display: "-webkit-box",
-    WebkitLineClamp: 2,
-    WebkitBoxOrient: "vertical",
-  }}
->
-  {p.name}
-</div>
+      <div style={{ minWidth: 0, display: "grid", gap: 8 }}>
+        <div style={{ display: "grid", gap: 6, minWidth: 0 }}>
+          <div
+            style={{
+              fontWeight: 900,
+              lineHeight: 1.25,
+              overflow: "hidden",
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+            }}
+          >
+            {p.name}
+          </div>
 
-                  <div
-                    style={{
-                      fontWeight: 900,
-                      fontSize: 15,
-                    }}
-                  >
-                    {p.sale_price != null ? `${Math.round(p.sale_price)} Kč` : ""}
-                  </div>
-                </div>
+          <div
+            style={{
+              fontWeight: 900,
+              fontSize: 15,
+            }}
+          >
+            {p.sale_price != null ? `${Math.round(p.sale_price)} Kč` : ""}
+          </div>
+        </div>
 
-                <div
-                  style={{
-                    display: "flex",
-                    gap: 8,
-                    alignItems: "center",
-                    flexWrap: "wrap",
-                    minWidth: 0,
-                  }}
-                >
-                  <span style={badgeStyle()}>{p.category ?? "—"}</span>
-                  {p.brand ? <span style={badgeStyle()}>{p.brand}</span> : null}
-                  {p.article_code ? <span style={badgeStyle()}>{p.article_code}</span> : null}
-                  {p.condition ? <span style={badgeStyle()}>{p.condition}</span> : null}
-                  {p.status ? (
-                    <span style={badgeStyle(p.status === "reserved")} title="available / reserved / sold">
-                      {p.status}
-                    </span>
-                  ) : null}
+        <div
+          style={{
+            display: "flex",
+            gap: 8,
+            alignItems: "center",
+            flexWrap: "wrap",
+            minWidth: 0,
+          }}
+        >
+          <span style={badgeStyle()}>{p.category ?? "—"}</span>
+          {p.brand ? <span style={badgeStyle()}>{p.brand}</span> : null}
+          {p.article_code ? <span style={badgeStyle()}>{p.article_code}</span> : null}
+          {p.condition ? <span style={badgeStyle()}>{p.condition}</span> : null}
+          {p.status ? (
+            <span style={badgeStyle(p.status === "reserved")} title="available / reserved / sold">
+              {p.status}
+            </span>
+          ) : null}
 
-                  <span style={badgeStyle(true)}>{p.stock_count} ks</span>
+          <span style={badgeStyle(true)}>{p.stock_count} ks</span>
 
-                  {showShoes ? (
-                    <>
-                      {p.boot_type ? <span style={badgeStyle(true)}>{p.boot_type}</span> : null}
-                      {eu ? <span style={badgeStyle()}>EU {eu}</span> : null}
-                      {uk ? <span style={badgeStyle()}>UK {uk}</span> : null}
-                      {cm ? <span style={badgeStyle()}>{cm} cm</span> : null}
-                    </>
-                  ) : null}
+          {showShoes ? (
+            <>
+              {p.boot_type ? <span style={badgeStyle(true)}>{p.boot_type}</span> : null}
+              {eu ? <span style={badgeStyle()}>EU {eu}</span> : null}
+              {uk ? <span style={badgeStyle()}>UK {uk}</span> : null}
+              {cm ? <span style={badgeStyle()}>{cm} cm</span> : null}
+            </>
+          ) : null}
 
-                  {p.category === "rukavice" && p.velikost_rukavic ? (
-                    <span style={badgeStyle()}>Rukavice {p.velikost_rukavic}</span>
-                  ) : null}
+          {p.category === "rukavice" && p.velikost_rukavic ? (
+            <span style={badgeStyle()}>Rukavice {p.velikost_rukavic}</span>
+          ) : null}
 
-                  {(p.category === "dresy" || p.category === "oblečení") && p.velikost_obleceni ? (
-                    <span style={badgeStyle()}>{String(p.velikost_obleceni).toUpperCase()}</span>
-                  ) : null}
+          {(p.category === "dresy" || p.category === "oblečení") && p.velikost_obleceni ? (
+            <span style={badgeStyle()}>{String(p.velikost_obleceni).toUpperCase()}</span>
+          ) : null}
 
-                  {p.category === "oblečení" && p.typ_obleceni ? (
-                    <span style={badgeStyle(true)}>{p.typ_obleceni}</span>
-                  ) : null}
-                </div>
+          {p.category === "oblečení" && p.typ_obleceni ? (
+            <span style={badgeStyle(true)}>{p.typ_obleceni}</span>
+          ) : null}
+        </div>
 
-                {notePreview ? (
-                  <div
-                    className="small muted"
-                    style={{
-                      lineHeight: 1.4,
-                      wordBreak: "break-word",
-                    }}
-                  >
-                    {notePreview.length > 180 ? `${notePreview.slice(0, 180)}...` : notePreview}
-                  </div>
-                ) : (
-                  <div className="small muted">Bez popisu.</div>
-                )}
-              </div>
+        {notePreview ? (
+          <div
+            className="small muted"
+            style={{
+              lineHeight: 1.4,
+              wordBreak: "break-word",
+            }}
+          >
+            {notePreview.length > 180 ? `${notePreview.slice(0, 180)}...` : notePreview}
+          </div>
+        ) : (
+          <div className="small muted">Bez popisu.</div>
+        )}
+      </div>
+    </div>
 
-              <div style={{ display: "grid", gap: 8, minWidth: 120 }}>
-                <Link className="btn btnPrimary" href={`/admin/produkty/${p.ids[0]}`}>
-                  Editovat
-                </Link>
+    <div className="adminGroupedProductActions">
+      <Link className="btn btnPrimary" href={`/admin/produkty/${p.ids[0]}`}>
+        Editovat
+      </Link>
 
-                <Link className="btn" href={`/admin/produkty/${p.ids[0]}`}>
-                  Cena / stav
-                </Link>
+      <Link className="btn" href={`/admin/produkty/${p.ids[0]}`}>
+        Cena / stav
+      </Link>
 
-                <Link className="btn" href={`/admin/produkty/new?copy=${p.ids[0]}`}>
-                  Kopírovat
-                </Link>
-              </div>
-            </div>
-          );
+      <Link className="btn" href={`/admin/produkty/new?copy=${p.ids[0]}`}>
+        Kopírovat
+      </Link>
+    </div>
+  </div>
+);
         })}
       </div>
     </div>
