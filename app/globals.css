@@ -2307,3 +2307,59 @@ body{
   width:28px;
   height:28px;
 }
+/* ===== PRODUKTOVÉ KARTY KOMPAKTNÍ ===== */
+
+/* menší mezery mezi produkty */
+.productGrid{
+  gap:10px !important;
+}
+
+/* menší padding karty */
+.productCardLarge{
+  padding:12px;
+}
+
+/* menší obrázek */
+.productThumbLarge{
+  aspect-ratio:1/1;
+  padding:6px;
+  margin-bottom:8px;
+}
+
+/* obrázek uvnitř */
+.productThumbLarge img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+}
+
+/* menší placeholder */
+.productThumbPlaceholder{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  opacity:0.35;
+}
+
+.productThumbPlaceholder svg{
+  width:24px;
+  height:24px;
+}
+/* ===== MOBIL - širší produkty ===== */
+
+@media (max-width:640px){
+
+  .container{
+    padding-left:10px;
+    padding-right:10px;
+  }
+
+  .productGrid{
+    gap:10px;
+  }
+
+  .productCardLarge{
+    padding:10px;
+  }
+
+}
