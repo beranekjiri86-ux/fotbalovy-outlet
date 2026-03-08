@@ -782,3 +782,65 @@ input:focus,select:focus,textarea:focus{border-color:#2e425f}
     width:100%;
   }
 }
+/* =========================================================
+   PRODUKTY - sticky search + razeni
+   ========================================================= */
+
+.productsStickyTools{
+  position:sticky;
+  top:72px;
+  z-index:18;
+  margin-bottom:14px;
+}
+
+.productsStickyToolsInner{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:10px;
+  align-items:center;
+  background:rgba(11,15,20,.88);
+  backdrop-filter:blur(10px);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:10px;
+}
+
+.productsSortWrap{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.productsSortSelect{
+  min-width:190px;
+  background:#0e1522;
+  border:1px solid var(--border);
+  color:var(--text);
+  padding:10px 12px;
+  border-radius:12px;
+  outline:none;
+}
+
+.productsSortSelect:focus{
+  border-color:#2e425f;
+}
+
+@media (max-width: 900px){
+  .productsStickyTools{
+    top:68px;
+  }
+
+  .productsStickyToolsInner{
+    grid-template-columns:1fr;
+  }
+
+  .productsSortWrap{
+    justify-content:space-between;
+  }
+
+  .productsSortSelect{
+    width:100%;
+    min-width:0;
+  }
+}
