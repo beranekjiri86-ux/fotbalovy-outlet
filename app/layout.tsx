@@ -39,9 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </form>
 
             <nav className="siteHeaderNav">
-              <Link className="btn" href="/produkty">
-                Produkty
-              </Link>
+              
 
               <Link className="btn iconBtn" href="/kosik" aria-label="Košík" title="Košík">
                 <svg
