@@ -1464,3 +1464,12 @@ html, body{
   object-fit: cover;
   border-radius: 14px;
 }
+/* FIX překrývání headeru */
+.siteHeader{
+  position: sticky;
+  top: 0;
+}
+
+main{
+  padding-top: 10px;
+}
