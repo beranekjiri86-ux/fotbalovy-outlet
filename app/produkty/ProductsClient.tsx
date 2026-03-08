@@ -338,7 +338,9 @@ export default function ProductsClient({
     setApparelType([]);
     setGloveSize([]);
     setSort("price_asc");
+    setShowMobileFilters(false);
     sessionStorage.removeItem(SCROLL_KEY);
+    window.history.replaceState({}, "", "/produkty");
   }
 
   const activeFiltersCount = [
@@ -393,13 +395,15 @@ export default function ProductsClient({
               </select>
             </div>
 
-            <button
-              type="button"
-              className="btn productsFilterToggle"
-              onClick={() => setShowMobileFilters(true)}
-            >
-              Filtr{activeFiltersCount ? ` (${activeFiltersCount})` : ""}
-            </button>
+            {!showMobileFilters ? (
+              <button
+                type="button"
+                className="btn productsFilterToggle"
+                onClick={() => setShowMobileFilters(true)}
+              >
+                Filtr{activeFiltersCount ? ` (${activeFiltersCount})` : ""}
+              </button>
+            ) : null}
           </div>
         </div>
       </div>
@@ -807,7 +811,7 @@ export default function ProductsClient({
               <div className="tagRow" style={{ marginTop: 8 }}>
                 <span className="tag">{p.category}</span>
                 {p.brand ? <span className="tag">{p.brand}</span> : null}
-                {p.boot_type ? <span className="tag">{p.boot_type}</span> : null}
+                {p.category === "kopačky" && p.boot_type ? <span className="tag">{p.boot_type}</span> : null}
                 {p.size_eu ? <span className="tag">EU {formatEUSize(Number(p.size_eu))}</span> : null}
                 {p.velikost_rukavic ? <span className="tag">Rukavice {p.velikost_rukavic}</span> : null}
                 {p.velikost_obleceni ? <span className="tag">{String(p.velikost_obleceni).toUpperCase()}</span> : null}
