@@ -82,6 +82,7 @@ export default function ProductsClient({
   const [apparelSize, setApparelSize] = useState<string[]>(initialApparelSize);
   const [apparelType, setApparelType] = useState<string[]>(initialApparelType);
   const [gloveSize, setGloveSize] = useState<string[]>(initialGloveSize);
+  const [sort, setSort] = useState("price_asc");
 
   useEffect(() => {
     const saved = sessionStorage.getItem(SCROLL_KEY);
@@ -129,7 +130,7 @@ export default function ProductsClient({
     const term = normalizeText(q);
     const words = term.split(/\s+/).filter(Boolean);
 
-    return products.filter((p: any) => {
+    let result = products.filter((p: any) => {
       if (words.length) {
         const hay = normalizeText(
           [
@@ -175,6 +176,24 @@ export default function ProductsClient({
 
       return true;
     });
+
+    if (sort === "price_asc") {
+      result.sort((a: any, b: any) => (a.sale_price ?? 0) - (b.sale_price ?? 0));
+    }
+
+    if (sort === "price_desc") {
+      result.sort((a: any, b: any) => (b.sale_price ?? 0) - (a.sale_price ?? 0));
+    }
+
+    if (sort === "discount") {
+      result.sort((a: any, b: any) => {
+        const discountA = (a.original_price ?? 0) - (a.sale_price ?? 0);
+        const discountB = (b.original_price ?? 0) - (b.sale_price ?? 0);
+        return discountB - discountA;
+      });
+    }
+
+    return result;
   }, [
     products,
     q,
@@ -190,6 +209,7 @@ export default function ProductsClient({
     showGloveFilters,
     showApparelSizeFilters,
     showApparelTypeFilters,
+    sort,
   ]);
 
   const backHref = useMemo(() => {
@@ -220,6 +240,7 @@ export default function ProductsClient({
     setApparelSize([]);
     setApparelType([]);
     setGloveSize([]);
+    setSort("price_asc");
     sessionStorage.removeItem(SCROLL_KEY);
   }
 
@@ -239,15 +260,30 @@ export default function ProductsClient({
         <div className="badge">{filteredProducts.length} ks</div>
       </div>
 
-      <div style={{ marginBottom: 14 }}>
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Hledat produkty..."
-          className="headerSearch"
-          autoComplete="off"
-          spellCheck={false}
-        />
+      <div className="productsStickyTools">
+        <div className="productsStickyToolsInner">
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Hledat produkty..."
+            className="headerSearch"
+            autoComplete="off"
+            spellCheck={false}
+          />
+
+          <div className="productsSortWrap">
+            <span className="small muted">Řazení:</span>
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value)}
+              className="productsSortSelect"
+            >
+              <option value="price_asc">Od nejlevnějšího</option>
+              <option value="price_desc">Od nejdražšího</option>
+              <option value="discount">Dle slevy</option>
+            </select>
+          </div>
+        </div>
       </div>
 
       <div className="productsLayout">
@@ -422,23 +458,28 @@ export default function ProductsClient({
               }}
             >
               <div className="productThumbLarge productThumbLargeZoom">
-  {p.image_url ? (
-    <img
-      src={p.image_url}
-      alt={p.name}
-      loading="lazy"
-      onError={(e) => {
-        e.currentTarget.src = "/no-photo.png";
-      }}
-    />
-  ) : (
-    <img
-      src="/no-photo.png"
-      alt="Bez fotky"
-      loading="lazy"
-    />
-  )}
-</div>
+                <img
+                  src={p.image_url || "/no-photo.png"}
+                  alt={p.name}
+                  loading="lazy"
+                  onError={(e) => {
+                    e.currentTarget.src = "/no-photo.png";
+                  }}
+                />
+              </div>
+
+              <div
+                style={{
+                  fontWeight: 800,
+                  lineHeight: 1.3,
+                  fontSize: 15,
+                  minHeight: 40,
+                  position: "relative",
+                  zIndex: 2,
+                }}
+              >
+                {p.name}
+              </div>
 
               <div className="tagRow" style={{ marginTop: 8 }}>
                 <span className="tag">{p.category}</span>
