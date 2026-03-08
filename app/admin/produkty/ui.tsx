@@ -188,7 +188,7 @@ export default function AdminProductsClient() {
         return;
       }
 
-      setRows((data ?? []) as ProductRow[]);
+      setRows(((data ?? []) as unknown) as ProductRow[]);
       setLoading(false);
     })();
 
