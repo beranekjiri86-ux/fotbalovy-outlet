@@ -2269,3 +2269,41 @@ body{
   aspect-ratio: 1 / 1;
   padding:8px;
 }
+/* ===== PRODUKTOVÉ KARTY - KOMPAKTNÍ DESIGN ===== */
+
+/* menší mezery mezi produkty */
+.productGrid{
+  gap:14px;
+}
+
+/* menší padding karty */
+.productCardLarge{
+  padding:14px;
+}
+
+/* menší obrázek produktu */
+.productThumbLarge{
+  aspect-ratio:1/1;
+  padding:8px;
+  margin-bottom:10px;
+}
+
+/* obrázek uvnitř */
+.productThumbLarge img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+}
+
+/* menší placeholder kamera */
+.productThumbPlaceholder{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  opacity:0.35;
+}
+
+.productThumbPlaceholder svg{
+  width:28px;
+  height:28px;
+}
