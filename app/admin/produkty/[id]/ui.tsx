@@ -185,62 +185,80 @@ export default function AdminProductEditClient({
   const [msg, setMsg] = useState<string | null>(null);
   const [dragOverUpload, setDragOverUpload] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+useEffect(() => {
+  let alive = true;
 
-  useEffect(() => {
-    if (isNew) return;
+  (async () => {
+    setMsg(null);
 
-    let alive = true;
+    if (isNew && !copyId) {
+      setP(makeEmptyProduct());
+      return;
+    }
 
-    (async () => {
-      setMsg(null);
+    const sourceId = isNew ? copyId : id;
+    if (!sourceId) return;
 
-      const { data, error } = await supabase
-        .from("products")
-        .select(
-          [
-            "id",
-            "slug",
-            "name",
-            "article_code",
-            "brand",
-            "category",
-            "boot_type",
-            "size_eu",
-            "size_uk",
-            "size_cm",
-            "condition",
-            "status",
-            "sale_price",
-            "original_price",
-            "note",
-            "image_url",
-            "images",
-            "velikost_rukavic",
-            "velikost_obleceni",
-            "typ_obleceni",
-          ].join(",")
-        )
-        .eq("id", id)
-        .single();
+    const { data, error } = await supabase
+      .from("products")
+      .select(
+        [
+          "id",
+          "slug",
+          "name",
+          "article_code",
+          "brand",
+          "category",
+          "boot_type",
+          "size_eu",
+          "size_uk",
+          "size_cm",
+          "condition",
+          "status",
+          "sale_price",
+          "original_price",
+          "note",
+          "image_url",
+          "images",
+          "velikost_rukavic",
+          "velikost_obleceni",
+          "typ_obleceni",
+        ].join(",")
+      )
+      .eq("id", sourceId)
+      .single();
 
-      if (!alive) return;
+    if (!alive) return;
 
-      if (error) {
-        console.error(error);
-        setMsg(error.message);
-        return;
-      }
+    if (error) {
+      console.error(error);
+      setMsg(error.message);
+      return;
+    }
 
+    const loaded = {
+      ...(data as any),
+      images: Array.isArray((data as any).images) ? (data as any).images : [],
+    } as Product;
+
+    if (isNew && copyId) {
       setP({
-        ...(data as any),
-        images: Array.isArray((data as any).images) ? (data as any).images : [],
+        ...loaded,
+        id: "new",
+        slug: null,
+        status: "available",
       });
-    })();
+      setMsg("Produkt byl předvyplněn z kopie. Uložení vytvoří nový kus.");
+      return;
+    }
 
-    return () => {
-      alive = false;
-    };
-  }, [id, isNew]);
+    setP(loaded);
+  })();
+
+  return () => {
+    alive = false;
+  };
+}, [id, isNew, copyId]);
 
   const gallery = useMemo(() => p?.images ?? [], [p]);
 
