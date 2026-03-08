@@ -652,15 +652,18 @@ export default function AdminProductsClient() {
 
               <div style={{ minWidth: 0, display: "grid", gap: 8 }}>
                 <div style={{ display: "grid", gap: 6, minWidth: 0 }}>
-                  <div
-                    style={{
-                      fontWeight: 900,
-                      lineHeight: 1.2,
-                      wordBreak: "break-word",
-                    }}
-                  >
-                    {p.name}
-                  </div>
+              <div
+  style={{
+    fontWeight: 900,
+    lineHeight: 1.25,
+    overflow: "hidden",
+    display: "-webkit-box",
+    WebkitLineClamp: 2,
+    WebkitBoxOrient: "vertical",
+  }}
+>
+  {p.name}
+</div>
 
                   <div
                     style={{
