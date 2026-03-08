@@ -185,80 +185,81 @@ export default function AdminProductEditClient({
   const [msg, setMsg] = useState<string | null>(null);
   const [dragOverUpload, setDragOverUpload] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
-useEffect(() => {
-  let alive = true;
 
-  (async () => {
-    setMsg(null);
+  useEffect(() => {
+    let alive = true;
 
-    if (isNew && !copyId) {
-      setP(makeEmptyProduct());
-      return;
-    }
+    (async () => {
+      setMsg(null);
 
-    const sourceId = isNew ? copyId : id;
-    if (!sourceId) return;
+      if (isNew && !copyId) {
+        setP(makeEmptyProduct());
+        return;
+      }
 
-    const { data, error } = await supabase
-      .from("products")
-      .select(
-        [
-          "id",
-          "slug",
-          "name",
-          "article_code",
-          "brand",
-          "category",
-          "boot_type",
-          "size_eu",
-          "size_uk",
-          "size_cm",
-          "condition",
-          "status",
-          "sale_price",
-          "original_price",
-          "note",
-          "image_url",
-          "images",
-          "velikost_rukavic",
-          "velikost_obleceni",
-          "typ_obleceni",
-        ].join(",")
-      )
-      .eq("id", sourceId)
-      .single();
+      const sourceId = isNew ? copyId : id;
+      if (!sourceId) return;
 
-    if (!alive) return;
+      const { data, error } = await supabase
+        .from("products")
+        .select(
+          [
+            "id",
+            "slug",
+            "name",
+            "article_code",
+            "brand",
+            "category",
+            "boot_type",
+            "size_eu",
+            "size_uk",
+            "size_cm",
+            "condition",
+            "status",
+            "sale_price",
+            "original_price",
+            "note",
+            "image_url",
+            "images",
+            "velikost_rukavic",
+            "velikost_obleceni",
+            "typ_obleceni",
+          ].join(",")
+        )
+        .eq("id", sourceId)
+        .single();
 
-    if (error) {
-      console.error(error);
-      setMsg(error.message);
-      return;
-    }
+      if (!alive) return;
 
-    const loaded = {
-      ...(data as any),
-      images: Array.isArray((data as any).images) ? (data as any).images : [],
-    } as Product;
+      if (error) {
+        console.error(error);
+        setMsg(error.message);
+        return;
+      }
 
-    if (isNew && copyId) {
-      setP({
-        ...loaded,
-        id: "new",
-        slug: null,
-        status: "available",
-      });
-      setMsg("Produkt byl předvyplněn z kopie. Uložení vytvoří nový kus.");
-      return;
-    }
+      const loaded = {
+        ...(data as any),
+        images: Array.isArray((data as any).images) ? (data as any).images : [],
+      } as Product;
 
-    setP(loaded);
-  })();
+      if (isNew && copyId) {
+        setP({
+          ...loaded,
+          id: "new",
+          slug: null,
+          status: "available",
+        });
+        setMsg("Produkt byl předvyplněn z kopie. Uložení vytvoří nový kus.");
+        return;
+      }
 
-  return () => {
-    alive = false;
-  };
-}, [id, isNew, copyId]);
+      setP(loaded);
+    })();
+
+    return () => {
+      alive = false;
+    };
+  }, [id, isNew, copyId]);
 
   const gallery = useMemo(() => p?.images ?? [], [p]);
 
@@ -468,8 +469,48 @@ useEffect(() => {
         .join(" ")
     );
 
+    let finalSlug = baseSlug || null;
+
+    if (baseSlug) {
+      const { data: existingRows, error: slugError } = await supabase
+        .from("products")
+        .select("id,slug")
+        .like("slug", `${baseSlug}%`);
+
+      if (slugError) {
+        console.error(slugError);
+        setMsg(slugError.message);
+        setSaving(false);
+        return;
+      }
+
+      const existing = (existingRows ?? []) as Array<{ id: string; slug: string | null }>;
+
+      if (isNew) {
+        const usedSlugs = new Set(existing.map((x) => x.slug).filter(Boolean));
+        if (usedSlugs.has(baseSlug)) {
+          let i = 2;
+          while (usedSlugs.has(`${baseSlug}-${i}`)) i += 1;
+          finalSlug = `${baseSlug}-${i}`;
+        }
+      } else {
+        const usedSlugs = new Set(
+          existing
+            .filter((x) => x.id !== p.id)
+            .map((x) => x.slug)
+            .filter(Boolean)
+        );
+
+        if (usedSlugs.has(baseSlug)) {
+          let i = 2;
+          while (usedSlugs.has(`${baseSlug}-${i}`)) i += 1;
+          finalSlug = `${baseSlug}-${i}`;
+        }
+      }
+    }
+
     const payload = {
-      slug: baseSlug || null,
+      slug: finalSlug,
 
       name: p.name.trim(),
       article_code: p.article_code?.trim() || null,
@@ -555,8 +596,8 @@ useEffect(() => {
 
       <div style={{ display: "grid", gap: 8 }}>
         <div style={{ fontWeight: 800, fontSize: 18 }}>
-  {isNew ? (copyId ? `Kopie: ${p.name || "Nový produkt"}` : "Nový produkt") : p.name}
-</div>
+          {isNew ? (copyId ? `Kopie: ${p.name || "Nový produkt"}` : "Nový produkt") : p.name}
+        </div>
         <div style={{ opacity: 0.8, fontSize: 13 }}>
           {p.brand ?? ""} {p.article_code ? `• ${p.article_code}` : ""}
         </div>
@@ -759,7 +800,15 @@ useEffect(() => {
       </label>
 
       <div className="card" style={{ display: "grid", gap: 12, padding: 12 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            gap: 10,
+            flexWrap: "wrap",
+            alignItems: "center",
+          }}
+        >
           <div>
             <div style={{ fontWeight: 800 }}>Fotky (max 10)</div>
             <div className="small muted">
