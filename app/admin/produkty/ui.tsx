@@ -33,6 +33,11 @@ type ProductRow = {
   typ_obleceni: string | null;
 };
 
+type GroupedProductRow = ProductRow & {
+  ids: string[];
+  stock_count: number;
+};
+
 const CATEGORIES = ["kopačky", "běžecké boty", "tenisky", "rukavice", "dresy", "oblečení"] as const;
 const CONDITIONS = ["nové", "použité"] as const;
 const STATUSES = ["available", "reserved", "sold"] as const;
@@ -68,6 +73,56 @@ function badgeStyle(active?: boolean) {
     wordBreak: "break-word" as const,
     maxWidth: "100%",
   };
+}
+
+function groupKey(p: ProductRow) {
+  const sizePart =
+    p.category === "rukavice"
+      ? `glove:${p.velikost_rukavic ?? ""}`
+      : p.category === "dresy" || p.category === "oblečení"
+      ? `apparel:${String(p.velikost_obleceni ?? "").toUpperCase()}`
+      : `shoe:${p.size_eu ?? ""}`;
+
+  return [
+    p.name?.trim().toLowerCase() ?? "",
+    p.article_code?.trim().toLowerCase() ?? "",
+    sizePart,
+  ].join("|");
+}
+
+function groupProducts(rows: ProductRow[]): GroupedProductRow[] {
+  const map = new Map<string, GroupedProductRow>();
+
+  for (const row of rows) {
+    const key = groupKey(row);
+    const existing = map.get(key);
+
+    if (!existing) {
+      map.set(key, {
+        ...row,
+        ids: [row.id],
+        stock_count: 1,
+      });
+      continue;
+    }
+
+    existing.ids.push(row.id);
+    existing.stock_count += 1;
+
+    if (!existing.image_url && row.image_url) existing.image_url = row.image_url;
+    if ((existing.images?.length ?? 0) === 0 && (row.images?.length ?? 0) > 0) existing.images = row.images;
+
+    const currentStatusWeight =
+      existing.status === "available" ? 3 : existing.status === "reserved" ? 2 : existing.status === "sold" ? 1 : 0;
+    const newStatusWeight =
+      row.status === "available" ? 3 : row.status === "reserved" ? 2 : row.status === "sold" ? 1 : 0;
+
+    if (newStatusWeight > currentStatusWeight) {
+      existing.status = row.status;
+    }
+  }
+
+  return Array.from(map.values());
 }
 
 export default function AdminProductsClient() {
@@ -119,7 +174,7 @@ export default function AdminProductsClient() {
           ].join(",")
         )
         .order("name", { ascending: true })
-        .limit(1000);
+        .limit(2000);
 
       if (!alive) return;
 
@@ -162,32 +217,34 @@ export default function AdminProductsClient() {
     };
   }, [showFilters]);
 
+  const groupedRows = useMemo(() => groupProducts(rows), [rows]);
+
   const allBrands = useMemo(() => {
-    return Array.from(new Set(rows.map((r) => r.brand).filter(Boolean) as string[])).sort((a, b) =>
+    return Array.from(new Set(groupedRows.map((r) => r.brand).filter(Boolean) as string[])).sort((a, b) =>
       a.localeCompare(b, "cs")
     );
-  }, [rows]);
+  }, [groupedRows]);
 
   const allApparelTypes = useMemo(() => {
-    return Array.from(new Set(rows.map((r) => r.typ_obleceni).filter(Boolean) as string[])).sort((a, b) =>
+    return Array.from(new Set(groupedRows.map((r) => r.typ_obleceni).filter(Boolean) as string[])).sort((a, b) =>
       a.localeCompare(b, "cs")
     );
-  }, [rows]);
+  }, [groupedRows]);
 
   const allShoesSizes = useMemo(() => {
     return Array.from(
       new Set(
-        rows
+        groupedRows
           .map((r) => r.size_eu)
           .filter((x): x is number => x != null && Number.isFinite(x))
       )
     ).sort((a, b) => a - b);
-  }, [rows]);
+  }, [groupedRows]);
 
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase();
 
-    return rows.filter((p) => {
+    return groupedRows.filter((p) => {
       if (term) {
         const hay = [
           p.name,
@@ -237,7 +294,7 @@ export default function AdminProductsClient() {
 
       return true;
     });
-  }, [rows, q, category, condition, status, brand, bootType, sizeEU, gloveSize, apparelSize, apparelType]);
+  }, [groupedRows, q, category, condition, status, brand, bootType, sizeEU, gloveSize, apparelSize, apparelType]);
 
   const resetFilters = () => {
     setQ("");
@@ -297,40 +354,34 @@ export default function AdminProductsClient() {
       </div>
 
       {showFilters ? (
-        <div
-          className="adminFilterBackdrop"
-          onClick={() => setShowFilters(false)}
-        />
+        <div className="adminFilterBackdrop" onClick={() => setShowFilters(false)} />
       ) : null}
 
-            <div
-        className={`adminFilterDrawer ${showFilters ? "open" : ""}`}
-        aria-hidden={!showFilters}
-      >
+      <div className={`adminFilterDrawer ${showFilters ? "open" : ""}`} aria-hidden={!showFilters}>
         <div className="adminFilterDrawerInner">
-         <div className="adminFilterDrawerHeader">
-  <div className="drawerHandle" />
+          <div className="adminFilterDrawerHeader">
+            <div className="drawerHandle" />
 
-  <div
-    style={{
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      gap: 10,
-    }}
-  >
-    <div style={{ fontWeight: 900, fontSize: 18 }}>Filtry</div>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: 10,
+              }}
+            >
+              <div style={{ fontWeight: 900, fontSize: 18 }}>Filtry</div>
 
-    <button
-      type="button"
-      className="btn"
-      onClick={() => setShowFilters(false)}
-      aria-label="Zavřít filtry"
-    >
-      Zavřít
-    </button>
-  </div>
-</div>
+              <button
+                type="button"
+                className="btn"
+                onClick={() => setShowFilters(false)}
+                aria-label="Zavřít filtry"
+              >
+                Zavřít
+              </button>
+            </div>
+          </div>
 
           <div
             className="card adminFiltersCard"
@@ -545,18 +596,10 @@ export default function AdminProductsClient() {
             ) : null}
 
             <div className="adminFilterDrawerFooter">
-              <button
-                type="button"
-                className="btn"
-                onClick={resetFilters}
-              >
+              <button type="button" className="btn" onClick={resetFilters}>
                 Reset
               </button>
-              <button
-                type="button"
-                className="btn btnPrimary"
-                onClick={() => setShowFilters(false)}
-              >
+              <button type="button" className="btn btnPrimary" onClick={() => setShowFilters(false)}>
                 Zobrazit {filtered.length} položek
               </button>
             </div>
@@ -573,17 +616,15 @@ export default function AdminProductsClient() {
           const notePreview = (p.note ?? "").trim();
 
           return (
-            <Link
-              key={p.id}
-              href={`/admin/produkty/${p.id}`}
+            <div
+              key={groupKey(p)}
               className="card"
               style={{
                 display: "grid",
-                gridTemplateColumns: "64px minmax(0, 1fr)",
+                gridTemplateColumns: "64px minmax(0, 1fr) auto",
                 gap: 12,
                 alignItems: "start",
                 padding: 12,
-                textDecoration: "none",
                 width: "100%",
                 minWidth: 0,
               }}
@@ -650,6 +691,8 @@ export default function AdminProductsClient() {
                     </span>
                   ) : null}
 
+                  <span style={badgeStyle(true)}>{p.stock_count} ks</span>
+
                   {showShoes ? (
                     <>
                       {p.boot_type ? <span style={badgeStyle(true)}>{p.boot_type}</span> : null}
@@ -686,7 +729,21 @@ export default function AdminProductsClient() {
                   <div className="small muted">Bez popisu.</div>
                 )}
               </div>
-            </Link>
+
+              <div style={{ display: "grid", gap: 8, minWidth: 120 }}>
+                <Link className="btn btnPrimary" href={`/admin/produkty/${p.ids[0]}`}>
+                  Editovat
+                </Link>
+
+                <Link className="btn" href={`/admin/produkty/${p.ids[0]}`}>
+                  Cena / stav
+                </Link>
+
+                <Link className="btn" href={`/admin/produkty/new?copy=${p.ids[0]}`}>
+                  Kopírovat
+                </Link>
+              </div>
+            </div>
           );
         })}
       </div>
