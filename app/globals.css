@@ -1761,3 +1761,33 @@ body {
     padding: 16px 10px;
   }
 }
+/* ===== HERO BANNER FIX (PC) ===== */
+
+.homeHeroBannerLink{
+  display:block;
+  width:100%;
+  max-width:1100px;
+  margin:0 auto;
+}
+
+.homeHeroBanner{
+  width:100%;
+  height:auto;
+  display:block;
+  border-radius:18px;
+}
+
+/* desktop úprava */
+@media (min-width:900px){
+
+  .homeHeroBanner{
+    height:auto !important;
+    max-height:none !important;
+    object-fit:contain !important;
+  }
+
+  .homeHero{
+    justify-items:center;
+  }
+
+}
