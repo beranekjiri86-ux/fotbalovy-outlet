@@ -145,6 +145,7 @@ export default function ProductsClient({
   const [apparelType, setApparelType] = useState<string[]>(initialApparelType);
   const [gloveSize, setGloveSize] = useState<string[]>(initialGloveSize);
   const [sort, setSort] = useState("price_asc");
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   useEffect(() => {
     const saved = sessionStorage.getItem(SCROLL_KEY);
@@ -178,11 +179,31 @@ export default function ProductsClient({
     };
   }, []);
 
+  useEffect(() => {
+    if (category !== "kopačky") {
+      setBoot([]);
+    }
+  }, [category]);
+
+  useEffect(() => {
+    if (!showMobileFilters) return;
+
+    const original = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = original;
+    };
+  }, [showMobileFilters]);
+
   const groupedProducts = useMemo(() => groupProducts(products), [products]);
 
   const showBootTypeFilter = category === "kopačky";
+  const showSizeEUFilters =
+    category === "kopačky" ||
+    category === "běžecké boty" ||
+    category === "tenisky";
 
-  const showShoesFilters = isShoesCategory;
   const showGloveFilters = category === "rukavice";
   const showApparelSizeFilters = category === "dresy" || category === "oblečení";
   const showApparelTypeFilters = category === "oblečení";
@@ -212,14 +233,14 @@ export default function ProductsClient({
       if (condition.length && !condition.includes(p.condition ?? "")) return false;
       if (brands.length && !brands.includes(p.brand ?? "")) return false;
 
-      if (showShoesFilters) {
-        if (boot.length && !boot.includes(p.boot_type ?? "")) return false;
+      if (showBootTypeFilter && boot.length) {
+        if (!boot.includes(p.boot_type ?? "")) return false;
+      }
 
-        if (sizeEU.length) {
-          const current = Number(p.size_eu);
-          const labels = sizeEU.map(parseEUSizeLabel).filter((n) => Number.isFinite(n));
-          if (!labels.some((n) => Math.abs(current - n) < 0.03)) return false;
-        }
+      if (showSizeEUFilters && sizeEU.length) {
+        const current = Number(p.size_eu);
+        const labels = sizeEU.map(parseEUSizeLabel).filter((n) => Number.isFinite(n));
+        if (!labels.some((n) => Math.abs(current - n) < 0.03)) return false;
       }
 
       if (showGloveFilters && gloveSize.length) {
@@ -280,7 +301,8 @@ export default function ProductsClient({
     apparelSize,
     apparelType,
     gloveSize,
-    showShoesFilters,
+    showBootTypeFilter,
+    showSizeEUFilters,
     showGloveFilters,
     showApparelSizeFilters,
     showApparelTypeFilters,
@@ -319,6 +341,17 @@ export default function ProductsClient({
     sessionStorage.removeItem(SCROLL_KEY);
   }
 
+  const activeFiltersCount = [
+    category,
+    condition.length ? "cond" : "",
+    brands.length ? "brand" : "",
+    boot.length ? "boot" : "",
+    sizeEU.length ? "eu" : "",
+    apparelSize.length ? "as" : "",
+    apparelType.length ? "at" : "",
+    gloveSize.length ? "gs" : "",
+  ].filter(Boolean).length;
+
   return (
     <div className="container" style={{ paddingTop: 16, paddingBottom: 24 }}>
       <div
@@ -346,23 +379,218 @@ export default function ProductsClient({
             spellCheck={false}
           />
 
-          <div className="productsSortWrap">
-            <span className="small muted">Řazení:</span>
-            <select
-              value={sort}
-              onChange={(e) => setSort(e.target.value)}
-              className="productsSortSelect"
+          <div className="productsTopActions">
+            <div className="productsSortWrap">
+              <span className="small muted">Řazení:</span>
+              <select
+                value={sort}
+                onChange={(e) => setSort(e.target.value)}
+                className="productsSortSelect"
+              >
+                <option value="price_asc">Od nejlevnějšího</option>
+                <option value="price_desc">Od nejdražšího</option>
+                <option value="discount">Dle slevy</option>
+              </select>
+            </div>
+
+            <button
+              type="button"
+              className="btn productsFilterToggle"
+              onClick={() => setShowMobileFilters(true)}
             >
-              <option value="price_asc">Od nejlevnějšího</option>
-              <option value="price_desc">Od nejdražšího</option>
-              <option value="discount">Dle slevy</option>
-            </select>
+              Filtr{activeFiltersCount ? ` (${activeFiltersCount})` : ""}
+            </button>
           </div>
         </div>
       </div>
 
+      {showMobileFilters ? (
+        <>
+          <div className="mobileFiltersBackdrop" onClick={() => setShowMobileFilters(false)} />
+          <div className="mobileFiltersDrawer">
+            <div className="mobileFiltersDrawerInner">
+              <div className="mobileFiltersHeader">
+                <div style={{ fontWeight: 900, fontSize: 18 }}>Filtry</div>
+                <button type="button" className="btn" onClick={() => setShowMobileFilters(false)}>
+                  Zavřít
+                </button>
+              </div>
+
+              <div className="card filtersCard mobileFiltersCard">
+                <button className="btn" type="button" onClick={resetFilters}>
+                  Reset filtrů
+                </button>
+
+                <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
+                  <details open>
+                    <summary style={{ fontWeight: 800, cursor: "pointer" }}>Kategorie</summary>
+                    <div className="filters" style={{ marginTop: 10 }}>
+                      {cats.map((c) => (
+                        <button
+                          key={c}
+                          type="button"
+                          className={"btn" + (category === c ? " btnPrimary" : "")}
+                          onClick={() => {
+                            setCategory(category === c ? "" : c);
+                            setBoot([]);
+                            setSizeEU([]);
+                            setApparelSize([]);
+                            setApparelType([]);
+                            setGloveSize([]);
+                          }}
+                        >
+                          {c}
+                        </button>
+                      ))}
+                    </div>
+                  </details>
+
+                  <details open>
+                    <summary style={{ fontWeight: 800, cursor: "pointer" }}>Stav</summary>
+                    <div className="filters" style={{ marginTop: 10 }}>
+                      {(["nové", "použité"] as const).map((c) => (
+                        <button
+                          key={c}
+                          type="button"
+                          className={"btn" + (condition.includes(c) ? " btnPrimary" : "")}
+                          onClick={() => setCondition(toggle(condition, c))}
+                        >
+                          {c}
+                        </button>
+                      ))}
+                    </div>
+                  </details>
+
+                  <details open>
+                    <summary style={{ fontWeight: 800, cursor: "pointer" }}>Značka</summary>
+                    {allBrands.length ? (
+                      <div className="filters" style={{ marginTop: 10, maxHeight: 260, overflow: "auto", paddingRight: 6 }}>
+                        {allBrands.map((b) => (
+                          <button
+                            key={b}
+                            type="button"
+                            className={"btn" + (brands.includes(b) ? " btnPrimary" : "")}
+                            onClick={() => setBrands(toggle(brands, b))}
+                          >
+                            {b}
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
+                  </details>
+
+                  {showBootTypeFilter ? (
+                    <details open>
+                      <summary style={{ fontWeight: 800, cursor: "pointer" }}>Typ / povrch</summary>
+                      <div className="filters" style={{ marginTop: 10 }}>
+                        {(["FG", "AG", "SG", "TF", "IC"] as const).map((t) => (
+                          <button
+                            key={t}
+                            type="button"
+                            className={"btn" + (boot.includes(t) ? " btnPrimary" : "")}
+                            onClick={() => setBoot(toggle(boot, t))}
+                          >
+                            {t}
+                          </button>
+                        ))}
+                      </div>
+                    </details>
+                  ) : null}
+
+                  {showSizeEUFilters ? (
+                    <details open>
+                      <summary style={{ fontWeight: 800, cursor: "pointer" }}>Velikost EU</summary>
+                      <div className="filters" style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 8 }}>
+                        {allSizesEU.map((label) => (
+                          <button
+                            key={label}
+                            type="button"
+                            className={"btn" + (sizeEU.includes(label) ? " btnPrimary" : "")}
+                            onClick={() => setSizeEU(toggle(sizeEU, label))}
+                          >
+                            EU {label}
+                          </button>
+                        ))}
+                      </div>
+                    </details>
+                  ) : null}
+
+                  {showGloveFilters ? (
+                    <details open>
+                      <summary style={{ fontWeight: 800, cursor: "pointer" }}>Velikost rukavic</summary>
+                      <div className="filters" style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 8 }}>
+                        {(allGloveSizes.length ? allGloveSizes : [6, 7, 8, 9, 10, 11]).map((s) => {
+                          const ss = String(s);
+                          return (
+                            <button
+                              key={ss}
+                              type="button"
+                              className={"btn" + (gloveSize.includes(ss) ? " btnPrimary" : "")}
+                              onClick={() => setGloveSize(toggle(gloveSize, ss))}
+                            >
+                              {ss}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </details>
+                  ) : null}
+
+                  {showApparelSizeFilters ? (
+                    <details open>
+                      <summary style={{ fontWeight: 800, cursor: "pointer" }}>Velikost</summary>
+                      <div className="filters" style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 8 }}>
+                        {allApparelSizes.map((s) => (
+                          <button
+                            key={s}
+                            type="button"
+                            className={"btn" + (apparelSize.includes(s) ? " btnPrimary" : "")}
+                            onClick={() => setApparelSize(toggle(apparelSize, s))}
+                          >
+                            {s}
+                          </button>
+                        ))}
+                      </div>
+                    </details>
+                  ) : null}
+
+                  {showApparelTypeFilters ? (
+                    <details>
+                      <summary style={{ fontWeight: 800, cursor: "pointer" }}>Typ oblečení</summary>
+                      {allApparelTypes.length ? (
+                        <div className="filters" style={{ marginTop: 10, maxHeight: 220, overflow: "auto", paddingRight: 6 }}>
+                          {allApparelTypes.map((t) => (
+                            <button
+                              key={t}
+                              type="button"
+                              className={"btn" + (apparelType.includes(t) ? " btnPrimary" : "")}
+                              onClick={() => setApparelType(toggle(apparelType, t))}
+                            >
+                              {t}
+                            </button>
+                          ))}
+                        </div>
+                      ) : null}
+                    </details>
+                  ) : null}
+                </div>
+
+                <div className="mobileFiltersFooter">
+                  <button type="button" className="btn" onClick={resetFilters}>
+                    Reset
+                  </button>
+                  <button type="button" className="btn btnPrimary" onClick={() => setShowMobileFilters(false)}>
+                    Zobrazit {filteredProducts.length} položek
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      ) : null}
+
       <div className="productsLayout">
-        <div className="card filtersCard">
+        <div className="card filtersCard productsFiltersDesktop">
           <button className="btn" type="button" onClick={resetFilters}>
             Reset filtrů
           </button>
@@ -425,40 +653,40 @@ export default function ProductsClient({
               ) : null}
             </details>
 
-            {showShoesFilters ? (
-              <>
-                <details open>
-                  <summary style={{ fontWeight: 800, cursor: "pointer" }}>Typ / povrch</summary>
-                  <div className="filters" style={{ marginTop: 10 }}>
-                    {(["FG", "AG", "SG", "TF", "IC"] as const).map((t) => (
-                      <button
-                        key={t}
-                        type="button"
-                        className={"btn" + (boot.includes(t) ? " btnPrimary" : "")}
-                        onClick={() => setBoot(toggle(boot, t))}
-                      >
-                        {t}
-                      </button>
-                    ))}
-                  </div>
-                </details>
+            {showBootTypeFilter ? (
+              <details open>
+                <summary style={{ fontWeight: 800, cursor: "pointer" }}>Typ / povrch</summary>
+                <div className="filters" style={{ marginTop: 10 }}>
+                  {(["FG", "AG", "SG", "TF", "IC"] as const).map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      className={"btn" + (boot.includes(t) ? " btnPrimary" : "")}
+                      onClick={() => setBoot(toggle(boot, t))}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </details>
+            ) : null}
 
-                <details>
-                  <summary style={{ fontWeight: 800, cursor: "pointer" }}>Velikost EU</summary>
-                  <div className="filters" style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 8 }}>
-                    {allSizesEU.map((label) => (
-                      <button
-                        key={label}
-                        type="button"
-                        className={"btn" + (sizeEU.includes(label) ? " btnPrimary" : "")}
-                        onClick={() => setSizeEU(toggle(sizeEU, label))}
-                      >
-                        EU {label}
-                      </button>
-                    ))}
-                  </div>
-                </details>
-              </>
+            {showSizeEUFilters ? (
+              <details>
+                <summary style={{ fontWeight: 800, cursor: "pointer" }}>Velikost EU</summary>
+                <div className="filters" style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {allSizesEU.map((label) => (
+                    <button
+                      key={label}
+                      type="button"
+                      className={"btn" + (sizeEU.includes(label) ? " btnPrimary" : "")}
+                      onClick={() => setSizeEU(toggle(sizeEU, label))}
+                    >
+                      EU {label}
+                    </button>
+                  ))}
+                </div>
+              </details>
             ) : null}
 
             {showGloveFilters ? (
