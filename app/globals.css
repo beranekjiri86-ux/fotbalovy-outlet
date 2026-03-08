@@ -1387,3 +1387,14 @@ body{
     max-height:none;
   }
 }
+/* FULL WIDTH BANNER */
+
+.homeHero{
+  margin-left:-12px;
+  margin-right:-12px;
+}
+
+.homeHeroBanner{
+  width:100vw;
+  max-width:100vw;
+}
