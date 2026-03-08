@@ -926,7 +926,7 @@ input:focus,select:focus,textarea:focus{border-color:#2e425f}
    ========================================================= */
 
 :root{
-  --bg:#07111d;
+  --bg:#0d2238;
   --card:#0d1a2a;
   --card-2:#102034;
   --border:#22354d;
@@ -1149,7 +1149,7 @@ body{
    ========================================================= */
 
 :root{
-  --bg:#07111d;
+  --bg:#0d2238;
   --card:#0d1a2a;
   --card-2:#102034;
   --border:#22354d;
@@ -1373,5 +1373,17 @@ body{
 @media (max-width:640px){
   .siteLogoImg{
     height:36px !important;
+  }
+}
+/* MENŠÍ BANNER NA PC */
+
+.homeHeroBanner{
+  max-height:420px;
+  object-fit:cover;
+}
+
+@media (max-width:900px){
+  .homeHeroBanner{
+    max-height:none;
   }
 }
