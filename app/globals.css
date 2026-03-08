@@ -1144,3 +1144,234 @@ body{
     grid-template-columns:1fr;
   }
 }
+/* =========================================================
+   SPORTOVNEJSI LIGHTER LOOK
+   ========================================================= */
+
+:root{
+  --bg:#07111d;
+  --card:#0d1a2a;
+  --card-2:#102034;
+  --border:#22354d;
+  --text:#eef4fb;
+  --muted:#aab8c9;
+  --accent:#2ecc63;
+}
+
+body{
+  background:
+    radial-gradient(circle at top, rgba(46,204,99,.08), transparent 28%),
+    linear-gradient(180deg, #07111d 0%, #08121f 100%);
+}
+
+.card{
+  background:linear-gradient(180deg, rgba(15,28,45,.96) 0%, rgba(12,24,39,.96) 100%);
+  border:1px solid var(--border);
+  box-shadow:0 10px 30px rgba(0,0,0,.18);
+}
+
+.siteHeader{
+  position:sticky;
+  top:0;
+  z-index:100;
+  background:rgba(7,17,29,.92);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--border);
+}
+
+.siteHeaderInner{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  padding:12px 0;
+  flex-wrap:wrap;
+}
+
+.siteLogoWrap{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  text-decoration:none;
+  color:inherit;
+  flex-shrink:0;
+}
+
+.siteLogoImg{
+  height:60px;
+  width:auto;
+  display:block;
+}
+
+.siteLogoText{
+  line-height:1;
+}
+
+.siteLogoTitle{
+  font-weight:900;
+  font-size:18px;
+}
+
+.siteLogoSub{
+  font-size:12px;
+  color:var(--muted);
+  margin-top:4px;
+}
+
+.siteHeaderSearchWrap{
+  flex:1;
+  max-width:540px;
+  min-width:220px;
+}
+
+.siteHeaderNav{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-shrink:0;
+}
+
+.iconBtn{
+  width:46px;
+  min-width:46px;
+  padding:0;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.homeHero{
+  display:grid;
+  gap:16px;
+  padding-top:8px;
+}
+
+.homeHeroBannerLink{
+  display:block;
+}
+
+.homeHeroBanner{
+  width:100%;
+  border-radius:18px;
+  display:block;
+  cursor:pointer;
+  border:1px solid var(--border);
+  box-shadow:0 14px 34px rgba(0,0,0,.22);
+}
+
+.homeHeroCard{
+  background:linear-gradient(180deg, rgba(16,31,49,.98) 0%, rgba(13,25,40,.98) 100%);
+  border:1px solid var(--border);
+  border-radius:22px;
+  padding:28px;
+  box-shadow:0 10px 30px rgba(0,0,0,.18);
+}
+
+.homeHeroEyebrow{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  font-size:13px;
+  font-weight:800;
+  color:var(--accent);
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  margin-bottom:14px;
+}
+
+.homeHeroTitle{
+  font-size:clamp(34px, 6vw, 64px);
+  line-height:1.02;
+  font-weight:900;
+  margin:0;
+  letter-spacing:-0.03em;
+}
+
+.homeHeroText{
+  font-size:clamp(17px, 2.3vw, 22px);
+  line-height:1.45;
+  color:var(--muted);
+  max-width:760px;
+  margin:18px 0 0;
+}
+
+.homeHeroActions{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-top:24px;
+}
+
+.btn{
+  border-radius:16px;
+}
+
+.btn.btnPrimary{
+  color:#04120a;
+  font-weight:900;
+}
+
+@media (max-width: 900px){
+  .siteHeaderInner{
+    gap:12px;
+  }
+
+  .siteHeaderNav{
+    width:100%;
+    justify-content:flex-start;
+    flex-wrap:wrap;
+  }
+
+  .siteHeaderSearchWrap{
+    order:3;
+    width:100%;
+    max-width:none;
+  }
+
+  .homeHeroCard{
+    padding:22px;
+    border-radius:18px;
+  }
+}
+
+@media (max-width: 640px){
+  .siteLogoImg{
+    height:56px;
+  }
+
+  .siteLogoTitle{
+    font-size:16px;
+  }
+
+  .siteLogoSub{
+    font-size:11px;
+  }
+
+  .siteHeaderNav{
+    gap:8px;
+  }
+
+  .homeHeroTitle{
+    font-size:clamp(26px, 9vw, 40px);
+  }
+
+  .homeHeroText{
+    font-size:17px;
+  }
+
+  .homeHeroCard{
+    padding:18px;
+  }
+}
+/* LOGO FIX */
+
+.siteLogoImg{
+  height:42px !important;
+  width:auto;
+}
+
+@media (max-width:640px){
+  .siteLogoImg{
+    height:36px !important;
+  }
+}
