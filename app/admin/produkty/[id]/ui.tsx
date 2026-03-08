@@ -169,7 +169,13 @@ async function normalizeImageFile(inputFile: File): Promise<File> {
   }
 }
 
-export default function AdminProductEditClient({ id }: { id: string }) {
+export default function AdminProductEditClient({
+  id,
+  copyId,
+}: {
+  id: string;
+  copyId?: string | null;
+}) {
   const router = useRouter();
   const isNew = id === "new";
   const inputRef = useRef<HTMLInputElement | null>(null);
