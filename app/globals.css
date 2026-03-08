@@ -1912,3 +1912,11 @@ body{
   transform:translateY(-6px);
   box-shadow:0 14px 40px rgba(0,0,0,0.45);
 }
+/* PRODUCT IMAGE ZOOM */
+
+.productCard img{
+  width:100%;
+  height:260px;
+  object-fit:cover;
+  border-radius:14px;
+}
