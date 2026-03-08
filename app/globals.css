@@ -844,3 +844,35 @@ input:focus,select:focus,textarea:focus{border-color:#2e425f}
     min-width:0;
   }
 }
+/* produktová fotka */
+
+.productThumbLarge{
+  position:relative;
+  width:100%;
+  aspect-ratio:1/1;
+  border-radius:14px;
+  overflow:hidden;
+  background:#0e1522;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.productThumbLarge img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  transition:transform .35s ease;
+}
+
+.productCardLarge:hover .productThumbLarge img{
+  transform:scale(1.08);
+}
+
+/* placeholder když není fotka */
+
+.productThumbPlaceholder{
+  font-size:13px;
+  color:#7c8aa0;
+  opacity:.7;
+}
