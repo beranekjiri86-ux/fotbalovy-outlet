@@ -414,11 +414,11 @@ export default function ProductsClient({
           <div className="mobileFiltersDrawer">
             <div className="mobileFiltersDrawerInner">
               <div className="mobileFiltersHeader">
-                <div style={{ fontWeight: 900, fontSize: 18 }}>Filtry</div>
-                <button type="button" className="btn" onClick={() => setShowMobileFilters(false)}>
-                  Zavřít
-                </button>
-              </div>
+  <div style={{ fontWeight: 900, fontSize: 18 }}>Filtry</div>
+  <button type="button" className="btn" onClick={() => setShowMobileFilters(false)}>
+    Zavřít
+  </button>
+</div>
 
               <div className="card filtersCard mobileFiltersCard">
                 <button className="btn" type="button" onClick={resetFilters}>
