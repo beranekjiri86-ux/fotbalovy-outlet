@@ -1834,3 +1834,81 @@ body {
     grid-template-columns:repeat(6,1fr);
   }
 }
+/* =========================================
+   SPORT STYLE UPDATE – HOMEPAGE + CARDS
+   ========================================= */
+
+/* ===== SPORTOVNĚJŠÍ POZADÍ STRÁNKY ===== */
+
+body{
+  background:
+  radial-gradient(circle at 20% 0%, #162b52 0%, transparent 40%),
+  radial-gradient(circle at 80% 20%, #1c3b6b 0%, transparent 40%),
+  #0b1426;
+}
+
+
+/* ===== LEPŠÍ KATEGORIE ===== */
+
+.homeCategory{
+  background:linear-gradient(180deg,#13284a,#0e1f3b);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:16px;
+  transition:all .25s ease;
+  cursor:pointer;
+}
+
+.homeCategory:hover{
+  transform:translateY(-4px);
+  border-color:#22c55e;
+  box-shadow:0 10px 25px rgba(0,0,0,0.4);
+}
+
+.homeCategory span{
+  font-size:15px;
+  font-weight:600;
+}
+
+
+/* ===== HERO TEXT ===== */
+
+.heroTitle{
+  font-size:34px;
+  font-weight:800;
+  line-height:1.2;
+}
+
+.heroText{
+  font-size:16px;
+  opacity:0.8;
+}
+
+
+/* ===== SPORTOVNÍ TLAČÍTKO ===== */
+
+.btnPrimary{
+  background:linear-gradient(90deg,#22c55e,#16a34a);
+  border:none;
+  font-weight:700;
+  box-shadow:0 4px 15px rgba(0,0,0,0.3);
+}
+
+.btnPrimary:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 25px rgba(0,0,0,0.4);
+}
+
+
+/* ===== PRODUKTOVÉ KARTY ===== */
+
+.productCard{
+  border-radius:18px;
+  background:linear-gradient(180deg,#13284a,#0f1e36);
+  border:1px solid rgba(255,255,255,0.06);
+  transition:all .25s ease;
+}
+
+.productCard:hover{
+  transform:translateY(-6px);
+  box-shadow:0 14px 40px rgba(0,0,0,0.45);
+}
