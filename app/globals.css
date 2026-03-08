@@ -891,3 +891,38 @@ input:focus,select:focus,textarea:focus{border-color:#2e425f}
   width:42px;
   height:42px;
 }
+.adminGroupedProductCard{
+  display:grid;
+  gap:12px;
+}
+
+.adminGroupedProductTop{
+  display:grid;
+  grid-template-columns:64px minmax(0,1fr);
+  gap:12px;
+  align-items:start;
+  min-width:0;
+}
+
+.adminGroupedProductActions{
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0,1fr));
+  gap:8px;
+}
+
+.adminGroupedProductActions .btn{
+  width:100%;
+  justify-content:center;
+  text-align:center;
+}
+
+@media (max-width: 640px){
+  .adminGroupedProductTop{
+    grid-template-columns:56px minmax(0,1fr);
+    gap:10px;
+  }
+
+  .adminGroupedProductActions{
+    grid-template-columns:1fr;
+  }
+}
