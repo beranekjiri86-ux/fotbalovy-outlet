@@ -1920,3 +1920,6 @@ body{
   object-fit:cover;
   border-radius:14px;
 }
+.productCard img{
+  transform:scale(1.05);
+}
