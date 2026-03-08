@@ -25,6 +25,21 @@ function formatEUSize(n: number | null) {
   return String(n).replace(".0", "");
 }
 
+function groupKey(p: any) {
+  const sizePart =
+    p.category === "rukavice"
+      ? `glove:${p.velikost_rukavic ?? ""}`
+      : p.category === "dresy" || p.category === "oblečení"
+      ? `apparel:${String(p.velikost_obleceni ?? "").toUpperCase()}`
+      : `shoe:${p.size_eu ?? ""}`;
+
+  return [
+    p.name?.trim().toLowerCase() ?? "",
+    p.article_code?.trim().toLowerCase() ?? "",
+    sizePart,
+  ].join("|");
+}
+
 export default async function ProductPage({
   params,
   searchParams,
@@ -46,6 +61,7 @@ export default async function ProductPage({
     .select(
       [
         "id",
+        "slug",
         "name",
         "article_code",
         "brand",
@@ -61,6 +77,9 @@ export default async function ProductPage({
         "note",
         "image_url",
         "images",
+        "velikost_rukavic",
+        "velikost_obleceni",
+        "typ_obleceni",
       ].join(",")
     )
     .eq("slug", slug)
@@ -68,11 +87,45 @@ export default async function ProductPage({
 
   if (error || !product) notFound();
 
-  const gallery: string[] = Array.isArray((product as any).images)
-    ? ((product as any).images as string[])
-    : [];
-  const mainImg = (product as any).image_url || gallery[0] || null;
-  const allImages = [mainImg, ...gallery].filter(Boolean) as string[];
+  const { data: sameRows } = await supabase
+    .from("products")
+    .select(
+      [
+        "id",
+        "slug",
+        "name",
+        "article_code",
+        "brand",
+        "category",
+        "boot_type",
+        "size_eu",
+        "size_uk",
+        "size_cm",
+        "condition",
+        "status",
+        "sale_price",
+        "original_price",
+        "note",
+        "image_url",
+        "images",
+        "velikost_rukavic",
+        "velikost_obleceni",
+        "typ_obleceni",
+      ].join(",")
+    )
+    .eq("name", (product as any).name)
+    .eq("article_code", (product as any).article_code);
+
+  const baseKey = groupKey(product as any);
+  const groupedSame = ((sameRows ?? []) as any[]).filter((row) => groupKey(row) === baseKey);
+  const stockCount = groupedSame.length || 1;
+
+  const allImages = groupedSame.flatMap((row) => {
+    const gallery: string[] = Array.isArray(row.images) ? row.images : [];
+    const mainImg = row.image_url || gallery[0] || null;
+    return [mainImg, ...gallery].filter(Boolean) as string[];
+  });
+
   const uniqueImages = Array.from(new Set(allImages));
 
   return (
@@ -104,6 +157,9 @@ export default async function ProductPage({
           </div>
           <div>
             <b>Status:</b> {(product as any).status ?? "—"}
+          </div>
+          <div>
+            <b>Skladem:</b> {stockCount} ks
           </div>
           <div>
             <b>Prodejní cena:</b> {money((product as any).sale_price ?? null)}
@@ -152,9 +208,13 @@ export default async function ProductPage({
           marginTop: 14,
         }}
       >
-        <div style={{ fontWeight: 900, fontSize: 18 }}>
-          {money((product as any).sale_price ?? null)}
+        <div style={{ display: "grid", gap: 4 }}>
+          <div style={{ fontWeight: 900, fontSize: 18 }}>
+            {money((product as any).sale_price ?? null)}
+          </div>
+          <div className="small muted">Skladem {stockCount} ks</div>
         </div>
+
         <a
           href="https://wa.me/420605171216"
           className="btn btnPrimary"
