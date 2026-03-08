@@ -1473,3 +1473,291 @@ html, body{
 main{
   padding-top: 10px;
 }
+/* =========================================
+   FINAL FIX: HEADER + LOGO + HERO TEXT
+   vlož úplně na konec globals.css
+   ========================================= */
+
+html,
+body {
+  overflow-x: hidden;
+}
+
+.container {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+/* ---------- HEADER ---------- */
+
+.siteHeader {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: #10243a;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+}
+
+.siteHeaderInner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 0;
+  flex-wrap: wrap;
+}
+
+.siteLogoWrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex-shrink: 0;
+  text-decoration: none;
+  color: inherit;
+}
+
+.siteLogoImg {
+  height: 44px;
+  width: 44px;
+  min-width: 44px;
+  object-fit: contain;
+  display: block;
+}
+
+.siteLogoText {
+  line-height: 1.05;
+  min-width: 0;
+}
+
+.siteLogoTitle {
+  font-size: 15px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.siteLogoSub {
+  font-size: 11px;
+  opacity: 0.72;
+  margin-top: 3px;
+  white-space: nowrap;
+}
+
+.siteHeaderSearchWrap {
+  flex: 1;
+  min-width: 260px;
+  max-width: 520px;
+}
+
+.siteHeaderNav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.iconBtn {
+  width: 42px;
+  min-width: 42px;
+  height: 42px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ---------- HERO / HOMEPAGE ---------- */
+
+.homeHero {
+  display: grid;
+  gap: 14px;
+  padding-top: 8px;
+}
+
+.homeHeroBanner {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 18px;
+  display: block;
+}
+
+.homeHeroCard {
+  max-width: 860px;
+  padding: 22px;
+  margin: 0;
+  border-radius: 22px;
+}
+
+.homeHeroEyebrow {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.homeHeroTitle {
+  font-size: 28px;
+  line-height: 1.12;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.homeHeroText {
+  font-size: 15px;
+  line-height: 1.5;
+  margin-top: 12px;
+  max-width: 720px;
+  color: var(--muted);
+}
+
+.homeHeroActions {
+  margin-top: 18px;
+}
+
+/* ---------- CATEGORY BOXES ---------- */
+
+.categoryGrid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.categoryCard {
+  min-width: 0;
+  padding: 14px 10px;
+  border-radius: 18px;
+}
+
+.categoryCard strong,
+.categoryCardTitle {
+  font-size: 14px;
+}
+
+/* ---------- TABLET ---------- */
+
+@media (max-width: 900px) {
+  .siteHeaderInner {
+    gap: 10px;
+  }
+
+  .siteHeaderSearchWrap {
+    order: 3;
+    width: 100%;
+    max-width: none;
+  }
+
+  .siteHeaderNav {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .homeHeroBanner {
+    height: 190px;
+  }
+
+  .homeHeroCard {
+    max-width: 100%;
+    padding: 18px;
+  }
+
+  .homeHeroTitle {
+    font-size: 24px;
+  }
+
+  .homeHeroText {
+    font-size: 14px;
+  }
+
+  .categoryGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* ---------- MOBILE ---------- */
+
+@media (max-width: 640px) {
+  .container {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .siteHeaderInner {
+    padding: 10px 0;
+    gap: 10px;
+  }
+
+  .siteLogoWrap {
+    gap: 10px;
+  }
+
+  .siteLogoImg {
+    height: 46px;
+    width: 46px;
+    min-width: 46px;
+  }
+
+  .siteLogoTitle {
+    font-size: 16px;
+    white-space: normal;
+  }
+
+  .siteLogoSub {
+    font-size: 11px;
+    white-space: normal;
+  }
+
+  .siteHeaderSearchWrap {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .siteHeaderNav {
+    width: 100%;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .iconBtn {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+  }
+
+  .homeHeroBanner {
+    height: 150px;
+    border-radius: 16px;
+  }
+
+  .homeHeroCard {
+    padding: 16px;
+    border-radius: 18px;
+  }
+
+  .homeHeroTitle {
+    font-size: 20px;
+    line-height: 1.15;
+  }
+
+  .homeHeroText {
+    font-size: 13px;
+    line-height: 1.45;
+    margin-top: 10px;
+  }
+
+  .categoryGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .categoryCard {
+    padding: 16px 10px;
+  }
+}
