@@ -38,16 +38,10 @@ function parseEUSizeLabel(s: string) {
 }
 
 const APPAREL_SIZES = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"] as const;
-const GLOVE_SIZES = [6, 7, 8, 9, 10, 11] as const;
 
 export default async function Produkty({ searchParams }: SP) {
   const q = getString(searchParams, "q");
   const category = getString(searchParams, "cat");
-
-  const isShoesCategory =
-    category === "kopačky" ||
-    category === "běžecké boty" ||
-    category === "tenisky";
 
   const condition = getMulti(searchParams, "cond");
   const brands = getMulti(searchParams, "brand");
@@ -65,15 +59,35 @@ export default async function Produkty({ searchParams }: SP) {
     { data: apparelSizeRows },
     { data: apparelTypeRows },
     { data: gloveSizeRows },
+    { data: productsRows },
   ] = await Promise.all([
-    category
-      ? supabase.from("products").select("brand").eq("category", category).not("brand", "is", null)
-      : supabase.from("products").select("brand").not("brand", "is", null),
-
+    supabase.from("products").select("brand").not("brand", "is", null),
     supabase.from("products").select("size_eu").not("size_eu", "is", null),
     supabase.from("products").select("velikost_obleceni").not("velikost_obleceni", "is", null),
     supabase.from("products").select("typ_obleceni").not("typ_obleceni", "is", null),
     supabase.from("products").select("velikost_rukavic").not("velikost_rukavic", "is", null),
+    supabase
+      .from("products")
+      .select(`
+        id,
+        slug,
+        name,
+        brand,
+        category,
+        boot_type,
+        size_eu,
+        velikost_rukavic,
+        velikost_obleceni,
+        typ_obleceni,
+        condition,
+        status,
+        sale_price,
+        original_price,
+        article_code,
+        image_url
+      `)
+      .in("status", ["available", "reserved"])
+      .order("sale_price", { ascending: true }),
   ]);
 
   const allBrands = Array.from(
@@ -117,68 +131,7 @@ export default async function Produkty({ searchParams }: SP) {
     .filter((n) => Number.isFinite(n))
     .sort((a, b) => a - b);
 
-  let query = supabase
-    .from("products")
-    .select(`
-      id,
-      slug,
-      name,
-      brand,
-      category,
-      boot_type,
-      size_eu,
-      velikost_rukavic,
-      velikost_obleceni,
-      typ_obleceni,
-      condition,
-      status,
-      sale_price,
-      original_price,
-      article_code,
-      image_url
-    `)
-    .in("status", ["available", "reserved"])
-    .order("sale_price", { ascending: true });
-
-  if (category) query = query.eq("category", category);
-  if (condition.length) query = query.in("condition", condition);
-  if (brands.length) query = query.in("brand", brands);
-
-  if (isShoesCategory) {
-    if (boot.length) query = query.in("boot_type", boot);
-
-    if (sizeEU.length) {
-      const nums = sizeEU.map(parseEUSizeLabel).filter((n) => Number.isFinite(n));
-      if (nums.length) {
-        const parts = nums.map((n) => {
-          const min = Number((n - 0.02).toFixed(2));
-          const max = Number((n + 0.02).toFixed(2));
-          return `and(size_eu.gte.${min},size_eu.lte.${max})`;
-        });
-        query = query.or(parts.join(","));
-      }
-    }
-  }
-
-  if (category === "rukavice") {
-    if (gloveSize.length) {
-      const nums = gloveSize.map((x) => Number(x)).filter((n) => Number.isFinite(n));
-      if (nums.length) query = query.in("velikost_rukavic", nums);
-    }
-  }
-
-  if (category === "dresy" || category === "oblečení") {
-    if (apparelSize.length) {
-      query = query.in("velikost_obleceni", apparelSize.map((x) => x.toUpperCase()));
-    }
-  }
-
-  if (category === "oblečení") {
-    if (apparelType.length) query = query.in("typ_obleceni", apparelType);
-  }
-
-  const { data } = await query;
-  const products = (data ?? []) as unknown as Product[];
+  const products = ((productsRows ?? []) as unknown) as Product[];
 
   return (
     <ProductsClient
