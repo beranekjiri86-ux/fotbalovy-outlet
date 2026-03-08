@@ -1960,7 +1960,7 @@ body{
 .productThumbLarge{
   position:relative;
   width:100%;
-  height:320px;
+  height:200px;
   overflow:hidden;
   border-radius:18px;
   background:#0d1725;
@@ -2147,17 +2147,17 @@ body{
 }
 
 .mobileFiltersHeader{
-  position:sticky;
-  top:0;
-  z-index:5;
+  position:relative;
+  top:auto;
+  z-index:auto;
   display:flex;
   align-items:center;
   justify-content:space-between;
   gap:10px;
   margin-bottom:12px;
-  padding:14px 0 10px;
-  background:var(--bg);
-  border-bottom:1px solid var(--border);
+  padding:0;
+  background:transparent;
+  border-bottom:none;
 }
 
 /* 3 karty v řadě na PC, ale nižší fotka */
@@ -2190,5 +2190,41 @@ body{
 }
   .productsFilterToggle{
     display:none !important;
+  }
+}
+/* menší karty na PC */
+@media (min-width: 901px){
+  .productThumbLarge{
+    height:210px;
+  }
+}
+
+/* mobil */
+@media (max-width: 640px){
+  .productThumbLarge{
+    height:170px;
+  }
+}
+@media (max-width: 900px){
+  .productsTopActions{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    width:100%;
+    flex-wrap:nowrap;
+  }
+
+  .productsFilterToggle{
+    display:inline-flex !important;
+    align-items:center;
+    justify-content:center;
+    order:1;
+    flex:0 0 auto;
+  }
+
+  .productsSortWrap{
+    order:2;
+    flex:1 1 auto;
+    min-width:0;
   }
 }
