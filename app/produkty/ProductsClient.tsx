@@ -180,10 +180,7 @@ export default function ProductsClient({
 
   const groupedProducts = useMemo(() => groupProducts(products), [products]);
 
-  const isShoesCategory =
-    category === "kopačky" ||
-    category === "běžecké boty" ||
-    category === "tenisky";
+  const showBootTypeFilter = category === "kopačky";
 
   const showShoesFilters = isShoesCategory;
   const showGloveFilters = category === "rukavice";
