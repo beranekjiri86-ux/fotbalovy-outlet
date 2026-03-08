@@ -554,7 +554,9 @@ useEffect(() => {
       ) : null}
 
       <div style={{ display: "grid", gap: 8 }}>
-        <div style={{ fontWeight: 800, fontSize: 18 }}>{isNew ? "Nový produkt" : p.name}</div>
+        <div style={{ fontWeight: 800, fontSize: 18 }}>
+  {isNew ? (copyId ? `Kopie: ${p.name || "Nový produkt"}` : "Nový produkt") : p.name}
+</div>
         <div style={{ opacity: 0.8, fontSize: 13 }}>
           {p.brand ?? ""} {p.article_code ? `• ${p.article_code}` : ""}
         </div>
