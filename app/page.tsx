@@ -64,9 +64,8 @@ export default function Home() {
           </h1>
 
           <p className="homeHeroText">
-            Značkové fotbalové kopačky, běžecké boty, tenisky, rukavice, dresy i
-            sportovní oblečení za výhodné ceny. Rychlé filtrování podle značky,
-            velikosti, stavu i typu podrážky.
+            Výhodné ceny značkových fotbalových kopaček a sportovní obuvi.
+            Nové i použité modely skladem a připravené k rychlému odeslání.
           </p>
 
           <div className="homeHeroActions">
