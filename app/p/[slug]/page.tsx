@@ -170,12 +170,13 @@ export default async function ProductPage({
   const stockCount = groupedSame.length || 1;
 
   const allImages = groupedSame.flatMap((row) => {
-    const gallery: string[] = Array.isArray(row.images) ? row.images : [];
-    const mainImg = row.image_url || gallery[0] || null;
-    return [mainImg, ...gallery].filter(Boolean) as string[];
-  });
+  const gallery: string[] = Array.isArray(row.images) ? row.images : [];
+  const mainImg = row.image_url || gallery[0] || null;
+  return [mainImg, ...gallery].filter(Boolean) as string[];
+});
 
-  const uniqueImages = Array.from(new Set(allImages));
+const uniqueImages = Array.from(new Set(allImages));
+
 const productJsonLd = {
   "@context": "https://schema.org",
   "@type": "Product",
@@ -210,15 +211,23 @@ const productJsonLd = {
         : "https://schema.org/UsedCondition",
   },
 };
-  return (
-    <main className="container" style={{ paddingTop: 18, paddingBottom: 30 }}>
-      <Link href={backHref} className="btn" style={{ marginBottom: 12 }}>
-        ← Zpět na výsledky
-      </Link>
 
-      <h1 className="h1" style={{ margin: 0 }}>
-        {(product as any).name}
-      </h1>
+return (
+  <main className="container" style={{ paddingTop: 18, paddingBottom: 30 }}>
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{
+        __html: JSON.stringify(productJsonLd),
+      }}
+    />
+
+    <Link href={backHref} className="btn" style={{ marginBottom: 12 }}>
+      ← Zpět na výsledky
+    </Link>
+
+    <h1 className="h1" style={{ margin: 0 }}>
+      {(product as any).name}
+    </h1>
 
       <div className="card" style={{ marginTop: 12, padding: 12, display: "grid", gap: 8 }}>
         <div className="small muted" style={{ display: "grid", gap: 6 }}>
