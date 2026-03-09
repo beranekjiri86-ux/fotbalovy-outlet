@@ -1,4 +1,11 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Fotbalové kopačky, tenisky a běžecké boty | Fotbalový Outlet CZ",
+  description:
+    "Nakupujte nové i použité fotbalové kopačky, běžecké boty a tenisky za výhodné ceny. Originální sportovní obuv skladem na FotbalovýOutletCZ.cz.",
+};
 
 export default function Home() {
   return (
