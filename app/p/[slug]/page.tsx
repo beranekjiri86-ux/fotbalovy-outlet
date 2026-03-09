@@ -3,6 +3,7 @@ export const revalidate = 300;
 
 import Link from "next/link";
 import { createSupabasePublicClient } from "@/lib/supabase/public";
+import { formatEUSize } from "@/lib/size";
 import { notFound } from "next/navigation";
 import ProductGallery from "./gallery";
 
@@ -13,17 +14,6 @@ function isShoesCategory(cat: string | null) {
 function money(n: number | null) {
   if (n == null) return "—";
   return `${Math.round(n)} Kč`;
-}
-
-function formatEUSize(n: number | null) {
-  if (n == null || !Number.isFinite(n)) return "—";
-  const whole = Math.floor(n);
-
-  if (Math.abs(n - (whole + 0.5)) < 0.02) return `${whole} 1/2`;
-  if (Math.abs(n - (whole + 1 / 3)) < 0.03) return `${whole} 1/3`;
-  if (Math.abs(n - (whole + 2 / 3)) < 0.03) return `${whole} 2/3`;
-
-  return String(n).replace(".0", "");
 }
 
 function groupKey(p: any) {
@@ -170,64 +160,64 @@ export default async function ProductPage({
   const stockCount = groupedSame.length || 1;
 
   const allImages = groupedSame.flatMap((row) => {
-  const gallery: string[] = Array.isArray(row.images) ? row.images : [];
-  const mainImg = row.image_url || gallery[0] || null;
-  return [mainImg, ...gallery].filter(Boolean) as string[];
-});
+    const gallery: string[] = Array.isArray(row.images) ? row.images : [];
+    const mainImg = row.image_url || gallery[0] || null;
+    return [mainImg, ...gallery].filter(Boolean) as string[];
+  });
 
-const uniqueImages = Array.from(new Set(allImages));
+  const uniqueImages = Array.from(new Set(allImages));
 
-const productJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "Product",
-  name: (product as any).name,
-  image: uniqueImages,
-  sku: (product as any).article_code ?? undefined,
-  brand: (product as any).brand
-    ? {
-        "@type": "Brand",
-        name: (product as any).brand,
-      }
-    : undefined,
-  description:
-    (product as any).note ||
-    `${(product as any).condition ?? ""} ${(product as any).category ?? "produkt"} ${(product as any).brand ?? ""}`.trim(),
-  category: (product as any).category ?? undefined,
-  offers: {
-    "@type": "Offer",
-    priceCurrency: "CZK",
-    price:
-      (product as any).sale_price != null
-        ? String(Math.round((product as any).sale_price))
-        : undefined,
-    availability:
-      (product as any).status === "available"
-        ? "https://schema.org/InStock"
-        : "https://schema.org/OutOfStock",
-    url: `https://www.fotbalovyoutletcz.cz/p/${(product as any).slug}`,
-    itemCondition:
-      (product as any).condition === "nové"
-        ? "https://schema.org/NewCondition"
-        : "https://schema.org/UsedCondition",
-  },
-};
+  const productJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: (product as any).name,
+    image: uniqueImages,
+    sku: (product as any).article_code ?? undefined,
+    brand: (product as any).brand
+      ? {
+          "@type": "Brand",
+          name: (product as any).brand,
+        }
+      : undefined,
+    description:
+      (product as any).note ||
+      `${(product as any).condition ?? ""} ${(product as any).category ?? "produkt"} ${(product as any).brand ?? ""}`.trim(),
+    category: (product as any).category ?? undefined,
+    offers: {
+      "@type": "Offer",
+      priceCurrency: "CZK",
+      price:
+        (product as any).sale_price != null
+          ? String(Math.round((product as any).sale_price))
+          : undefined,
+      availability:
+        (product as any).status === "available"
+          ? "https://schema.org/InStock"
+          : "https://schema.org/OutOfStock",
+      url: `https://www.fotbalovyoutletcz.cz/p/${(product as any).slug}`,
+      itemCondition:
+        (product as any).condition === "nové"
+          ? "https://schema.org/NewCondition"
+          : "https://schema.org/UsedCondition",
+    },
+  };
 
-return (
-  <main className="container" style={{ paddingTop: 18, paddingBottom: 30 }}>
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{
-        __html: JSON.stringify(productJsonLd),
-      }}
-    />
+  return (
+    <main className="container" style={{ paddingTop: 18, paddingBottom: 30 }}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(productJsonLd),
+        }}
+      />
 
-    <Link href={backHref} className="btn" style={{ marginBottom: 12 }}>
-      ← Zpět na výsledky
-    </Link>
+      <Link href={backHref} className="btn" style={{ marginBottom: 12 }}>
+        ← Zpět na výsledky
+      </Link>
 
-    <h1 className="h1" style={{ margin: 0 }}>
-      {(product as any).name}
-    </h1>
+      <h1 className="h1" style={{ margin: 0 }}>
+        {(product as any).name}
+      </h1>
 
       <div className="card" style={{ marginTop: 12, padding: 12, display: "grid", gap: 8 }}>
         <div className="small muted" style={{ display: "grid", gap: 6 }}>
