@@ -57,7 +57,7 @@ export async function generateMetadata({
 
   if (!product) {
     return {
-      title: "Produkt nenalezen | Fotbalový Outlet CZ",
+      title: "Produkt nenalezen",
       description: "Požadovaný produkt nebyl nalezen.",
     };
   }
@@ -70,18 +70,15 @@ export async function generateMetadata({
       ? ` ve velikosti EU ${formatEUSize(product.size_eu)}`
       : "";
 
-  return {
-  title: `${product.name}${condition ? ` - ${condition}` : ""}`,
-  description,
-  alternates: {
-    canonical: `/p/${product.slug}`,
-  },
-};
+  const conditionLabel =
+    condition ? condition.charAt(0).toUpperCase() + condition.slice(1) : "";
+
+  const title = `${product.name}${condition ? ` - ${condition}` : ""}`;
 
   const description =
-    `${condition ? `${condition} ` : ""}${category.toLowerCase()} ${brand}${size} skladem. ` +
+    `${conditionLabel ? `${conditionLabel} ` : ""}${category.toLowerCase()} ${brand}${size}. ` +
     `${product.article_code ? `Kód ${product.article_code}. ` : ""}` +
-    `Originální sportovní vybavení na Fotbalový Outlet CZ.`;
+    `Skladem na Fotbalový Outlet CZ.`;
 
   return {
     title,
