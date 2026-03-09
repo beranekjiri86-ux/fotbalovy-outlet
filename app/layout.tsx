@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     default: "Fotbalový Outlet CZ",
     template: "%s | Fotbalový Outlet CZ",
   },
-  description: "Kopačky, běžecké boty a tenisky – nové i použité.",
+  description: "Kopačky, běžecké boty, rukavice, dresy a sportovní oblečení – nové i použité.",
   alternates: {
     canonical: "/",
   },
@@ -28,6 +28,7 @@ export default function RootLayout({
     "SHOP_FB",
     "https://www.facebook.com/profile.php?id=61581311155200"
   );
+  const email = getEnv("SHOP_EMAIL_TO", "objednavky@fotbalovyoutletcz.cz");
 
   return (
     <html lang="cs">
@@ -51,6 +52,10 @@ export default function RootLayout({
             </form>
 
             <nav className="siteHeaderNav">
+              <Link className="btn headerTextBtn" href="/kontakt">
+                Kontakt
+              </Link>
+
               <Link className="btn iconBtn" href="/kosik" aria-label="Košík" title="Košík">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -120,12 +125,47 @@ export default function RootLayout({
           {children}
         </main>
 
-        <footer className="container" style={{ paddingTop: 24, paddingBottom: 40 }}>
-          <div className="small">
-            © {new Date().getFullYear()} Fotbalový Outlet CZ • Dotazy/objednávky:{" "}
-            <a href={`mailto:${getEnv("SHOP_EMAIL_TO", "objednavky@fotbalovyoutletcz.cz")}`}>
-              {getEnv("SHOP_EMAIL_TO", "objednavky@fotbalovyoutletcz.cz")}
-            </a>
+        <footer className="siteFooter">
+          <div className="container siteFooterGrid">
+            <div>
+              <div className="siteFooterTitle">Fotbalový Outlet CZ</div>
+              <div className="siteFooterText">
+                Nové i použité fotbalové kopačky, rukavice, dresy a sportovní vybavení.
+              </div>
+            </div>
+
+            <div>
+              <div className="siteFooterTitle">Kontakt</div>
+              <div className="siteFooterText">
+                <a href={`mailto:${email}`}>{email}</a>
+              </div>
+              <div className="siteFooterText">
+                <a href="https://wa.me/420605171216" target="_blank" rel="noreferrer">
+                  WhatsApp
+                </a>
+              </div>
+            </div>
+
+            <div>
+              <div className="siteFooterTitle">Sítě a informace</div>
+              <div className="siteFooterText">
+                <Link href="/kontakt">Kontakt</Link>
+              </div>
+              <div className="siteFooterText">
+                <a href={`https://instagram.com/${ig}`} target="_blank" rel="noreferrer">
+                  Instagram
+                </a>
+              </div>
+              <div className="siteFooterText">
+                <a href={fb} target="_blank" rel="noreferrer">
+                  Facebook
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div className="container siteFooterBottom">
+            © {new Date().getFullYear()} Fotbalový Outlet CZ
           </div>
         </footer>
       </body>
