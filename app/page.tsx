@@ -14,7 +14,7 @@ export default function Home() {
         <Link href="/produkty" className="homeHeroBannerLink">
           <img
             src="/baner.png"
-            alt="Fotbalový Outlet CZ"
+            alt="Fotbalové kopačky, tenisky a běžecké boty – Fotbalový Outlet CZ"
             className="homeHeroBanner"
           />
         </Link>
