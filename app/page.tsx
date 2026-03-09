@@ -72,13 +72,41 @@ export default function Home() {
             <Link className="btn btnPrimary" href="/produkty">
               Prohlédnout nabídku
             </Link>
+            <Link className="btn" href="/kontakt">
+              Kontakt
+            </Link>
           </div>
         </div>
       </section>
 
-      <section className="container" style={{ paddingTop: 16, paddingBottom: 12 }}>
-        <h2 style={{ marginBottom: 12 }}>Fotbalový outlet pro hráče i brankáře</h2>
-        <p style={{ lineHeight: 1.7, margin: 0 }}>
+      <section className="homeBenefits">
+        <div className="homeBenefitsGrid">
+          <div className="homeBenefit card">
+            <div className="homeBenefitTitle">Originální zboží</div>
+            <p className="homeBenefitText">
+              Nabídka značek Nike, adidas, Puma, Mizuno, Diadora a dalších.
+            </p>
+          </div>
+
+          <div className="homeBenefit card">
+            <div className="homeBenefitTitle">Výhodné ceny</div>
+            <p className="homeBenefitText">
+              Nové i použité produkty za outlet ceny bez zbytečných přirážek.
+            </p>
+          </div>
+
+          <div className="homeBenefit card">
+            <div className="homeBenefitTitle">Rychlý kontakt</div>
+            <p className="homeBenefitText">
+              Objednávky i dotazy vyřídíš jednoduše přes e-mail, Facebook nebo WhatsApp.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="homeSeoBlock">
+        <h2 className="homeSeoTitle">Fotbalový outlet pro hráče i brankáře</h2>
+        <p className="homeSeoText">
           Fotbalový Outlet CZ nabízí nové i použité fotbalové kopačky, běžecké boty,
           tenisky, brankářské rukavice, dresy i sportovní oblečení za výhodné ceny.
           V nabídce najdete originální produkty značek Nike, adidas, Puma, Mizuno,
