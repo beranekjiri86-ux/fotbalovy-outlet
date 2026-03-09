@@ -88,3 +88,14 @@ export function buildSizeSearchVariants(input: string) {
 
   return Array.from(variants);
 }
+export function formatEUSizeForSlug(n: number | null) {
+  if (n == null || !Number.isFinite(n)) return "";
+
+  const whole = Math.floor(n);
+
+  if (Math.abs(n - (whole + 0.5)) < 0.02) return `${whole}-1-2`;
+  if (Math.abs(n - (whole + 1 / 3)) < 0.03) return `${whole}-1-3`;
+  if (Math.abs(n - (whole + 2 / 3)) < 0.03) return `${whole}-2-3`;
+
+  return String(n).replace(".0", "").replace(".", "-");
+}
