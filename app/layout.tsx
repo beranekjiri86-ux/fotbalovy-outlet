@@ -1,16 +1,28 @@
+import type { Metadata } from "next";
 import "./globals.css";
 import Link from "next/link";
 
-export const metadata = {
-  title: "Fotbalový Outlet CZ",
+export const metadata: Metadata = {
+  metadataBase: new URL("https://www.fotbalovyoutletcz.cz"),
+  title: {
+    default: "Fotbalový Outlet CZ",
+    template: "%s | Fotbalový Outlet CZ",
+  },
   description: "Kopačky, běžecké boty a tenisky – nové i použité.",
+  alternates: {
+    canonical: "/",
+  },
 };
 
 function getEnv(name: string, fallback = "") {
   return process.env[name] ?? fallback;
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const ig = getEnv("SHOP_IG", "fotbalovy_outlet_cz");
   const fb = getEnv(
     "SHOP_FB",
@@ -39,8 +51,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </form>
 
             <nav className="siteHeaderNav">
-              
-
               <Link className="btn iconBtn" href="/kosik" aria-label="Košík" title="Košík">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
