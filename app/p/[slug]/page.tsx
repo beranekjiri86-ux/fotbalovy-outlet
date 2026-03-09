@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 export const revalidate = 300;
 
 import Link from "next/link";
@@ -38,6 +39,51 @@ function groupKey(p: any) {
     p.article_code?.trim().toLowerCase() ?? "",
     sizePart,
   ].join("|");
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { slug: string };
+}): Promise<Metadata> {
+  const slug = decodeURIComponent(params.slug);
+  const supabase = createSupabasePublicClient();
+
+  const { data: product } = await supabase
+    .from("products")
+    .select("name, brand, category, condition, size_eu, article_code, note, slug")
+    .eq("slug", slug)
+    .single();
+
+  if (!product) {
+    return {
+      title: "Produkt nenalezen | Fotbalový Outlet CZ",
+      description: "Požadovaný produkt nebyl nalezen.",
+    };
+  }
+
+  const category = product.category ?? "produkt";
+  const condition = product.condition ?? "";
+  const brand = product.brand ?? "";
+  const size =
+    product.size_eu != null && Number.isFinite(product.size_eu)
+      ? ` ve velikosti EU ${formatEUSize(product.size_eu)}`
+      : "";
+
+  const title = `${product.name}${condition ? ` - ${condition}` : ""} | Fotbalový Outlet CZ`;
+
+  const description =
+    `${condition ? `${condition} ` : ""}${category.toLowerCase()} ${brand}${size} skladem. ` +
+    `${product.article_code ? `Kód ${product.article_code}. ` : ""}` +
+    `Originální sportovní vybavení na Fotbalový Outlet CZ.`;
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: `/p/${product.slug}`,
+    },
+  };
 }
 
 export default async function ProductPage({
