@@ -2803,11 +2803,12 @@ body{
     margin-bottom: 10px;
   }
 
-  .homeSeoText {
-    font-size: 15px;
-    line-height: 1.65;
-  }
+ .homeSeoText {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.65;
 }
+
 @media (max-width: 640px) {
   .headerTextBtn {
     font-size: 14px;
