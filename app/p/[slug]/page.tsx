@@ -176,7 +176,40 @@ export default async function ProductPage({
   });
 
   const uniqueImages = Array.from(new Set(allImages));
-
+const productJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Product",
+  name: (product as any).name,
+  image: uniqueImages,
+  sku: (product as any).article_code ?? undefined,
+  brand: (product as any).brand
+    ? {
+        "@type": "Brand",
+        name: (product as any).brand,
+      }
+    : undefined,
+  description:
+    (product as any).note ||
+    `${(product as any).condition ?? ""} ${(product as any).category ?? "produkt"} ${(product as any).brand ?? ""}`.trim(),
+  category: (product as any).category ?? undefined,
+  offers: {
+    "@type": "Offer",
+    priceCurrency: "CZK",
+    price:
+      (product as any).sale_price != null
+        ? String(Math.round((product as any).sale_price))
+        : undefined,
+    availability:
+      (product as any).status === "available"
+        ? "https://schema.org/InStock"
+        : "https://schema.org/OutOfStock",
+    url: `https://www.fotbalovyoutletcz.cz/p/${(product as any).slug}`,
+    itemCondition:
+      (product as any).condition === "nové"
+        ? "https://schema.org/NewCondition"
+        : "https://schema.org/UsedCondition",
+  },
+};
   return (
     <main className="container" style={{ paddingTop: 18, paddingBottom: 30 }}>
       <Link href={backHref} className="btn" style={{ marginBottom: 12 }}>
