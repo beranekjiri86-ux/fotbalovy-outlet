@@ -1,6 +1,9 @@
+import type { MetadataRoute } from "next";
 import { createSupabasePublicClient } from "@/lib/supabase/public";
 
-export default async function sitemap() {
+export const revalidate = 60;
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const supabase = createSupabasePublicClient();
 
   const { data: products } = await supabase
