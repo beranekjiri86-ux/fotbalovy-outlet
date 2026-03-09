@@ -70,7 +70,13 @@ export async function generateMetadata({
       ? ` ve velikosti EU ${formatEUSize(product.size_eu)}`
       : "";
 
-  const title = `${product.name}${condition ? ` - ${condition}` : ""} | Fotbalový Outlet CZ`;
+  return {
+  title: `${product.name}${condition ? ` - ${condition}` : ""}`,
+  description,
+  alternates: {
+    canonical: `/p/${product.slug}`,
+  },
+};
 
   const description =
     `${condition ? `${condition} ` : ""}${category.toLowerCase()} ${brand}${size} skladem. ` +
