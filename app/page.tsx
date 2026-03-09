@@ -72,9 +72,6 @@ export default function Home() {
             <Link className="btn btnPrimary" href="/produkty">
               Prohlédnout nabídku
             </Link>
-            <Link className="btn" href="/kontakt">
-              Kontakt
-            </Link>
           </div>
         </div>
       </section>
