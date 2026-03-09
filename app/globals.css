@@ -2881,3 +2881,9 @@ body{
     line-height: 1.65;
   }
 }
+@media (max-width: 640px) {
+  .headerTextBtn {
+    font-size: 14px;
+    padding: 9px 14px;
+  }
+}
