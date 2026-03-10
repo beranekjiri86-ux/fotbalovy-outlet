@@ -4,6 +4,7 @@ import { DragEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import heic2any from "heic2any";
 import { supabase } from "@/lib/supabaseClient";
+import { formatEUSizeForSlug } from "@/lib/size";
 
 type Product = {
   id: string;
@@ -54,6 +55,64 @@ function slugify(input: string) {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)+/g, "")
     .trim();
+}
+
+function buildBaseSlug(p: Product) {
+  const sizePart = isShoesCategory(p.category)
+    ? p.size_eu != null
+      ? `eu${formatEUSizeForSlug(p.size_eu)}`
+      : ""
+    : p.category === "rukavice"
+      ? p.velikost_rukavic != null
+        ? `g${p.velikost_rukavic}`
+        : ""
+      : p.category === "dresy" || p.category === "oblečení"
+        ? p.velikost_obleceni
+          ? String(p.velikost_obleceni).toUpperCase()
+          : ""
+        : "";
+
+  return slugify(
+    [
+      p.name,
+      p.article_code ?? "",
+      p.brand ?? "",
+      sizePart,
+      p.condition ?? "",
+    ]
+      .filter(Boolean)
+      .join(" ")
+  );
+}
+
+function buildPayload(p: Product) {
+  return {
+    name: p.name.trim(),
+    article_code: p.article_code?.trim() || null,
+    brand: p.brand?.trim() || null,
+    category: p.category || null,
+
+    boot_type: isShoesCategory(p.category) ? (p.boot_type || null) : null,
+    size_eu: isShoesCategory(p.category) ? (p.size_eu ?? null) : null,
+    size_uk: isShoesCategory(p.category) ? (p.size_uk ?? null) : null,
+    size_cm: isShoesCategory(p.category) ? (p.size_cm ?? null) : null,
+
+    condition: p.condition || null,
+    status: p.status || "available",
+    sale_price: p.sale_price ?? null,
+    original_price: p.original_price ?? null,
+
+    note: p.note?.trim() || null,
+    image_url: (p.images ?? [])[0] ?? null,
+    images: p.images ?? [],
+
+    velikost_rukavic: p.category === "rukavice" ? (p.velikost_rukavic ?? null) : null,
+    velikost_obleceni:
+      p.category === "dresy" || p.category === "oblečení"
+        ? (p.velikost_obleceni || null)
+        : null,
+    typ_obleceni: p.category === "oblečení" ? (p.typ_obleceni?.trim() || null) : null,
+  };
 }
 
 function makeEmptyProduct(): Product {
@@ -185,6 +244,8 @@ export default function AdminProductEditClient({
   const [msg, setMsg] = useState<string | null>(null);
   const [dragOverUpload, setDragOverUpload] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [stockCount, setStockCount] = useState(1);
+  const [sameProductIds, setSameProductIds] = useState<string[]>([]);
 
   useEffect(() => {
     let alive = true;
@@ -194,6 +255,8 @@ export default function AdminProductEditClient({
 
       if (isNew && !copyId) {
         setP(makeEmptyProduct());
+        setStockCount(1);
+        setSameProductIds([]);
         return;
       }
 
@@ -249,11 +312,14 @@ export default function AdminProductEditClient({
           slug: null,
           status: "available",
         });
+        setStockCount(1);
+        setSameProductIds([]);
         setMsg("Produkt byl předvyplněn z kopie. Uložení vytvoří nový kus.");
         return;
       }
 
       setP(loaded);
+      refreshStockInfo(loaded);
     })();
 
     return () => {
@@ -262,6 +328,50 @@ export default function AdminProductEditClient({
   }, [id, isNew, copyId]);
 
   const gallery = useMemo(() => p?.images ?? [], [p]);
+
+  async function refreshStockInfo(source: Product) {
+    let query: any = supabase.from("products").select("id");
+
+    query = query.eq("name", source.name.trim());
+
+    if (source.article_code?.trim()) {
+      query = query.eq("article_code", source.article_code.trim());
+    } else {
+      query = query.is("article_code", null);
+    }
+
+    if (source.category) {
+      query = query.eq("category", source.category);
+    } else {
+      query = query.is("category", null);
+    }
+
+    if (isShoesCategory(source.category)) {
+      if (source.size_eu != null) query = query.eq("size_eu", source.size_eu);
+      else query = query.is("size_eu", null);
+    }
+
+    if (source.category === "rukavice") {
+      if (source.velikost_rukavic != null) query = query.eq("velikost_rukavic", source.velikost_rukavic);
+      else query = query.is("velikost_rukavic", null);
+    }
+
+    if (source.category === "dresy" || source.category === "oblečení") {
+      if (source.velikost_obleceni) query = query.eq("velikost_obleceni", source.velikost_obleceni);
+      else query = query.is("velikost_obleceni", null);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    const ids = ((data ?? []) as Array<{ id: string }>).map((x) => x.id);
+    setSameProductIds(ids);
+    setStockCount(ids.length || 1);
+  }
 
   async function persistImages(nextImages: string[]) {
     if (!p || p.id === "new") return;
@@ -451,24 +561,116 @@ export default function AdminProductEditClient({
     }
   }
 
+  async function addPiece() {
+    if (!p || p.id === "new") {
+      setMsg("Nejdřív produkt ulož, potom můžeš přidávat kusy.");
+      return;
+    }
+
+    setSaving(true);
+    setMsg(null);
+
+    try {
+      const payload = buildPayload(p);
+      const baseSlug = buildBaseSlug(p);
+
+      let finalSlug = baseSlug || null;
+
+      if (baseSlug) {
+        const { data: existingRows, error: slugError } = await supabase
+          .from("products")
+          .select("id,slug")
+          .like("slug", `${baseSlug}%`);
+
+        if (slugError) {
+          console.error(slugError);
+          setMsg(slugError.message);
+          return;
+        }
+
+        const usedSlugs = new Set(
+          ((existingRows ?? []) as Array<{ id: string; slug: string | null }>)
+            .map((x) => x.slug)
+            .filter(Boolean)
+        );
+
+        if (usedSlugs.has(baseSlug)) {
+          let i = 2;
+          while (usedSlugs.has(`${baseSlug}-${i}`)) i += 1;
+          finalSlug = `${baseSlug}-${i}`;
+        }
+      }
+
+      const { error } = await supabase.from("products").insert({
+        ...payload,
+        slug: finalSlug,
+        status: "available",
+      });
+
+      if (error) {
+        console.error(error);
+        setMsg(`Přidání kusu selhalo: ${error.message}`);
+        return;
+      }
+
+      await refreshStockInfo(p);
+      setMsg("Přidán 1 kus.");
+      router.refresh();
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function removePiece() {
+    if (!p || p.id === "new") {
+      setMsg("Nejdřív produkt ulož.");
+      return;
+    }
+
+    const targetId = sameProductIds.find((x) => x !== p.id) ?? p.id;
+
+    const ok = window.confirm(
+      stockCount <= 1
+        ? "Tímto odebereš poslední kus a produkt se smaže. Pokračovat?"
+        : "Odebrat 1 kus tohoto produktu?"
+    );
+
+    if (!ok) return;
+
+    setSaving(true);
+    setMsg(null);
+
+    try {
+      const { error } = await supabase.from("products").delete().eq("id", targetId);
+
+      if (error) {
+        console.error(error);
+        setMsg(`Odebrání kusu selhalo: ${error.message}`);
+        return;
+      }
+
+      if (targetId === p.id) {
+        setMsg("Poslední kus byl smazán.");
+        router.replace("/admin/produkty");
+        router.refresh();
+        return;
+      }
+
+      await refreshStockInfo(p);
+      setMsg("Odebrán 1 kus.");
+      router.refresh();
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function save() {
     if (!p) return;
 
     setSaving(true);
     setMsg(null);
 
-    const baseSlug = slugify(
-      [
-        p.name,
-        p.article_code ?? "",
-        p.brand ?? "",
-        p.size_eu != null ? `eu${String(p.size_eu).replace(".", "")}` : "",
-        p.condition ?? "",
-      ]
-        .filter(Boolean)
-        .join(" ")
-    );
-
+    const baseSlug = buildBaseSlug(p);
     let finalSlug = baseSlug || null;
 
     if (baseSlug) {
@@ -511,30 +713,7 @@ export default function AdminProductEditClient({
 
     const payload = {
       slug: finalSlug,
-
-      name: p.name.trim(),
-      article_code: p.article_code?.trim() || null,
-      brand: p.brand?.trim() || null,
-      category: p.category || null,
-
-      boot_type: isShoesCategory(p.category) ? (p.boot_type || null) : null,
-      size_eu: isShoesCategory(p.category) ? (p.size_eu ?? null) : null,
-      size_uk: isShoesCategory(p.category) ? (p.size_uk ?? null) : null,
-      size_cm: isShoesCategory(p.category) ? (p.size_cm ?? null) : null,
-
-      condition: p.condition || null,
-      status: p.status || "available",
-      sale_price: p.sale_price ?? null,
-      original_price: p.original_price ?? null,
-
-      note: p.note?.trim() || null,
-      image_url: (p.images ?? [])[0] ?? null,
-      images: p.images ?? [],
-
-      velikost_rukavic: p.category === "rukavice" ? (p.velikost_rukavic ?? null) : null,
-      velikost_obleceni:
-        p.category === "dresy" || p.category === "oblečení" ? (p.velikost_obleceni || null) : null,
-      typ_obleceni: p.category === "oblečení" ? (p.typ_obleceni?.trim() || null) : null,
+      ...buildPayload(p),
     };
 
     try {
@@ -568,6 +747,7 @@ export default function AdminProductEditClient({
         console.error(error);
         setMsg(error.message);
       } else {
+        await refreshStockInfo(p);
         setMsg("Uloženo.");
         router.replace("/admin/produkty");
         router.refresh();
@@ -602,6 +782,52 @@ export default function AdminProductEditClient({
           {p.brand ?? ""} {p.article_code ? `• ${p.article_code}` : ""}
         </div>
       </div>
+
+      {!isNew ? (
+        <div className="card" style={{ display: "grid", gap: 10, padding: 12 }}>
+          <div style={{ fontWeight: 800 }}>Sklad stejného produktu</div>
+
+          <div style={{ fontSize: 16 }}>
+            Skladem: <b>{stockCount} ks</b>
+          </div>
+
+          <div className="small muted">
+            Počítá se podle názvu, kódu artiklu, kategorie a velikosti.
+          </div>
+
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <button
+              type="button"
+              className="btn"
+              onClick={removePiece}
+              disabled={saving}
+              style={{
+                border: "1px solid #dc2626",
+                color: "#dc2626",
+                background: "transparent",
+                fontWeight: 700,
+              }}
+            >
+              − Odebrat kus
+            </button>
+
+            <button
+              type="button"
+              className="btn"
+              onClick={addPiece}
+              disabled={saving}
+              style={{
+                border: "1px solid #16a34a",
+                color: "#16a34a",
+                background: "transparent",
+                fontWeight: 700,
+              }}
+            >
+              + Přidat kus
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       <label style={{ display: "grid", gap: 6 }}>
         Název
