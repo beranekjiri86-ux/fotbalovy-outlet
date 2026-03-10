@@ -2786,3 +2786,22 @@ body{
     padding: 18px;
   }
 }
+/* =========================
+   ZELENÉ TLAČÍTKO FILTR (MOBIL)
+   ========================= */
+
+@media (max-width: 768px) {
+
+  .productsFilterToggle {
+    background: #22c55e !important;
+    color: #000 !important;
+    border: none !important;
+    font-weight: 700;
+    box-shadow: 0 6px 16px rgba(34,197,94,0.35);
+  }
+
+  .productsFilterToggle:active {
+    transform: scale(0.96);
+  }
+
+}
