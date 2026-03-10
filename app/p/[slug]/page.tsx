@@ -212,7 +212,8 @@ export default async function ProductPage({
       />
 
       <Link href={backHref} className="btn backToResults" style={{ marginBottom: 12 }}>
-  ← Zpět na výsledky
+  ← <span className="backShort">Zpět</span>
+  <span className="backLong">Zpět na výsledky</span>
 </Link>
 
       <h1 className="h1" style={{ margin: 0 }}>
