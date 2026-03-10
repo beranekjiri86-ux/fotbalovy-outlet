@@ -421,9 +421,9 @@ export default function ProductsClient({
 </div>
 
               <div className="card filtersCard mobileFiltersCard">
-                <button className="btn" type="button" onClick={resetFilters}>
-                  Reset filtrů
-                </button>
+                <button className="btn productsResetFilters" type="button" onClick={resetFilters}>
+  Reset filtrů
+</button>
 
                 <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
                   <details open>
@@ -580,9 +580,9 @@ export default function ProductsClient({
                 </div>
 
                 <div className="mobileFiltersFooter">
-                  <button type="button" className="btn" onClick={resetFilters}>
-                    Reset
-                  </button>
+                  <button type="button" className="btn productsResetFilters" onClick={resetFilters}>
+  Reset
+</button>
                   <button type="button" className="btn btnPrimary" onClick={() => setShowMobileFilters(false)}>
                     Zobrazit {filteredProducts.length} položek
                   </button>
@@ -595,9 +595,9 @@ export default function ProductsClient({
 
       <div className="productsLayout">
         <div className="card filtersCard productsFiltersDesktop">
-          <button className="btn" type="button" onClick={resetFilters}>
-            Reset filtrů
-          </button>
+         <button className="btn productsResetFilters" type="button" onClick={resetFilters}>
+  Reset filtrů
+</button>
 
           <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
             <details open>
