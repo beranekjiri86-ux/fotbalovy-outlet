@@ -211,9 +211,9 @@ export default async function ProductPage({
         }}
       />
 
-      <Link href={backHref} className="btn" style={{ marginBottom: 12 }}>
-        ← Zpět na výsledky
-      </Link>
+      <Link href={backHref} className="btn backToResults" style={{ marginBottom: 12 }}>
+  ← Zpět na výsledky
+</Link>
 
       <h1 className="h1" style={{ margin: 0 }}>
         {(product as any).name}
