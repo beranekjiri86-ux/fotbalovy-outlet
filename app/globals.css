@@ -2889,3 +2889,17 @@ body{
     font-size: 14px;
   }
 }
+/* ========================================
+   TLAČÍTKO ZPĚT NA VÝSLEDKY
+   ======================================== */
+
+.backToResults {
+  border: 2px solid #d1d5db;
+  background: #f9fafb;
+  font-weight: 700;
+}
+
+.backToResults:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
