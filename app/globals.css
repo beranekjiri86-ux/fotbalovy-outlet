@@ -2786,24 +2786,3 @@ body{
     padding: 18px;
   }
 }
-/* =========================
-   ZVÝRAZNĚNÍ TLAČÍTKA FILTR (MOBIL)
-   ========================= */
-
-@media (max-width: 768px) {
-
-  /* zelené tlačítko Filtr */
-  .card button:first-child {
-    background: #22c55e !important;
-    color: #000 !important;
-    border: none !important;
-    font-weight: 700;
-    box-shadow: 0 4px 14px rgba(34,197,94,0.4);
-  }
-
-  /* hover / klik efekt */
-  .card button:first-child:active {
-    transform: scale(0.96);
-  }
-
-}
