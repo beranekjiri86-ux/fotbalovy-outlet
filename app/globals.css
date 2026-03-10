@@ -2902,3 +2902,38 @@ body{
   background: #e2e8f0;
   border-color: #64748b;
 }
+/* ========================================
+   ZPĚT NA VÝSLEDKY – RESPONSIVE TEXT
+   ======================================== */
+
+.backToResults {
+  border: 2px solid #94a3b8;
+  background: #f1f5f9;
+  color: #1e293b;
+  font-weight: 700;
+}
+
+.backToResults:hover {
+  background: #e2e8f0;
+  border-color: #64748b;
+}
+
+/* mobil */
+.backShort {
+  display: inline;
+}
+
+.backLong {
+  display: none;
+}
+
+/* desktop */
+@media (min-width: 768px) {
+  .backShort {
+    display: none;
+  }
+
+  .backLong {
+    display: inline;
+  }
+}
