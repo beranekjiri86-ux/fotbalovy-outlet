@@ -75,17 +75,23 @@ function badgeStyle(active?: boolean) {
   };
 }
 
+function normalizeText(value: string | null | undefined) {
+  return (value ?? "").trim().toLowerCase();
+}
+
 function groupKey(p: ProductRow) {
   const sizePart =
     p.category === "rukavice"
       ? `glove:${p.velikost_rukavic ?? ""}`
       : p.category === "dresy" || p.category === "oblečení"
-      ? `apparel:${String(p.velikost_obleceni ?? "").toUpperCase()}`
-      : `shoe:${p.size_eu ?? ""}`;
+        ? `apparel:${String(p.velikost_obleceni ?? "").toUpperCase()}`
+        : `shoe:${p.size_eu ?? ""}`;
 
   return [
-    p.name?.trim().toLowerCase() ?? "",
-    p.article_code?.trim().toLowerCase() ?? "",
+    normalizeText(p.name),
+    normalizeText(p.article_code),
+    normalizeText(p.category),
+    normalizeText(p.condition),
     sizePart,
   ].join("|");
 }
@@ -257,6 +263,7 @@ export default function AdminProductsClient() {
           p.category ?? "",
           p.typ_obleceni ?? "",
           p.boot_type ?? "",
+          p.condition ?? "",
         ]
           .join(" ")
           .toLowerCase();
