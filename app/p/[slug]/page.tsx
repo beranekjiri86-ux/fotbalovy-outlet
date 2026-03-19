@@ -16,17 +16,28 @@ function money(n: number | null) {
   return `${Math.round(n)} Kč`;
 }
 
+function normalizeText(value: string | null | undefined) {
+  return (value ?? "").trim().toLowerCase();
+}
+
+function normalizeNullableText(value: string | null | undefined) {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : null;
+}
+
 function groupKey(p: any) {
   const sizePart =
     p.category === "rukavice"
       ? `glove:${p.velikost_rukavic ?? ""}`
       : p.category === "dresy" || p.category === "oblečení"
-      ? `apparel:${String(p.velikost_obleceni ?? "").toUpperCase()}`
-      : `shoe:${p.size_eu ?? ""}`;
+        ? `apparel:${String(p.velikost_obleceni ?? "").toUpperCase()}`
+        : `shoe:${p.size_eu ?? ""}`;
 
   return [
-    p.name?.trim().toLowerCase() ?? "",
-    p.article_code?.trim().toLowerCase() ?? "",
+    normalizeText(p.name),
+    normalizeText(p.article_code),
+    normalizeText(p.category),
+    normalizeText(p.condition),
     sizePart,
   ].join("|");
 }
@@ -126,7 +137,12 @@ export default async function ProductPage({
 
   if (error || !product) notFound();
 
-  const { data: sameRows } = await supabase
+  const normalizedArticleCode = normalizeNullableText((product as any).article_code);
+  const normalizedCategory = normalizeNullableText((product as any).category);
+  const normalizedCondition = normalizeNullableText((product as any).condition);
+  const normalizedApparelSize = normalizeNullableText((product as any).velikost_obleceni);
+
+  let sameRowsQuery: any = supabase
     .from("products")
     .select(
       [
@@ -152,8 +168,51 @@ export default async function ProductPage({
         "typ_obleceni",
       ].join(",")
     )
-    .eq("name", (product as any).name)
-    .eq("article_code", (product as any).article_code);
+    .eq("name", (product as any).name.trim());
+
+  if (normalizedArticleCode) {
+    sameRowsQuery = sameRowsQuery.eq("article_code", normalizedArticleCode);
+  } else {
+    sameRowsQuery = sameRowsQuery.is("article_code", null);
+  }
+
+  if (normalizedCategory) {
+    sameRowsQuery = sameRowsQuery.eq("category", normalizedCategory);
+  } else {
+    sameRowsQuery = sameRowsQuery.is("category", null);
+  }
+
+  if (normalizedCondition) {
+    sameRowsQuery = sameRowsQuery.eq("condition", normalizedCondition);
+  } else {
+    sameRowsQuery = sameRowsQuery.is("condition", null);
+  }
+
+  if (isShoesCategory((product as any).category ?? null)) {
+    if ((product as any).size_eu != null) {
+      sameRowsQuery = sameRowsQuery.eq("size_eu", (product as any).size_eu);
+    } else {
+      sameRowsQuery = sameRowsQuery.is("size_eu", null);
+    }
+  }
+
+  if ((product as any).category === "rukavice") {
+    if ((product as any).velikost_rukavic != null) {
+      sameRowsQuery = sameRowsQuery.eq("velikost_rukavic", (product as any).velikost_rukavic);
+    } else {
+      sameRowsQuery = sameRowsQuery.is("velikost_rukavic", null);
+    }
+  }
+
+  if ((product as any).category === "dresy" || (product as any).category === "oblečení") {
+    if (normalizedApparelSize) {
+      sameRowsQuery = sameRowsQuery.eq("velikost_obleceni", normalizedApparelSize);
+    } else {
+      sameRowsQuery = sameRowsQuery.is("velikost_obleceni", null);
+    }
+  }
+
+  const { data: sameRows } = await sameRowsQuery;
 
   const baseKey = groupKey(product as any);
   const groupedSame = ((sameRows ?? []) as any[]).filter((row) => groupKey(row) === baseKey);
@@ -212,9 +271,9 @@ export default async function ProductPage({
       />
 
       <Link href={backHref} className="btn backToResults" style={{ marginBottom: 12 }}>
-  ← <span className="backShort">Zpět</span>
-  <span className="backLong">Zpět na výsledky</span>
-</Link>
+        ← <span className="backShort">Zpět</span>
+        <span className="backLong">Zpět na výsledky</span>
+      </Link>
 
       <h1 className="h1" style={{ margin: 0 }}>
         {(product as any).name}
