@@ -87,6 +87,8 @@ export default async function Produkty({ searchParams }: SP) {
         image_url
       `)
       .in("status", ["available", "reserved"])
+      .order("name", { ascending: true })
+      .order("condition", { ascending: true })
       .order("sale_price", { ascending: true }),
   ]);
 
