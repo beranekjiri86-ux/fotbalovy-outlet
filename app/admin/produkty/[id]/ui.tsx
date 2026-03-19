@@ -57,6 +57,11 @@ function slugify(input: string) {
     .trim();
 }
 
+function normalizeNullableText(value: string | null | undefined) {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : null;
+}
+
 function buildBaseSlug(p: Product) {
   const sizePart = isShoesCategory(p.category)
     ? p.size_eu != null
@@ -330,20 +335,32 @@ export default function AdminProductEditClient({
   const gallery = useMemo(() => p?.images ?? [], [p]);
 
   async function refreshStockInfo(source: Product) {
+    const normalizedName = source.name.trim();
+    const normalizedArticleCode = normalizeNullableText(source.article_code);
+    const normalizedCategory = normalizeNullableText(source.category);
+    const normalizedCondition = normalizeNullableText(source.condition);
+    const normalizedApparelSize = normalizeNullableText(source.velikost_obleceni);
+
     let query: any = supabase.from("products").select("id");
 
-    query = query.eq("name", source.name.trim());
+    query = query.eq("name", normalizedName);
 
-    if (source.article_code?.trim()) {
-      query = query.eq("article_code", source.article_code.trim());
+    if (normalizedArticleCode) {
+      query = query.eq("article_code", normalizedArticleCode);
     } else {
       query = query.is("article_code", null);
     }
 
-    if (source.category) {
-      query = query.eq("category", source.category);
+    if (normalizedCategory) {
+      query = query.eq("category", normalizedCategory);
     } else {
       query = query.is("category", null);
+    }
+
+    if (normalizedCondition) {
+      query = query.eq("condition", normalizedCondition);
+    } else {
+      query = query.is("condition", null);
     }
 
     if (isShoesCategory(source.category)) {
@@ -357,7 +374,7 @@ export default function AdminProductEditClient({
     }
 
     if (source.category === "dresy" || source.category === "oblečení") {
-      if (source.velikost_obleceni) query = query.eq("velikost_obleceni", source.velikost_obleceni);
+      if (normalizedApparelSize) query = query.eq("velikost_obleceni", normalizedApparelSize);
       else query = query.is("velikost_obleceni", null);
     }
 
@@ -792,7 +809,7 @@ export default function AdminProductEditClient({
           </div>
 
           <div className="small muted">
-            Počítá se podle názvu, kódu artiklu, kategorie a velikosti.
+            Počítá se podle názvu, kódu artiklu, kategorie, stavu a velikosti.
           </div>
 
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
