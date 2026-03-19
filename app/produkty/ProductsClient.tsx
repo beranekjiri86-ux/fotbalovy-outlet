@@ -50,12 +50,8 @@ function parseEUSizeLabel(s: string) {
   return Number.isFinite(n) ? n : NaN;
 }
 
-function normalizeText(s: string) {
-  return s
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim();
+function normalizeText(value: string | null | undefined) {
+  return (value ?? "").trim().toLowerCase();
 }
 
 function groupKey(p: any) {
@@ -63,12 +59,14 @@ function groupKey(p: any) {
     p.category === "rukavice"
       ? `glove:${p.velikost_rukavic ?? ""}`
       : p.category === "dresy" || p.category === "oblečení"
-      ? `apparel:${String(p.velikost_obleceni ?? "").toUpperCase()}`
-      : `shoe:${p.size_eu ?? ""}`;
+        ? `apparel:${String(p.velikost_obleceni ?? "").toUpperCase()}`
+        : `shoe:${p.size_eu ?? ""}`;
 
   return [
-    p.name?.trim().toLowerCase() ?? "",
-    p.article_code?.trim().toLowerCase() ?? "",
+    normalizeText(p.name),
+    normalizeText(p.article_code),
+    normalizeText(p.category),
+    normalizeText(p.condition),
     sizePart,
   ].join("|");
 }
@@ -92,10 +90,13 @@ function groupProducts(products: Product[]): GroupedProduct[] {
     existing.ids.push(product.id);
     existing.stock_count += 1;
 
-    if (!existing.image_url && product.image_url) existing.image_url = product.image_url;
+    if (!existing.image_url && product.image_url) {
+      existing.image_url = product.image_url;
+    }
 
     const existingStatusWeight =
       existing.status === "available" ? 3 : existing.status === "reserved" ? 2 : existing.status === "sold" ? 1 : 0;
+
     const nextStatusWeight =
       product.status === "available" ? 3 : product.status === "reserved" ? 2 : product.status === "sold" ? 1 : 0;
 
@@ -105,6 +106,7 @@ function groupProducts(products: Product[]): GroupedProduct[] {
 
     const existingPrice = existing.sale_price ?? Number.MAX_SAFE_INTEGER;
     const nextPrice = product.sale_price ?? Number.MAX_SAFE_INTEGER;
+
     if (nextPrice < existingPrice) {
       existing.sale_price = product.sale_price;
       existing.original_price = product.original_price;
