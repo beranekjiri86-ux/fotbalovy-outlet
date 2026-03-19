@@ -822,11 +822,23 @@ export default function ProductsClient({
               </div>
 
               <div className="priceRow" style={{ marginTop: 10 }}>
-                <span className="price">{Math.round(p.sale_price)} Kč</span>
-                {p.original_price ? <span className="priceOld">{Math.round(p.original_price)} Kč</span> : null}
-              </div>
+  <span className="price">{Math.round(Number(p.sale_price ?? 0))} Kč</span>
+  {p.original_price ? <span className="priceOld">{Math.round(Number(p.original_price))} Kč</span> : null}
+</div>
 
-              <div className="small" style={{ marginTop: 6 }}>Kód: {p.article_code}</div>
+<div className="small" style={{ marginTop: 6 }}>
+  Kód: {p.article_code}
+</div>
+
+<div className="small muted">
+  DEBUG ID: {p.id}
+</div>
+<div className="small muted">
+  DEBUG stav: {p.condition ?? "—"}
+</div>
+<div className="small muted">
+  DEBUG slug: {p.slug}
+</div>
             </Link>
           ))}
         </div>
