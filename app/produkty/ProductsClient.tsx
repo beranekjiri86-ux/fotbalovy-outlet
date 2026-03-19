@@ -217,15 +217,16 @@ export default function ProductsClient({
     let result = groupedProducts.filter((p: any) => {
       if (words.length) {
         const hay = normalizeText(
-          [
-            p.name ?? "",
-            p.article_code ?? "",
-            p.brand ?? "",
-            p.category ?? "",
-            p.typ_obleceni ?? "",
-            p.boot_type ?? "",
-          ].join(" ")
-        );
+  [
+    p.name ?? "",
+    p.article_code ?? "",
+    p.brand ?? "",
+    p.category ?? "",
+    p.condition ?? "",
+    p.typ_obleceni ?? "",
+    p.boot_type ?? "",
+  ].join(" ")
+);
 
         const matchesAllWords = words.every((word) => hay.includes(word));
         if (!matchesAllWords) return false;
